@@ -1,236 +1,222 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Field Service – Tasks</title>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Field Service – Tasks</title>
 
-    <style>
-      :root {
-        --primary: #2c5aa0;
-        --accent: #28a745;
-        --bg: #f8f9fa;
-        --text-dark: #1e2a3a;
-        --text-light: #6c757d;
-      }
+  <style>
+    :root {
+      --primary: #2c5aa0;
+      --accent: #28a745;
+      --bg: #f8f9fa;
+      --text-dark: #1e2a3a;
+      --text-light: #6c757d;
+    }
 
-      body {
-        margin: 0;
-        background: var(--bg);
-        font-family: "Inter", Arial, sans-serif;
-      }
+    body {
+      margin: 0;
+      background: var(--bg);
+      font-family: "Inter", Arial, sans-serif;
+      min-height: 100vh;
+    }
 
-      header {
-        background: linear-gradient(135deg, var(--primary), #1e3d72);
-        color: white;
-        padding: 18px 20px;
-        text-align: center;
-        font-weight: 600;
-        font-size: 1.2rem;
-      }
+    header {
+      background: linear-gradient(135deg, var(--primary), #1e3d72);
+      color: white;
+      padding: 18px 20px;
+      text-align: center;
+      font-weight: 600;
+      font-size: 1.2rem;
+    }
 
-      .tabs {
-        display: flex;
-        background: white;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-      }
+    .tabs {
+      display: flex;
+      background: white;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
 
-      .tab {
-        flex: 1;
-        text-align: center;
-        padding: 12px;
-        cursor: pointer;
-        border-bottom: 3px solid transparent;
-        font-weight: 600;
-        transition: 0.2s;
-      }
+    .tab {
+      flex: 1;
+      text-align: center;
+      padding: 12px;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      font-weight: 600;
+      color: var(--text-dark);
+    }
 
-      .tab.active {
-        color: var(--primary);
-        border-bottom: 3px solid var(--primary);
-      }
+    .tab.active {
+      color: var(--primary);
+      border-bottom: 3px solid var(--primary);
+    }
 
-      .container {
-        padding: 15px;
-      }
+    .container {
+      padding: 15px;
+    }
 
-      .task-card {
-        background: white;
-        padding: 15px;
-        border-radius: 8px;
-        margin-bottom: 12px;
-        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
-        cursor: pointer;
-        transition: 0.25s;
-      }
+    .task-card {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+      cursor: pointer;
+      transition: 0.25s;
+    }
 
-      .task-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
-      }
+    .task-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+    }
 
-      .task-title {
-        font-size: 1.05rem;
-        font-weight: 600;
-        color: var(--primary);
-      }
+    .task-title {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--primary);
+    }
 
-      .task-line {
-        font-size: 0.9rem;
-        color: var(--text-dark);
-        margin-top: 4px;
-      }
+    .task-line {
+      font-size: .9rem;
+      color: var(--text-dark);
+      margin-top: 4px;
+    }
 
-      .status-badge {
-        padding: 4px 8px;
-        border-radius: 6px;
-        font-size: 0.8rem;
-        font-weight: 600;
-        display: inline-block;
-        margin-top: 6px;
-      }
+    .status-badge {
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      display: inline-block;
+      margin-top: 6px;
+    }
 
-      .status-new {
-        background: #d1ecf1;
-        color: #0c5460;
-      }
-      .status-progress {
-        background: #fff3cd;
-        color: #856404;
-      }
-      .status-done {
-        background: #d4edda;
-        color: #155724;
-      }
-    </style>
-  </head>
-  <body>
-    <header>My Tasks</header>
+    .status-new { background: #d1ecf1; color: #0c5460; }
+    .status-progress { background: #fff3cd; color: #856404; }
+    .status-done { background: #d4edda; color: #155724; }
 
-    <div class="tabs">
-      <div class="tab active" id="tabToday">Today</div>
-      <div class="tab" id="tabUpcoming">Upcoming</div>
-      <div class="tab" id="tabPast">Past</div>
-      <div class="tab" id="tabCompleted">Completed</div>
-    </div>
+    .no-task {
+      text-align: center;
+      color: #777;
+      padding: 20px;
+    }
+  </style>
+</head>
 
-    <div class="container" id="taskList">Loading tasks...</div>
+<body>
 
-    <script>
-      const SCRIPT_URL =
-        "https://script.google.com/macros/s/AKfycbxVyHDJPIXxxVsAgsbpcv01HKNVh4HkszcTGTLOMbIOUwu8RtdRBWobiiuAQb3tVt6H/exec";
+<header>My Tasks</header>
 
-      let currentFilter = "today";
+<div class="tabs">
+  <div class="tab active" id="tabToday">Today</div>
+  <div class="tab" id="tabUpcoming">Upcoming</div>
+  <div class="tab" id="tabCompleted">Completed</div>
+  <div class="tab" id="tabPast">Past</div>
+</div>
 
-      function statusBadge(status) {
-        status = status.toLowerCase();
-        if (status === "done")
-          return `<span class="status-badge status-done">Done</span>`;
-        if (status === "in progress")
-          return `<span class="status-badge status-progress">In Progress</span>`;
-        return `<span class="status-badge status-new">New</span>`;
-      }
-      function overdueBadge(isOverdue) {
-        if (!isOverdue) return "";
-        return `<span class="status-badge" style="background:#f8d7da; color:#721c24; margin-left:6px;">Overdue</span>`;
-      }
+<div class="container" id="taskList">Loading tasks...</div>
 
-      function renderTaskList(tasks) {
-        const container = document.getElementById("taskList");
+<script>
+const SCRIPT_URL =
+  "https://script.google.com/macros/s/AKfycbztvTsbKPvLTpVruMzcQfiCfID98wU1fNn18TManX211_S9Q1ugnbGA9Jx4Yuk9z5eT/exec";
 
-        if (!tasks || tasks.length === 0) {
-          container.innerHTML = `<div style="text-align:center; color:#777; padding:20px;">No tasks found</div>`;
-          return;
-        }
+let currentFilter = "today";
 
-        container.innerHTML = "";
+function statusBadge(status) {
+  status = status.toLowerCase();
+  if (status === "done") return `<span class="status-badge status-done">Done</span>`;
+  if (status === "in progress") return `<span class="status-badge status-progress">In Progress</span>`;
+  return `<span class="status-badge status-new">New</span>`;
+}
 
-        tasks.forEach((task) => {
-          const card = document.createElement("div");
-          card.className = "task-card";
+function renderTaskList(tasks) {
+  const container = document.getElementById("taskList");
 
-          card.innerHTML = `
+  if (!tasks || tasks.length === 0) {
+    container.innerHTML = `<div class="no-task">No tasks found</div>`;
+    return;
+  }
+
+  container.innerHTML = "";
+
+  tasks.forEach(task => {
+    const card = document.createElement("div");
+    card.className = "task-card";
+
+    card.innerHTML = `
       <div class="task-title">${task.client}</div>
       <div class="task-line"><strong>Date:</strong> ${task.date}</div>
       <div class="task-line"><strong>Time:</strong> ${task.time}</div>
       <div class="task-line"><strong>Location:</strong> ${task.location}</div>
-      <div class="task-line">
-  ${statusBadge(task.status)}
-  ${overdueBadge(task.overdue)}
-</div>
-
+      <div class="task-line">${statusBadge(task.status)}</div>
     `;
 
-          card.addEventListener("click", () => {
-            localStorage.setItem("selectedTask", JSON.stringify(task));
-            window.location.href = "task-details.html";
-          });
+    card.onclick = () => {
+      localStorage.setItem("selectedTask", JSON.stringify(task));
+      window.location.href = "task-details.html";
+    };
 
-          container.appendChild(card);
-        });
-      }
+    container.appendChild(card);
+  });
+}
 
-      async function loadTasks() {
-        const email = localStorage.getItem("staff_email");
+async function loadTasks() {
+  const email = localStorage.getItem("staff_email");
 
-        let filter = "";
-        if (currentFilter === "today") filter = "today";
-        else if (currentFilter === "upcoming") filter = "upcoming";
-        else if (currentFilter === "past") filter = "past";
-        else filter = "completed";
+  if (!email) {
+    document.getElementById("taskList").innerHTML = "You are not logged in.";
+    return;
+  }
 
-        const query = new URLSearchParams({
-          action: "getTasks",
-          email: email,
-          filter,
-        });
+  const query = new URLSearchParams({
+    action: "getTasks",
+    email,
+    filter: currentFilter
+  });
 
-        const res = await fetch(`${SCRIPT_URL}?${query}`);
-        const responseText = await res.text();
+  const res = await fetch(`${SCRIPT_URL}?${query}`);
+  const text = await res.text();
 
-        try {
-          const data = JSON.parse(responseText);
-          if (data.success) renderTaskList(data.tasks);
-          else document.getElementById("taskList").innerHTML = data.message;
-        } catch {
-          document.getElementById("taskList").innerHTML =
-            "Error loading tasks.";
-        }
-      }
+  try {
+    const data = JSON.parse(text);
+    if (data.success) renderTaskList(data.tasks);
+    else document.getElementById("taskList").innerHTML = data.message;
+  } catch {
+    document.getElementById("taskList").innerHTML = "Error loading tasks.";
+  }
+}
 
-      /* TAB CONTROLS */
-      document.getElementById("tabToday").onclick = () => {
-        currentFilter = "today";
-        setActive("tabToday");
-        loadTasks();
-      };
+function setActiveTab(id) {
+  document.querySelectorAll(".tab").forEach(tab => tab.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
 
-      document.getElementById("tabUpcoming").onclick = () => {
-        currentFilter = "upcoming";
-        setActive("tabUpcoming");
-        loadTasks();
-      };
+document.getElementById("tabToday").onclick = () => {
+  currentFilter = "today";
+  setActiveTab("tabToday");
+  loadTasks();
+};
 
-      document.getElementById("tabPast").onclick = () => {
-        currentFilter = "past";
-        setActive("tabPast");
-        loadTasks();
-      };
+document.getElementById("tabUpcoming").onclick = () => {
+  currentFilter = "upcoming";
+  setActiveTab("tabUpcoming");
+  loadTasks();
+};
 
-      document.getElementById("tabCompleted").onclick = () => {
-        currentFilter = "completed";
-        setActive("tabCompleted");
-        loadTasks();
-      };
+document.getElementById("tabCompleted").onclick = () => {
+  currentFilter = "completed";
+  setActiveTab("tabCompleted");
+  loadTasks();
+};
 
-      function setActive(id) {
-        document
-          .querySelectorAll(".tab")
-          .forEach((t) => t.classList.remove("active"));
-        document.getElementById(id).classList.add("active");
-      }
+document.getElementById("tabPast").onclick = () => {
+  currentFilter = "past";
+  setActiveTab("tabPast");
+  loadTasks();
+};
 
-      document.addEventListener("DOMContentLoaded", loadTasks);
-    </script>
-  </body>
+document.addEventListener("DOMContentLoaded", loadTasks);
+</script>
+
+</body>
 </html>
