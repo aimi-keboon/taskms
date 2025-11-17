@@ -118,7 +118,7 @@
 
     <script>
       const SCRIPT_URL =
-        "https://script.google.com/macros/s/AKfycby7eOfZazv7mEzcuZZTbTrbyJcD6DwyiOBgWWf5wP2VGYia_UqY8iQUL6IaFyiCl7BK/exec";
+        "https://script.google.com/macros/s/AKfycbxVyHDJPIXxxVsAgsbpcv01HKNVh4HkszcTGTLOMbIOUwu8RtdRBWobiiuAQb3tVt6H/exec";
 
       let currentFilter = "today";
 
@@ -129,6 +129,10 @@
         if (status === "in progress")
           return `<span class="status-badge status-progress">In Progress</span>`;
         return `<span class="status-badge status-new">New</span>`;
+      }
+      function overdueBadge(isOverdue) {
+        if (!isOverdue) return "";
+        return `<span class="status-badge" style="background:#f8d7da; color:#721c24; margin-left:6px;">Overdue</span>`;
       }
 
       function renderTaskList(tasks) {
@@ -150,7 +154,11 @@
       <div class="task-line"><strong>Date:</strong> ${task.date}</div>
       <div class="task-line"><strong>Time:</strong> ${task.time}</div>
       <div class="task-line"><strong>Location:</strong> ${task.location}</div>
-      <div class="task-line">${statusBadge(task.status)}</div>
+      <div class="task-line">
+  ${statusBadge(task.status)}
+  ${overdueBadge(task.overdue)}
+</div>
+
     `;
 
           card.addEventListener("click", () => {
