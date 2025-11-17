@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Field Service – Task Details</title>
+    <style>
+      :root {
+        --primary: #2c5aa0;
+        --accent: #28a745;
+        --text-dark: #1e2a3a;
+        --text-light: #6c757d;
+        --bg: #f8f9fa;
+        --radius: 10px;
+      }
+
+      * {
+        box-sizing: border-box;
+        font-family: "Inter", Arial, sans-serif;
+      }
+
+      body {
+        background: var(--bg);
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+
+      header {
+        background: linear-gradient(135deg, var(--primary), #1e3d72);
+        color: white;
+        padding: 18px 20px;
+        text-align: center;
+        font-weight: 600;
+        font-size: 1.2rem;
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+      }
+
+      .container {
+        padding: 20px;
+        flex: 1;
+      }
+
+      .task-info,
+      .subtasks {
+        background: white;
+        border-radius: var(--radius);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        padding: 18px;
+        margin-bottom: 20px;
+      }
+
+      .task-info h3 {
+        margin: 0 0 10px;
+        color: var(--primary);
+        font-size: 1.2rem;
+      }
+
+      .task-detail {
+        margin-bottom: 8px;
+        font-size: 0.95rem;
+        color: var(--text-dark);
+      }
+
+      .task-detail span {
+        color: var(--text-light);
+      }
+
+      .checkbox-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+
+      .checkbox-item input {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+      }
+
+      .actions {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      button {
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: 0.25s;
+      }
+
+      .btn-start {
+        background: var(--accent);
+        color: white;
+      }
+      .btn-start:hover {
+        background: #218838;
+        transform: translateY(-2px);
+      }
+
+      .btn-complete {
+        background: var(--primary);
+        color: white;
+      }
+      .btn-complete:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+      }
+
+      .gps-box {
+        background: #e9f7ef;
+        padding: 10px;
+        border-radius: 8px;
+        margin-top: 10px;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+
+      .alert {
+        padding: 10px;
+        background: #f8d7da;
+        color: #721c24;
+        border-radius: 6px;
+        margin-bottom: 15px;
+        text-align: center;
+      }
+
+      footer {
+        text-align: center;
+        padding: 12px;
+        color: var(--text-light);
+        font-size: 0.8rem;
+      }
+    </style>
+  </head>
+  <body>
+    <header>Task Details</header>
+
+    <div class="container">
+      <div id="alertBox" class="alert" style="display: none"></div>
+
+      <div class="task-info" id="taskInfo"><h3>Loading...</h3></div>
+
+      <div class="subtasks">
+        <h3>Checklist</h3>
+        <div id="checklist"></div>
+      </div>
+
+      <div class="actions">
+        <button id="startBtn" class="btn-start">Start Task</button>
+        <button id="completeBtn" class="btn-complete" disabled>
+          Complete Task
+        </button>
+      </div>
+
+      <div id="gpsBox" class="gps-box" style="display: none"></div>
+    </div>
+
+    <footer>© 2025 Synergy Alliance – Field Service Monitoring System</footer>
+
+    <script>
+      const SCRIPT_URL =
+        "https://script.google.com/macros/s/AKfycby7eOfZazv7mEzcuZZTbTrbyJcD6DwyiOBgWWf5wP2VGYia_UqY8iQUL6IaFyiCl7BK/exec";
+
+      const subtasks = [
+        "Arrived at client site",
+        "Setup and installation",
+        "System configuration",
+        "Client walkthrough / training",
+        "Final verification and sign-off",
+      ];
+
+      let currentTask = {};
+
+      function showAlert(msg) {
+        const box = document.getElementById("alertBox");
+        box.innerText = msg;
+        box.style.display = "block";
+      }
+
+      function hideAlert() {
+        document.getElementById("alertBox").style.display = "none";
+      }
+
+      function renderTask() {
+        currentTask = JSON.parse(localStorage.getItem("selectedTask") || "{}");
+
+        const isDone = currentTask.status === "Done";
+
+        document.getElementById("taskInfo").innerHTML = `
+    <h3>${currentTask.client}</h3>
+
+    <div class="task-detail"><strong>Date:</strong> <span>${currentTask.date}</span></div>
+    <div class="task-detail"><strong>Time:</strong> <span>${currentTask.time}</span></div>
+    <div class="task-detail"><strong>Location:</strong> <span>${currentTask.location}</span></div>
+    <div class="task-detail"><strong>Status:</strong> <span>${currentTask.status}</span></div>
+  `;
+
+        const list = document.getElementById("checklist");
+        list.innerHTML = "";
+
+        subtasks.forEach((s, i) => {
+          list.innerHTML += `
+      <div class="checkbox-item">
+        <input type="checkbox" id="chk${i}" ${isDone ? "disabled" : ""}>
+        <label for="chk${i}">${s}</label>
+      </div>
+    `;
+        });
+
+        document.getElementById("startBtn").disabled = isDone;
+        document.getElementById("completeBtn").disabled = true;
+
+        document
+          .querySelectorAll("#checklist input")
+          .forEach((chk) => chk.addEventListener("change", updateCompletion));
+      }
+
+      function updateCompletion() {
+        const allChecked = [
+          ...document.querySelectorAll("#checklist input"),
+        ].every((c) => c.checked);
+        document.getElementById("completeBtn").disabled = !allChecked;
+      }
+
+      function getGPS() {
+        return new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              const { latitude, longitude } = pos.coords;
+              const gpsBox = document.getElementById("gpsBox");
+
+              gpsBox.style.display = "block";
+              gpsBox.innerText = `📍 Latitude: ${latitude.toFixed(
+                5
+              )}, Longitude: ${longitude.toFixed(5)}`;
+
+              resolve({ lat: latitude, lon: longitude });
+            },
+            () => reject("GPS failed")
+          );
+        });
+      }
+
+      async function callAPI(action, params) {
+        const query = new URLSearchParams({ action, ...params }).toString();
+        const res = await fetch(`${SCRIPT_URL}?${query}`);
+        const text = await res.text();
+        try {
+          return JSON.parse(text);
+        } catch {
+          return { success: false, message: text };
+        }
+      }
+
+      async function startTask() {
+        showAlert("Starting task...");
+        try {
+          const gps = await getGPS();
+          const res = await callAPI("updateTaskStart", {
+            taskID: currentTask.id,
+            lat: gps.lat,
+            lon: gps.lon,
+          });
+
+          if (res.success) {
+            hideAlert();
+          } else {
+            showAlert(res.message);
+          }
+        } catch (err) {
+          showAlert("Error: " + err);
+        }
+      }
+
+      async function completeTask() {
+        showAlert("Completing task...");
+        try {
+          const gps = await getGPS();
+          const res = await callAPI("updateTaskComplete", {
+            taskID: currentTask.id,
+            lat: gps.lat,
+            lon: gps.lon,
+          });
+
+          if (res.success) {
+            showAlert("Task completed!");
+            setTimeout(() => {
+              window.location.href = "tasklist.html";
+            }, 1000);
+          } else {
+            showAlert(res.message);
+          }
+        } catch (err) {
+          showAlert("Error: " + err);
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        renderTask();
+        document.getElementById("startBtn").onclick = startTask;
+        document.getElementById("completeBtn").onclick = completeTask;
+      });
+    </script>
+  </body>
+</html>
