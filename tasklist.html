@@ -31,20 +31,30 @@
       }
 
       .tabs {
-        display: flex;
-        background: white;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-      }
+  display: flex;
+  background: white;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 
-      .tab {
-        flex: 1;
-        text-align: center;
-        padding: 12px;
-        cursor: pointer;
-        border-bottom: 3px solid transparent;
-        font-weight: 600;
-        color: var(--text-dark);
-      }
+  overflow-x: auto;        /* allow scrolling ONLY when needed */
+  white-space: nowrap;     /* prevents line breaks */
+  scrollbar-width: none;   /* hide scrollbar (Firefox) */
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;           /* hide scrollbar (Chrome/Safari) */
+}
+
+.tab {
+  flex: 1 0 auto;           /* expand if space, shrink if not */
+  min-width: 100px;         /* ensures tabs don't shrink too tiny */
+  padding: 12px;
+  text-align: center;
+  font-weight: 600;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  color: var(--text-dark);
+}
+
 
       .tab.active {
         color: var(--primary);
@@ -118,7 +128,7 @@
   </head>
 
   <body>
-    <header>My Tasks</header>
+
 
     <div class="tabs">
       <div class="tab active" id="tabToday">Today</div>
@@ -278,5 +288,9 @@
 
       document.addEventListener("DOMContentLoaded", loadTasks);
     </script>
+    <script src="navbar.js"></script>
+    <div style="height: 70px;"></div>
+
+
   </body>
 </html>
