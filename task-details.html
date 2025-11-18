@@ -1,367 +1,374 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Field Service – Task Details</title>
-  <style>
-    :root {
-      --primary: #2c5aa0;
-      --accent: #28a745;
-      --text-dark: #1e2a3a;
-      --text-light: #6c757d;
-      --bg: #f8f9fa;
-      --radius: 10px;
-      --danger: #dc3545;
-      --info: #17a2b8;
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Field Service – Task Details</title>
+    <style>
+      :root {
+        --primary: #2c5aa0;
+        --accent: #28a745;
+        --text-dark: #1e2a3a;
+        --text-light: #6c757d;
+        --bg: #f8f9fa;
+        --radius: 10px;
+        --danger: #dc3545;
+        --info: #17a2b8;
+      }
 
-    * {
-      box-sizing: border-box;
-      font-family: "Inter", Arial, sans-serif;
-    }
+      * {
+        box-sizing: border-box;
+        font-family: "Inter", Arial, sans-serif;
+      }
 
-    body {
-      background: var(--bg);
-      margin: 0;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
+      body {
+        background: var(--bg);
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
 
-    header {
-      background: linear-gradient(135deg, var(--primary), #1e3d72);
-      color: white;
-      padding: 18px 20px;
-      text-align: center;
-      font-weight: 600;
-      font-size: 1.2rem;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.15);
-    }
+      header {
+        background: linear-gradient(135deg, var(--primary), #1e3d72);
+        color: white;
+        padding: 18px 20px;
+        text-align: center;
+        font-weight: 600;
+        font-size: 1.2rem;
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+      }
 
-    .container {
-      padding: 15px;
-      flex: 1;
-      max-width: 900px;
-      margin: 0 auto;
-    }
+      .container {
+        padding: 15px;
+        flex: 1;
+        max-width: 900px;
+        margin: 0 auto;
+      }
 
-    .alert {
-      padding: 10px;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      margin-bottom: 10px;
-      display: none;
-      text-align: center;
-    }
+      .alert {
+        padding: 10px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        margin-bottom: 10px;
+        display: none;
+        text-align: center;
+      }
 
-    .alert-info {
-      background: #d1ecf1;
-      color: #0c5460;
-      border: 1px solid #bee5eb;
-    }
+      .alert-info {
+        background: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+      }
 
-    .alert-error {
-      background: #f8d7da;
-      color: #721c24;
-      border: 1px solid #f5c6cb;
-    }
+      .alert-error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
 
-    .task-info {
-      background: white;
-      border-radius: var(--radius);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-      padding: 18px;
-      margin-bottom: 16px;
-    }
+      .task-info {
+        background: white;
+        border-radius: var(--radius);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        padding: 18px;
+        margin-bottom: 16px;
+      }
 
-    .task-info h3 {
-      margin: 0 0 10px;
-      color: var(--primary);
-      font-size: 1.2rem;
-    }
+      .task-info h3 {
+        margin: 0 0 10px;
+        color: var(--primary);
+        font-size: 1.2rem;
+      }
 
-    .task-detail {
-      margin-bottom: 6px;
-      font-size: 0.95rem;
-      color: var(--text-dark);
-    }
+      .task-detail {
+        margin-bottom: 6px;
+        font-size: 0.95rem;
+        color: var(--text-dark);
+      }
 
-    .task-detail span {
-      color: var(--text-light);
-    }
+      .task-detail span {
+        color: var(--text-light);
+      }
 
-    .status-pill {
-      display: inline-block;
-      font-size: 0.8rem;
-      padding: 4px 10px;
-      border-radius: 999px;
-      background: #d1ecf1;
-      color: #0c5460;
-      font-weight: 600;
-    }
-    .status-inprogress {
-      background: #fff3cd;
-      color: #856404;
-    }
-    .status-done {
-      background: #d4edda;
-      color: #155724;
-    }
+      .status-pill {
+        display: inline-block;
+        font-size: 0.8rem;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: #d1ecf1;
+        color: #0c5460;
+        font-weight: 600;
+      }
+      .status-inprogress {
+        background: #fff3cd;
+        color: #856404;
+      }
+      .status-done {
+        background: #d4edda;
+        color: #155724;
+      }
 
-    .actions-top {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-top: 10px;
-    }
+      .actions-top {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+      }
 
-    button {
-      padding: 10px 12px;
-      border-radius: 8px;
-      border: none;
-      font-size: 0.95rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: 0.2s;
-    }
+      button {
+        padding: 10px 12px;
+        border-radius: 8px;
+        border: none;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.2s;
+      }
 
-    .btn-start {
-      background: var(--accent);
-      color: white;
-      flex: 1;
-      min-width: 120px;
-    }
+      .btn-start {
+        background: var(--accent);
+        color: white;
+        flex: 1;
+        min-width: 120px;
+      }
 
-    .btn-start:hover:not(:disabled) {
-      background: #218838;
-      box-shadow: 0 6px 18px rgba(40,167,69,0.25);
-      transform: translateY(-1px);
-    }
+      .btn-start:hover:not(:disabled) {
+        background: #218838;
+        box-shadow: 0 6px 18px rgba(40, 167, 69, 0.25);
+        transform: translateY(-1px);
+      }
 
-    .btn-complete {
-      background: var(--primary);
-      color: white;
-      flex: 1;
-      min-width: 120px;
-    }
+      .btn-complete {
+        background: var(--primary);
+        color: white;
+        flex: 1;
+        min-width: 120px;
+      }
 
-    .btn-complete:disabled,
-    .btn-start:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      box-shadow: none;
-      transform: none;
-    }
+      .btn-complete:disabled,
+      .btn-start:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        box-shadow: none;
+        transform: none;
+      }
 
-    .subtasks-wrapper {
-      margin-top: 12px;
-    }
+      .subtasks-wrapper {
+        margin-top: 12px;
+      }
 
-    .subtasks-header {
-      font-weight: 600;
-      color: var(--primary);
-      margin-bottom: 8px;
-    }
+      .subtasks-header {
+        font-weight: 600;
+        color: var(--primary);
+        margin-bottom: 8px;
+      }
 
-    .subtask-accordion {
-      background: white;
-      border-radius: var(--radius);
-      box-shadow: 0 3px 8px rgba(0,0,0,0.08);
-      margin-bottom: 10px;
-      overflow: hidden;
-    }
+      .subtask-accordion {
+        background: white;
+        border-radius: var(--radius);
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+        margin-bottom: 10px;
+        overflow: hidden;
+      }
 
-    .subtask-summary {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px 12px;
-      cursor: pointer;
-      background: #f1f3f5;
-    }
+      .subtask-summary {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 12px;
+        cursor: pointer;
+        background: #f1f3f5;
+      }
 
-    .subtask-title {
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: var(--text-dark);
-    }
+      .subtask-title {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--text-dark);
+      }
 
-    .subtask-summary-right {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.8rem;
-    }
+      .subtask-summary-right {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.8rem;
+      }
 
-    .subtask-body {
-      padding: 10px 12px 12px;
-      font-size: 0.9rem;
-    }
+      .subtask-body {
+        padding: 10px 12px 12px;
+        font-size: 0.9rem;
+      }
 
-    .field-label {
-      font-size: 0.83rem;
-      margin-top: 8px;
-      margin-bottom: 4px;
-      color: var(--text-dark);
-      font-weight: 500;
-    }
+      .field-label {
+        font-size: 0.83rem;
+        margin-top: 8px;
+        margin-bottom: 4px;
+        color: var(--text-dark);
+        font-weight: 500;
+      }
 
-    .gps-line {
-      font-size: 0.8rem;
-      color: #155724;
-      background: #e9f7ef;
-      padding: 6px 8px;
-      border-radius: 6px;
-      margin-top: 4px;
-    }
+      .gps-line {
+        font-size: 0.8rem;
+        color: #155724;
+        background: #e9f7ef;
+        padding: 6px 8px;
+        border-radius: 6px;
+        margin-top: 4px;
+      }
 
-    .btn-small {
-      padding: 6px 8px;
-      font-size: 0.8rem;
-      border-radius: 6px;
-      margin-right: 4px;
-    }
+      .btn-small {
+        padding: 6px 8px;
+        font-size: 0.8rem;
+        border-radius: 6px;
+        margin-right: 4px;
+      }
 
-    .btn-gps {
-      background: var(--info);
-      color: white;
-    }
+      .btn-gps {
+        background: var(--info);
+        color: white;
+      }
 
-    .btn-photo {
-      background: var(--accent);
-      color: white;
-    }
+      .btn-photo {
+        background: var(--accent);
+        color: white;
+      }
 
-    .pending-photos {
-      margin-top: 6px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 4px;
-    }
+      .pending-photos {
+        margin-top: 6px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+      }
 
-    .photo-chip {
-      background: #e9ecef;
-      border-radius: 999px;
-      padding: 3px 8px;
-      font-size: 0.75rem;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
+      .photo-chip {
+        background: #e9ecef;
+        border-radius: 999px;
+        padding: 3px 8px;
+        font-size: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
 
-    .photo-chip button {
-      background: transparent;
-      border: none;
-      color: #495057;
-      font-size: 0.8rem;
-      padding: 0;
-      cursor: pointer;
-    }
+      .photo-chip button {
+        background: transparent;
+        border: none;
+        color: #495057;
+        font-size: 0.8rem;
+        padding: 0;
+        cursor: pointer;
+      }
 
-    textarea {
-      width: 100%;
-      min-height: 60px;
-      resize: vertical;
-      padding: 6px 8px;
-      font-size: 0.9rem;
-      border-radius: 6px;
-      border: 1px solid #ced4da;
-    }
+      textarea {
+        width: 100%;
+        min-height: 60px;
+        resize: vertical;
+        padding: 6px 8px;
+        font-size: 0.9rem;
+        border-radius: 6px;
+        border: 1px solid #ced4da;
+      }
 
-    .subtask-footer {
-      margin-top: 8px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
+      .subtask-footer {
+        margin-top: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
 
-    .subtask-footer label {
-      font-size: 0.85rem;
-      color: var(--text-dark);
-    }
+      .subtask-footer label {
+        font-size: 0.85rem;
+        color: var(--text-dark);
+      }
 
-    .error-text {
-      font-size: 0.8rem;
-      color: var(--danger);
-      margin-top: 2px;
-    }
+      .error-text {
+        font-size: 0.8rem;
+        color: var(--danger);
+        margin-top: 2px;
+      }
 
-    footer {
-      text-align: center;
-      padding: 10px;
-      font-size: 0.8rem;
-      color: var(--text-light);
-    }
-  </style>
-</head>
-<body>
-  <header>Task Details</header>
+      footer {
+        text-align: center;
+        padding: 10px;
+        font-size: 0.8rem;
+        color: var(--text-light);
+      }
+    </style>
+  </head>
+  <body>
+    <header>Task Details</header>
 
-  <div class="container">
-    <div id="alertBox" class="alert"></div>
+    <div class="container">
+      <div id="alertBox" class="alert"></div>
 
-    <div id="taskInfo" class="task-info">
-      <h3>Loading task...</h3>
+      <div id="taskInfo" class="task-info">
+        <h3>Loading task...</h3>
+      </div>
+
+      <div class="subtasks-wrapper">
+        <div class="subtasks-header">Subtasks / Checklist</div>
+        <div id="subtasksContainer"></div>
+      </div>
     </div>
 
-    <div class="subtasks-wrapper">
-      <div class="subtasks-header">Subtasks / Checklist</div>
-      <div id="subtasksContainer"></div>
-    </div>
-  </div>
+    <footer>© 2025 Synergy Alliance – Field Service Monitoring System</footer>
 
-  <footer>© 2025 Synergy Alliance – Field Service Monitoring System</footer>
+    <script>
+      // 🔗 Use the same Apps Script URL as your staff backend (login / review)
+      const SCRIPT_URL =
+        "https://script.google.com/macros/s/AKfycbymIvXoFWlzk3GiCeHrShYuGJQCM5s1rnd_czNI4-iTFN20woylO7mP9eWAPe2cahGz/exec";
 
-  <script>
-    // 🔗 Use the same Apps Script URL as your staff backend (login / review)
-    const SCRIPT_URL =
-      "https://script.google.com/macros/s/AKfycbymIvXoFWlzk3GiCeHrShYuGJQCM5s1rnd_czNI4-iTFN20woylO7mP9eWAPe2cahGz/exec";
+      const alertBox = document.getElementById("alertBox");
+      const taskInfoEl = document.getElementById("taskInfo");
+      const subtasksContainer = document.getElementById("subtasksContainer");
 
-    const alertBox = document.getElementById("alertBox");
-    const taskInfoEl = document.getElementById("taskInfo");
-    const subtasksContainer = document.getElementById("subtasksContainer");
+      let currentTask = null;
+      let taskStarted = false;
+      let subtasks = [];
+      const subtasksState = {}; // subtaskNo -> { lat, lon, photoCount, pendingFiles[], status, required, remarks }
 
-    let currentTask = null;
-    let taskStarted = false;
-    let subtasks = [];
-    const subtasksState = {}; // subtaskNo -> { lat, lon, photoCount, pendingFiles[], status, required, remarks }
-
-    function showAlert(message, type = "info", autoHide = false) {
-      alertBox.className = "alert " + (type === "error" ? "alert-error" : "alert-info");
-      alertBox.innerText = message;
-      alertBox.style.display = "block";
-      if (autoHide) {
-        setTimeout(() => (alertBox.style.display = "none"), 2000);
+      function showAlert(message, type = "info", autoHide = false) {
+        alertBox.className =
+          "alert " + (type === "error" ? "alert-error" : "alert-info");
+        alertBox.innerText = message;
+        alertBox.style.display = "block";
+        if (autoHide) {
+          setTimeout(() => (alertBox.style.display = "none"), 2000);
+        }
       }
-    }
 
-    function hideAlert() {
-      alertBox.style.display = "none";
-    }
-
-    function statusPill(status) {
-      const s = (status || "New").toLowerCase();
-      if (s === "done") return '<span class="status-pill status-done">Done</span>';
-      if (s === "in progress") return '<span class="status-pill status-inprogress">In Progress</span>';
-      return '<span class="status-pill">New</span>';
-    }
-
-    function loadTaskFromLocal() {
-      const raw = localStorage.getItem("selectedTask");
-      if (!raw) {
-        taskInfoEl.innerHTML = "<h3>No task selected.</h3>";
-        return;
+      function hideAlert() {
+        alertBox.style.display = "none";
       }
-      currentTask = JSON.parse(raw);
-      const status = currentTask.status || "New";
 
-      taskStarted = status === "In Progress" || status === "Done";
+      function statusPill(status) {
+        const s = (status || "New").toLowerCase();
+        if (s === "done")
+          return '<span class="status-pill status-done">Done</span>';
+        if (s === "in progress")
+          return '<span class="status-pill status-inprogress">In Progress</span>';
+        return '<span class="status-pill">New</span>';
+      }
 
-      taskInfoEl.innerHTML = `
+      function loadTaskFromLocal() {
+        const raw = localStorage.getItem("selectedTask");
+        if (!raw) {
+          taskInfoEl.innerHTML = "<h3>No task selected.</h3>";
+          return;
+        }
+        currentTask = JSON.parse(raw);
+        const status = currentTask.status || "New";
+
+        taskStarted = status === "In Progress" || status === "Done";
+
+        taskInfoEl.innerHTML = `
         <h3>${currentTask.client}</h3>
-        <div class="task-detail"><strong>Location:</strong> <span>${currentTask.location}</span></div>
-        <div class="task-detail"><strong>Scheduled:</strong> <span>${currentTask.date} ${currentTask.time}</span></div>
+        <div class="task-detail"><strong>Location:</strong> <span>${
+          currentTask.location
+        }</span></div>
+        <div class="task-detail"><strong>Scheduled:</strong> <span>${
+          currentTask.date
+        } ${currentTask.time}</span></div>
         <div class="task-detail">
           <strong>Status:</strong> 
           <span>${statusPill(status)}</span>
@@ -371,122 +378,154 @@
           <button id="completeBtn" class="btn-complete" disabled>Complete Task</button>
         </div>
       `;
-    }
+      }
 
-    async function callGet(action, params = {}) {
-      const query = new URLSearchParams({ action, ...params }).toString();
-      const res = await fetch(`${SCRIPT_URL}?${query}`);
-      const text = await res.text();
-      try { return JSON.parse(text); } catch { return { success: false, message: text }; }
-    }
+      async function callGet(action, params = {}) {
+        const query = new URLSearchParams({ action, ...params }).toString();
+        const res = await fetch(`${SCRIPT_URL}?${query}`);
+        const text = await res.text();
+        try {
+          return JSON.parse(text);
+        } catch {
+          return { success: false, message: text };
+        }
+      }
 
-    async function callPost(payload) {
-      const res = await fetch(SCRIPT_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify(payload)
-      });
-      const text = await res.text();
-      try { return JSON.parse(text); } catch { return { success: false, message: text }; }
-    }
+      async function callPost(payload) {
+        const res = await fetch(SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain" },
+          body: JSON.stringify(payload),
+        });
+        const text = await res.text();
+        try {
+          return JSON.parse(text);
+        } catch {
+          return { success: false, message: text };
+        }
+      }
 
-    async function captureGPS() {
-      return new Promise((resolve, reject) => {
-        if (!navigator.geolocation) {
-          reject("GPS not supported");
+      async function captureGPS() {
+        return new Promise((resolve, reject) => {
+          if (!navigator.geolocation) {
+            reject("GPS not supported");
+            return;
+          }
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              const { latitude, longitude } = pos.coords;
+              resolve({ lat: latitude, lon: longitude });
+            },
+            () => reject("Unable to get GPS position")
+          );
+        });
+      }
+
+      function clearSubtaskError(subtaskNo) {
+        const el = document.getElementById(`error-${subtaskNo}`);
+        if (el) el.textContent = "";
+      }
+
+      function setSubtaskError(subtaskNo, msg) {
+        const el = document.getElementById(`error-${subtaskNo}`);
+        if (el) el.textContent = msg;
+      }
+
+      function updateCompleteButtonState() {
+        const completeBtn = document.getElementById("completeBtn");
+        if (!completeBtn || !subtasks || subtasks.length === 0) {
+          completeBtn.disabled = true;
           return;
         }
-        navigator.geolocation.getCurrentPosition(
-          pos => {
-            const { latitude, longitude } = pos.coords;
-            resolve({ lat: latitude, lon: longitude });
-          },
-          () => reject("Unable to get GPS position")
-        );
-      });
-    }
+        if (!taskStarted) {
+          completeBtn.disabled = true;
+          return;
+        }
+        const allDone = subtasks.every((s) => {
+          const st = subtasksState[s.subtaskNo];
+          return st && st.status === "Done";
+        });
 
-    function clearSubtaskError(subtaskNo) {
-      const el = document.getElementById(`error-${subtaskNo}`);
-      if (el) el.textContent = "";
-    }
-
-    function setSubtaskError(subtaskNo, msg) {
-      const el = document.getElementById(`error-${subtaskNo}`);
-      if (el) el.textContent = msg;
-    }
-
-    function updateCompleteButtonState() {
-      const completeBtn = document.getElementById("completeBtn");
-      if (!completeBtn || !subtasks || subtasks.length === 0) {
-        completeBtn.disabled = true;
-        return;
+        completeBtn.disabled = !allDone;
       }
-      if (!taskStarted) {
-        completeBtn.disabled = true;
-        return;
-      }
-      const allDone = subtasks.every(s => {
-        const st = subtasksState[s.subtaskNo];
-        return st && st.status === "Done";
-      });
-      completeBtn.disabled = !allDone;
-    }
 
-    function renderSubtasks() {
-      subtasksContainer.innerHTML = "";
+      function renderSubtasks() {
+        subtasksContainer.innerHTML = "";
 
-      if (!subtasks || subtasks.length === 0) {
-        subtasksContainer.innerHTML = `
+        if (!subtasks || subtasks.length === 0) {
+          subtasksContainer.innerHTML = `
           <div style="text-align:center; color:#777; padding:15px;">
             No subtasks configured for this task.
           </div>`;
-        return;
-      }
+          return;
+        }
 
-      subtasks.forEach(s => {
-        const state = {
-          lat: s.lat || "",
-          lon: s.lon || "",
-          photoCount: (s.photoUrls && s.photoUrls.length) || 0,
-          pendingFiles: [],
-          status: s.status || "New",
-          required: !!s.required,
-          remarks: s.remarks || ""
-        };
-        subtasksState[s.subtaskNo] = state;
+        subtasks.forEach((s) => {
+          const state = {
+            lat: s.lat || "",
+            lon: s.lon || "",
+            photoCount: (s.photoUrls && s.photoUrls.length) || 0,
+            pendingFiles: [],
+            status: s.status || "New",
+            required: !!s.required,
+            remarks: s.remarks || "",
+          };
+          subtasksState[s.subtaskNo] = state;
 
-        const gpsText = state.lat && state.lon
-          ? `📍 ${Number(state.lat).toFixed(5)}, ${Number(state.lon).toFixed(5)}`
-          : "No GPS captured yet";
+          const gpsText =
+            state.lat && state.lon
+              ? `📍 ${Number(state.lat).toFixed(5)}, ${Number(
+                  state.lon
+                ).toFixed(5)}`
+              : "No GPS captured yet";
 
-        const done = state.status === "Done";
+          const done = state.status === "Done";
 
-        const card = document.createElement("div");
-        card.className = "subtask-accordion";
-        card.innerHTML = `
+          const card = document.createElement("div");
+          card.className = "subtask-accordion";
+          card.innerHTML = `
           <div class="subtask-summary" data-toggle="${s.subtaskNo}">
             <div class="subtask-title">[${s.subtaskNo}] ${s.title}</div>
             <div class="subtask-summary-right">
-              ${state.required ? '<span style="color:#dc3545;font-weight:600;">Required</span>' : ""}
+              ${
+                state.required
+                  ? '<span style="color:#dc3545;font-weight:600;">Required</span>'
+                  : ""
+              }
               ${statusPill(state.status)}
             </div>
           </div>
-          <div class="subtask-body" id="body-${s.subtaskNo}" style="display:none;">
+          <div class="subtask-body" id="body-${
+            s.subtaskNo
+          }" style="display:none;">
             <div class="field-label">GPS Location</div>
-            <button class="btn-small btn-gps" data-gps="${s.subtaskNo}" ${done ? "disabled" : ""}>
+            <button class="btn-small btn-gps" data-gps="${s.subtaskNo}" ${
+            done ? "disabled" : ""
+          }>
               Capture / Refresh GPS
             </button>
             <div class="gps-line" id="gps-${s.subtaskNo}">${gpsText}</div>
 
-            <div class="field-label">Photos (min 1, max ${s.maxPhotos || 5})</div>
-            <button class="btn-small btn-photo" data-addphoto="${s.subtaskNo}" ${done ? "disabled" : ""}>
+            <div class="field-label">Photos (min 1, max ${
+              s.maxPhotos || 5
+            })</div>
+            <button class="btn-small btn-photo" data-addphoto="${
+              s.subtaskNo
+            }" ${done ? "disabled" : ""}>
               Add Photo
             </button>
-            <input type="file" accept="image/*" data-file-input="${s.subtaskNo}" multiple style="display:none;" />
+            <input type="file" accept="image/*" data-file-input="${
+              s.subtaskNo
+            }" multiple style="display:none;" />
             <div class="pending-photos" id="pending-${s.subtaskNo}"></div>
-            <div style="font-size:0.8rem; color:#6c757d; margin-top:4px;" id="photos-${s.subtaskNo}">
-              ${state.photoCount > 0 ? "Uploaded photos: " + state.photoCount : "No photos uploaded yet"}
+            <div style="font-size:0.8rem; color:#6c757d; margin-top:4px;" id="photos-${
+              s.subtaskNo
+            }">
+              ${
+                state.photoCount > 0
+                  ? "Uploaded photos: " + state.photoCount
+                  : "No photos uploaded yet"
+              }
             </div>
             <button class="btn-small" style="background:#6c757d;color:white;margin-top:6px;"
                     data-upload="${s.subtaskNo}" ${done ? "disabled" : ""}>
@@ -494,11 +533,15 @@
             </button>
 
             <div class="field-label">Remarks</div>
-            <textarea id="remarks-${s.subtaskNo}" ${done ? "disabled" : ""}>${state.remarks}</textarea>
+            <textarea id="remarks-${s.subtaskNo}" ${done ? "disabled" : ""}>${
+            state.remarks
+          }</textarea>
 
             <div class="subtask-footer">
               <label>
-                <input type="checkbox" id="done-${s.subtaskNo}" ${done ? "checked disabled" : ""} />
+                <input type="checkbox" id="done-${s.subtaskNo}" ${
+            done ? "checked disabled" : ""
+          } />
                 Mark subtask as done (requires GPS + photo)
               </label>
               <div class="error-text" id="error-${s.subtaskNo}"></div>
@@ -506,315 +549,394 @@
           </div>
         `;
 
-        subtasksContainer.appendChild(card);
-      });
+          subtasksContainer.appendChild(card);
+        });
 
-      attachSubtaskHandlers();
-      updateCompleteButtonState();
-    }
+        attachSubtaskHandlers();
+        updateCompleteButtonState();
+      }
 
-    function attachSubtaskHandlers() {
-      // Accordion toggle
-      subtasks.forEach(s => {
-        const summary = document.querySelector(`.subtask-summary[data-toggle="${s.subtaskNo}"]`);
-        const body = document.getElementById(`body-${s.subtaskNo}`);
-        if (summary && body) {
-          summary.addEventListener("click", () => {
-            body.style.display = body.style.display === "none" ? "block" : "none";
-          });
-        }
-      });
+      function attachSubtaskHandlers() {
+        // Accordion toggle
+        subtasks.forEach((s) => {
+          const summary = document.querySelector(
+            `.subtask-summary[data-toggle="${s.subtaskNo}"]`
+          );
+          const body = document.getElementById(`body-${s.subtaskNo}`);
+          if (summary && body) {
+            summary.addEventListener("click", () => {
+              body.style.display =
+                body.style.display === "none" ? "block" : "none";
+            });
+          }
+        });
 
-      // GPS buttons
-      subtasks.forEach(s => {
-        const btnGPS = document.querySelector(`button[data-gps="${s.subtaskNo}"]`);
-        const gpsLabel = document.getElementById(`gps-${s.subtaskNo}`);
-        if (btnGPS) {
-          btnGPS.addEventListener("click", async () => {
-            try {
-              showAlert("Capturing GPS...", "info");
-              const gps = await captureGPS();
+        // GPS buttons
+        subtasks.forEach((s) => {
+          const btnGPS = document.querySelector(
+            `button[data-gps="${s.subtaskNo}"]`
+          );
+          const gpsLabel = document.getElementById(`gps-${s.subtaskNo}`);
+          if (btnGPS) {
+            btnGPS.addEventListener("click", async () => {
+              try {
+                showAlert("Capturing GPS...", "info");
+                const gps = await captureGPS();
+                const state = subtasksState[s.subtaskNo];
+                state.lat = gps.lat;
+                state.lon = gps.lon;
+                gpsLabel.textContent = `📍 ${gps.lat.toFixed(
+                  5
+                )}, ${gps.lon.toFixed(5)}`;
+                hideAlert();
+                updateCompleteButtonState();
+              } catch (err) {
+                showAlert(err, "error");
+              }
+            });
+          }
+        });
+
+        // Add photo buttons
+        subtasks.forEach((s) => {
+          const addBtn = document.querySelector(
+            `button[data-addphoto="${s.subtaskNo}"]`
+          );
+          const fileInput = document.querySelector(
+            `input[data-file-input="${s.subtaskNo}"]`
+          );
+          const pendingContainer = document.getElementById(
+            `pending-${s.subtaskNo}`
+          );
+
+          if (addBtn && fileInput && pendingContainer) {
+            addBtn.addEventListener("click", () => {
               const state = subtasksState[s.subtaskNo];
-              state.lat = gps.lat;
-              state.lon = gps.lon;
-              gpsLabel.textContent = `📍 ${gps.lat.toFixed(5)}, ${gps.lon.toFixed(5)}`;
-              hideAlert();
-              updateCompleteButtonState();
+              const max = s.maxPhotos || 5;
+              const remaining =
+                max - state.photoCount - state.pendingFiles.length;
+              if (remaining <= 0) {
+                showAlert(
+                  `Maximum ${max} photos reached for this subtask.`,
+                  "error",
+                  true
+                );
+                return;
+              }
+              fileInput.setAttribute("data-remaining", remaining);
+              fileInput.click();
+            });
 
-            } catch (err) {
-              showAlert(err, "error");
-            }
-          });
-        }
-      });
+            fileInput.addEventListener("change", () => {
+              const remaining = parseInt(
+                fileInput.getAttribute("data-remaining") || "5",
+                10
+              );
+              const files = Array.from(fileInput.files || []);
+              if (files.length === 0) return;
 
-      // Add photo buttons
-      subtasks.forEach(s => {
-        const addBtn = document.querySelector(`button[data-addphoto="${s.subtaskNo}"]`);
-        const fileInput = document.querySelector(`input[data-file-input="${s.subtaskNo}"]`);
-        const pendingContainer = document.getElementById(`pending-${s.subtaskNo}`);
-
-        if (addBtn && fileInput && pendingContainer) {
-          addBtn.addEventListener("click", () => {
-            const state = subtasksState[s.subtaskNo];
-            const max = s.maxPhotos || 5;
-            const remaining = max - state.photoCount - state.pendingFiles.length;
-            if (remaining <= 0) {
-              showAlert(`Maximum ${max} photos reached for this subtask.`, "error", true);
-              return;
-            }
-            fileInput.setAttribute("data-remaining", remaining);
-            fileInput.click();
-          });
-
-          fileInput.addEventListener("change", () => {
-            const remaining = parseInt(fileInput.getAttribute("data-remaining") || "5", 10);
-            const files = Array.from(fileInput.files || []);
-            if (files.length === 0) return;
-
-            const state = subtasksState[s.subtaskNo];
-            const toAdd = files.slice(0, remaining);
-            toAdd.forEach(file => {
-              state.pendingFiles.push(file);
-              const idx = state.pendingFiles.length - 1;
-              const chip = document.createElement("div");
-              chip.className = "photo-chip";
-              chip.setAttribute("data-file-idx", idx.toString());
-              chip.innerHTML = `
+              const state = subtasksState[s.subtaskNo];
+              const toAdd = files.slice(0, remaining);
+              toAdd.forEach((file) => {
+                state.pendingFiles.push(file);
+                const idx = state.pendingFiles.length - 1;
+                const chip = document.createElement("div");
+                chip.className = "photo-chip";
+                chip.setAttribute("data-file-idx", idx.toString());
+                chip.innerHTML = `
                 <span>${file.name}</span>
                 <button type="button">&times;</button>
               `;
-              chip.querySelector("button").addEventListener("click", () => {
-                const chipIdx = parseInt(chip.getAttribute("data-file-idx"), 10);
-                state.pendingFiles[chipIdx] = null; // mark as removed
-                chip.remove();
+                chip.querySelector("button").addEventListener("click", () => {
+                  const chipIdx = parseInt(
+                    chip.getAttribute("data-file-idx"),
+                    10
+                  );
+                  state.pendingFiles[chipIdx] = null; // mark as removed
+                  chip.remove();
+                });
+                pendingContainer.appendChild(chip);
               });
-              pendingContainer.appendChild(chip);
+
+              // reset input so same file can be picked again if needed
+              fileInput.value = "";
             });
+          }
+        });
 
-            // reset input so same file can be picked again if needed
-            fileInput.value = "";
-          });
-        }
-      });
+        // Upload buttons
+        subtasks.forEach((s) => {
+          const uploadBtn = document.querySelector(
+            `button[data-upload="${s.subtaskNo}"]`
+          );
+          const photosLabel = document.getElementById(`photos-${s.subtaskNo}`);
+          const pendingContainer = document.getElementById(
+            `pending-${s.subtaskNo}`
+          );
+          if (uploadBtn) {
+            uploadBtn.addEventListener("click", async () => {
+              const state = subtasksState[s.subtaskNo];
+              const validFiles = state.pendingFiles.filter((f) => !!f);
+              if (!validFiles.length) {
+                showAlert(
+                  "Please add at least one photo before uploading.",
+                  "error",
+                  true
+                );
+                return;
+              }
 
-      // Upload buttons
-      subtasks.forEach(s => {
-        const uploadBtn = document.querySelector(`button[data-upload="${s.subtaskNo}"]`);
-        const photosLabel = document.getElementById(`photos-${s.subtaskNo}`);
-        const pendingContainer = document.getElementById(`pending-${s.subtaskNo}`);
-        if (uploadBtn) {
-          uploadBtn.addEventListener("click", async () => {
+              showAlert("Uploading photos...", "info");
+
+              const base64List = [];
+              for (let file of validFiles) {
+                const b64 = await fileToDataURL(file);
+                base64List.push(b64);
+              }
+
+              const staffEmail =
+                localStorage.getItem("staff_email") || "unknown";
+
+              const result = await callPost({
+                action: "uploadSubtaskPhotos",
+                taskID: currentTask.id,
+                subtaskNo: s.subtaskNo,
+                staffEmail,
+                files: base64List,
+              });
+
+              if (result.success) {
+                state.photoCount += result.urls
+                  ? result.urls.length
+                  : validFiles.length;
+                state.pendingFiles = [];
+                pendingContainer.innerHTML = "";
+                photosLabel.textContent = `Uploaded photos: ${state.photoCount}`;
+                hideAlert();
+                updateCompleteButtonState();
+              } else {
+                showAlert(
+                  result.message || "Failed to upload photos.",
+                  "error"
+                );
+              }
+            });
+          }
+        });
+
+        // Done checkboxes
+        subtasks.forEach((s) => {
+          const doneCheckbox = document.getElementById(`done-${s.subtaskNo}`);
+          const remarksEl = document.getElementById(`remarks-${s.subtaskNo}`);
+
+          if (!doneCheckbox || doneCheckbox.disabled) return;
+
+          doneCheckbox.addEventListener("change", async () => {
+            if (!doneCheckbox.checked) return;
+
+            clearSubtaskError(s.subtaskNo);
             const state = subtasksState[s.subtaskNo];
-            const validFiles = state.pendingFiles.filter(f => !!f);
-            if (!validFiles.length) {
-              showAlert("Please add at least one photo before uploading.", "error", true);
+
+            if (!state.lat || !state.lon) {
+              setSubtaskError(
+                s.subtaskNo,
+                "Please capture GPS location before marking this subtask done."
+              );
+              doneCheckbox.checked = false;
               return;
             }
 
-            showAlert("Uploading photos...", "info");
-
-            const base64List = [];
-            for (let file of validFiles) {
-              const b64 = await fileToDataURL(file);
-              base64List.push(b64);
+            if (state.photoCount < 1) {
+              setSubtaskError(
+                s.subtaskNo,
+                "Please upload at least one photo before marking this subtask done."
+              );
+              doneCheckbox.checked = false;
+              return;
             }
 
-            const staffEmail = localStorage.getItem("staff_email") || "unknown";
+            const remarks = remarksEl.value.trim();
+            showAlert("Saving subtask status...", "info");
 
-            const result = await callPost({
-              action: "uploadSubtaskPhotos",
+            const res = await callGet("updateSubtaskMeta", {
               taskID: currentTask.id,
               subtaskNo: s.subtaskNo,
-              staffEmail,
-              files: base64List
+              lat: state.lat,
+              lon: state.lon,
+              remarks,
+              status: "Done",
             });
 
-            if (result.success) {
-              state.photoCount += result.urls ? result.urls.length : validFiles.length;
-              state.pendingFiles = [];
-              pendingContainer.innerHTML = "";
-              photosLabel.textContent = `Uploaded photos: ${state.photoCount}`;
-              hideAlert();
-              updateCompleteButtonState();
+            if (res.success) {
+              // Update state
+              state.status = "Done";
 
+              // Update subtasks array
+              const target = subtasks.find((st) => st.subtaskNo == s.subtaskNo);
+              if (target) target.status = "Done";
+
+              // 🔥 Save updated task to localStorage
+              localStorage.setItem("selectedTask", JSON.stringify(currentTask));
+
+              // Disable related UI elements
+              doneCheckbox.disabled = true;
+              remarksEl.disabled = true;
+              const gpsBtn = document.querySelector(
+                `button[data-gps="${s.subtaskNo}"]`
+              );
+              const addBtn = document.querySelector(
+                `button[data-addphoto="${s.subtaskNo}"]`
+              );
+              const uploadBtn = document.querySelector(
+                `button[data-upload="${s.subtaskNo}"]`
+              );
+              if (gpsBtn) gpsBtn.disabled = true;
+              if (addBtn) addBtn.disabled = true;
+              if (uploadBtn) uploadBtn.disabled = true;
+
+              const summary = document.querySelector(
+                `.subtask-summary[data-toggle="${s.subtaskNo}"] .subtask-summary-right`
+              );
+              if (summary) {
+                summary.querySelector(".status-pill").outerHTML =
+                  statusPill("Done");
+              }
+
+              showAlert("Subtask marked as done.", "info", true);
+
+              // Recalculate complete button
+              updateCompleteButtonState();
             } else {
-              showAlert(result.message || "Failed to upload photos.", "error");
+              showAlert(res.message || "Failed to update subtask.", "error");
+              doneCheckbox.checked = false;
             }
           });
-        }
-      });
+        });
+      }
 
-      // Done checkboxes
-      subtasks.forEach(s => {
-        const doneCheckbox = document.getElementById(`done-${s.subtaskNo}`);
-        const remarksEl = document.getElementById(`remarks-${s.subtaskNo}`);
+      function fileToDataURL(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      }
 
-        if (!doneCheckbox || doneCheckbox.disabled) return;
-
-        doneCheckbox.addEventListener("change", async () => {
-          if (!doneCheckbox.checked) return;
-
-          clearSubtaskError(s.subtaskNo);
-          const state = subtasksState[s.subtaskNo];
-
-          if (!state.lat || !state.lon) {
-            setSubtaskError(s.subtaskNo, "Please capture GPS location before marking this subtask done.");
-            doneCheckbox.checked = false;
-            return;
-          }
-
-          if (state.photoCount < 1) {
-            setSubtaskError(s.subtaskNo, "Please upload at least one photo before marking this subtask done.");
-            doneCheckbox.checked = false;
-            return;
-          }
-
-          const remarks = remarksEl.value.trim();
-          showAlert("Saving subtask status...", "info");
-
-          const res = await callGet("updateSubtaskMeta", {
+      async function startTask() {
+        const startBtn = document.getElementById("startBtn");
+        if (!startBtn) return;
+        startBtn.disabled = true;
+        showAlert("Starting task and capturing GPS...", "info");
+        try {
+          const gps = await captureGPS();
+          const res = await callGet("updateTaskStart", {
             taskID: currentTask.id,
-            subtaskNo: s.subtaskNo,
-            lat: state.lat,
-            lon: state.lon,
-            remarks,
-            status: "Done"
+            lat: gps.lat,
+            lon: gps.lon,
           });
-
           if (res.success) {
-            state.status = "Done";
-            doneCheckbox.disabled = true;
-            remarksEl.disabled = true;
-            const gpsBtn = document.querySelector(`button[data-gps="${s.subtaskNo}"]`);
-            const addBtn = document.querySelector(`button[data-addphoto="${s.subtaskNo}"]`);
-            const uploadBtn = document.querySelector(`button[data-upload="${s.subtaskNo}"]`);
-            if (gpsBtn) gpsBtn.disabled = true;
-            if (addBtn) addBtn.disabled = true;
-            if (uploadBtn) uploadBtn.disabled = true;
-            showAlert("Subtask marked as done.", "info", true);
-            updateCompleteButtonState();
+            taskStarted = true;
+            currentTask.status = "In Progress";
+
+            // 🔥 Save updated task back to localStorage
+            localStorage.setItem("selectedTask", JSON.stringify(currentTask));
+
+            // 🔥 Re-render using UPDATED data
+            loadTaskFromLocal();
+
+            // Re-wire buttons after re-render
+            wireTopButtons();
+
+            showAlert("Task started successfully.", "info", true);
           } else {
-            showAlert(res.message || "Failed to update subtask.", "error");
-            doneCheckbox.checked = false;
+            showAlert(res.message || "Failed to start task.", "error");
+            startBtn.disabled = false;
           }
-        });
-      });
-    }
-
-    function fileToDataURL(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-    }
-
-    async function startTask() {
-      const startBtn = document.getElementById("startBtn");
-      if (!startBtn) return;
-      startBtn.disabled = true;
-      showAlert("Starting task and capturing GPS...", "info");
-      try {
-        const gps = await captureGPS();
-        const res = await callGet("updateTaskStart", {
-          taskID: currentTask.id,
-          lat: gps.lat,
-          lon: gps.lon
-        });
-        if (res.success) {
-          taskStarted = true;
-          currentTask.status = "In Progress";
-          // Refresh header pill
-          loadTaskFromLocal(); // re-render from currentTask
-          // Re-wire buttons after re-render
-          wireTopButtons();
-          showAlert("Task started successfully.", "info", true);
-        } else {
-          showAlert(res.message || "Failed to start task.", "error");
+        } catch (err) {
+          showAlert("Error starting task: " + err, "error");
           startBtn.disabled = false;
         }
-      } catch (err) {
-        showAlert("Error starting task: " + err, "error");
-        startBtn.disabled = false;
-      }
-      updateCompleteButtonState();
-    }
-
-    async function completeTask() {
-      if (!taskStarted) {
-        showAlert("Please start the task before completing.", "error");
-        return;
+        updateCompleteButtonState();
       }
 
-      const allDone = subtasks.every(s => {
-        const st = subtasksState[s.subtaskNo];
-        return st && st.status === "Done";
-      });
-      if (!allDone) {
-        showAlert("All subtasks must be marked done before completing the task.", "error");
-        return;
-      }
-
-      showAlert("Completing task and capturing final GPS...", "info");
-      try {
-        const gps = await captureGPS();
-        const res = await callGet("updateTaskComplete", {
-          taskID: currentTask.id,
-          lat: gps.lat,
-          lon: gps.lon
-        });
-        if (res.success) {
-          showAlert("Task completed successfully.", "info");
-          setTimeout(() => {
-            localStorage.removeItem("selectedTask");
-            window.location.href = "tasklist.html";
-          }, 1200);
-        } else {
-          showAlert(res.message || "Failed to complete task.", "error");
+      async function completeTask() {
+        if (!taskStarted) {
+          showAlert("Please start the task before completing.", "error");
+          return;
         }
-      } catch (err) {
-        showAlert("Error completing task: " + err, "error");
+
+        const allDone = subtasks.every((s) => {
+          const st = subtasksState[s.subtaskNo];
+          return st && st.status === "Done";
+        });
+
+        if (!allDone) {
+          showAlert(
+            "All subtasks must be marked done before completing the task.",
+            "error"
+          );
+          return;
+        }
+
+        showAlert("Completing task and capturing final GPS...", "info");
+        try {
+          const gps = await captureGPS();
+          const res = await callGet("updateTaskComplete", {
+            taskID: currentTask.id,
+            lat: gps.lat,
+            lon: gps.lon,
+          });
+          if (res.success) {
+            showAlert("Task completed successfully.", "info");
+            setTimeout(() => {
+              localStorage.removeItem("selectedTask");
+              window.location.href = "tasklist.html";
+            }, 1200);
+          } else {
+            showAlert(res.message || "Failed to complete task.", "error");
+          }
+        } catch (err) {
+          showAlert("Error completing task: " + err, "error");
+        }
       }
-    }
 
-    function wireTopButtons() {
-      const startBtn = document.getElementById("startBtn");
-      const completeBtn = document.getElementById("completeBtn");
+      function wireTopButtons() {
+        const startBtn = document.getElementById("startBtn");
+        const completeBtn = document.getElementById("completeBtn");
 
-      if (!startBtn || !completeBtn) return;
+        if (!startBtn || !completeBtn) return;
 
-      const status = currentTask.status || "New";
-      const isDone = status === "Done";
+        const status = currentTask.status || "New";
+        const isDone = status === "Done";
 
-      startBtn.disabled = isDone || taskStarted;
-      completeBtn.disabled = true; // will be recalculated
+        startBtn.disabled = isDone || taskStarted;
+        completeBtn.disabled = true; // will be recalculated
 
-      startBtn.onclick = startTask;
-      completeBtn.onclick = completeTask;
+        startBtn.onclick = startTask;
+        completeBtn.onclick = completeTask;
 
-      updateCompleteButtonState();
-    }
-
-    async function init() {
-      loadTaskFromLocal();
-      if (!currentTask) return;
-
-      wireTopButtons();
-
-      showAlert("Loading subtasks...", "info");
-      const res = await callGet("getSubtasks", { taskID: currentTask.id });
-      if (res.success) {
-        subtasks = res.subtasks || [];
-        hideAlert();
-        renderSubtasks();
-      } else {
-        showAlert(res.message || "Failed to load subtasks.", "error");
+        updateCompleteButtonState();
       }
-    }
 
-    document.addEventListener("DOMContentLoaded", init);
-  </script>
-</body>
+      async function init() {
+        loadTaskFromLocal();
+        if (!currentTask) return;
+
+        wireTopButtons();
+
+        showAlert("Loading subtasks...", "info");
+        const res = await callGet("getSubtasks", { taskID: currentTask.id });
+        if (res.success) {
+          subtasks = res.subtasks || [];
+          hideAlert();
+          renderSubtasks();
+        } else {
+          showAlert(res.message || "Failed to load subtasks.", "error");
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", init);
+    </script>
+  </body>
 </html>
