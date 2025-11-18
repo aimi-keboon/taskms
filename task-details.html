@@ -368,7 +368,7 @@
         <div id="surveyStatusText" class="survey-status-line">
           Checking survey status...
         </div>
-        <button id="sendSurveyBtn" class="btn-survey" style="display:none;">
+        <button id="sendSurveyBtn" class="btn-survey" style="display: none">
           Generate Survey Link
         </button>
       </div>
@@ -402,7 +402,7 @@
       const surveyMeta = {
         required: false,
         link: "",
-        status: "Not Required" // Not Required | Not Sent | Pending | Submitted
+        status: "Not Required", // Not Required | Not Sent | Pending | Submitted
       };
 
       function showAlert(message, type = "info", autoHide = false) {
@@ -441,8 +441,12 @@
 
         taskInfoEl.innerHTML = `
           <h3>${currentTask.client}</h3>
-          <div class="task-detail"><strong>Location:</strong> <span>${currentTask.location}</span></div>
-          <div class="task-detail"><strong>Scheduled:</strong> <span>${currentTask.date} ${currentTask.time}</span></div>
+          <div class="task-detail"><strong>Location:</strong> <span>${
+            currentTask.location
+          }</span></div>
+          <div class="task-detail"><strong>Scheduled:</strong> <span>${
+            currentTask.date
+          } ${currentTask.time}</span></div>
           <div class="task-detail">
             <strong>Status:</strong> 
             <span>${statusPill(status)}</span>
@@ -469,7 +473,7 @@
         const res = await fetch(SCRIPT_URL, {
           method: "POST",
           headers: { "Content-Type": "text/plain" },
-          body: JSON.stringify(payload)
+          body: JSON.stringify(payload),
         });
         const text = await res.text();
         try {
@@ -486,7 +490,7 @@
             return;
           }
           navigator.geolocation.getCurrentPosition(
-            pos => {
+            (pos) => {
               const { latitude, longitude } = pos.coords;
               resolve({ lat: latitude, lon: longitude });
             },
@@ -521,13 +525,12 @@
           return;
         }
 
-        const allDone = subtasks.every(s => {
+        const allDone = subtasks.every((s) => {
           const st = subtasksState[s.subtaskNo];
           return st && st.status === "Done";
         });
 
-        const canComplete =
-          allDone && isSurveyCompletedOrNotRequired();
+        const canComplete = allDone && isSurveyCompletedOrNotRequired();
 
         completeBtn.disabled = !canComplete;
       }
@@ -538,30 +541,27 @@
         let pillText = "Not required";
 
         if (!surveyMeta.required) {
-  pillClass = "notrequired";
-  pillText = "Survey is not required for this task.";
-  sendSurveyBtn.style.display = "none";
-}
-
-else if (surveyMeta.required && !surveyMeta.link) {
-  pillClass = "notsent";
-  pillText = "Survey required — no link generated yet.";
-  sendSurveyBtn.style.display = "block";
-  sendSurveyBtn.disabled = false;
-}
-
-else if (surveyMeta.required && surveyMeta.link && surveyMeta.status !== "Submitted") {
-  pillClass = "pending";
-  pillText = `Survey link generated. Waiting for client to submit.`;
-  sendSurveyBtn.style.display = "none";
-}
-
-else if (surveyMeta.required && surveyMeta.status === "Submitted") {
-  pillClass = "submitted";
-  pillText = "Survey has been submitted.";
-  sendSurveyBtn.style.display = "none";
-}
-
+          pillClass = "notrequired";
+          pillText = "Survey is not required for this task.";
+          sendSurveyBtn.style.display = "none";
+        } else if (surveyMeta.required && !surveyMeta.link) {
+          pillClass = "notsent";
+          pillText = "Survey required — no link generated yet.";
+          sendSurveyBtn.style.display = "block";
+          sendSurveyBtn.disabled = false;
+        } else if (
+          surveyMeta.required &&
+          surveyMeta.link &&
+          surveyMeta.status !== "Submitted"
+        ) {
+          pillClass = "pending";
+          pillText = `Survey link generated. Waiting for client to submit.`;
+          sendSurveyBtn.style.display = "none";
+        } else if (surveyMeta.required && surveyMeta.status === "Submitted") {
+          pillClass = "submitted";
+          pillText = "Survey has been submitted.";
+          sendSurveyBtn.style.display = "none";
+        }
 
         surveyStatusTextEl.innerHTML = `
           <span class="survey-status-pill ${pillClass}">
@@ -577,7 +577,8 @@ else if (surveyMeta.required && surveyMeta.status === "Submitted") {
         if (res.success) {
           surveyMeta.required = !!res.required;
           surveyMeta.link = res.link || "";
-          surveyMeta.status = res.status || (res.required ? "Not Sent" : "Not Required");
+          surveyMeta.status =
+            res.status || (res.required ? "Not Sent" : "Not Required");
         } else {
           // If backend fails, default to not required so we don't hard-block
           surveyMeta.required = false;
@@ -592,11 +593,11 @@ else if (surveyMeta.required && surveyMeta.status === "Submitted") {
         if (!currentTask) return;
         sendSurveyBtn.disabled = true;
         showAlert("Generating survey link...", "info");
-        const baseUrl = window.location.origin;  // <-- Dynamic!
-const res = await callGet("generateSurveyLink", { 
-    taskID: currentTask.id,
-    baseUrl
-});
+        const baseUrl = window.location.origin; // <-- Dynamic!
+        const res = await callGet("generateSurveyLink", {
+          taskID: currentTask.id,
+          baseUrl,
+        });
 
         if (res.success) {
           surveyMeta.required = true;
@@ -623,7 +624,7 @@ const res = await callGet("generateSurveyLink", {
           return;
         }
 
-        subtasks.forEach(s => {
+        subtasks.forEach((s) => {
           const state = {
             lat: s.lat || "",
             lon: s.lon || "",
@@ -631,13 +632,15 @@ const res = await callGet("generateSurveyLink", {
             pendingFiles: [],
             status: s.status || "New",
             required: !!s.required,
-            remarks: s.remarks || ""
+            remarks: s.remarks || "",
           };
           subtasksState[s.subtaskNo] = state;
 
           const gpsText =
             state.lat && state.lon
-              ? `📍 ${Number(state.lat).toFixed(5)}, ${Number(state.lon).toFixed(5)}`
+              ? `📍 ${Number(state.lat).toFixed(5)}, ${Number(
+                  state.lon
+                ).toFixed(5)}`
               : "No GPS captured yet";
 
           const done = state.status === "Done";
@@ -648,25 +651,45 @@ const res = await callGet("generateSurveyLink", {
             <div class="subtask-summary" data-toggle="${s.subtaskNo}">
               <div class="subtask-title">[${s.subtaskNo}] ${s.title}</div>
               <div class="subtask-summary-right">
-                ${state.required ? '<span style="color:#dc3545;font-weight:600;">Required</span>' : ""}
+                ${
+                  state.required
+                    ? '<span style="color:#dc3545;font-weight:600;">Required</span>'
+                    : ""
+                }
                 ${statusPill(state.status)}
               </div>
             </div>
-            <div class="subtask-body" id="body-${s.subtaskNo}" style="display:none;">
+            <div class="subtask-body" id="body-${
+              s.subtaskNo
+            }" style="display:none;">
               <div class="field-label">GPS Location</div>
-              <button class="btn-small btn-gps" data-gps="${s.subtaskNo}" ${done ? "disabled" : ""}>
+              <button class="btn-small btn-gps" data-gps="${s.subtaskNo}" ${
+            done ? "disabled" : ""
+          }>
                 Capture / Refresh GPS
               </button>
               <div class="gps-line" id="gps-${s.subtaskNo}">${gpsText}</div>
 
-              <div class="field-label">Photos (min 1, max ${s.maxPhotos || 5})</div>
-              <button class="btn-small btn-photo" data-addphoto="${s.subtaskNo}" ${done ? "disabled" : ""}>
+              <div class="field-label">Photos (min 1, max ${
+                s.maxPhotos || 5
+              })</div>
+              <button class="btn-small btn-photo" data-addphoto="${
+                s.subtaskNo
+              }" ${done ? "disabled" : ""}>
                 Add Photo
               </button>
-              <input type="file" accept="image/*" data-file-input="${s.subtaskNo}" multiple style="display:none;" />
+              <input type="file" accept="image/*" data-file-input="${
+                s.subtaskNo
+              }" multiple style="display:none;" />
               <div class="pending-photos" id="pending-${s.subtaskNo}"></div>
-              <div style="font-size:0.8rem; color:#6c757d; margin-top:4px;" id="photos-${s.subtaskNo}">
-                ${state.photoCount > 0 ? "Uploaded photos: " + state.photoCount : "No photos uploaded yet"}
+              <div style="font-size:0.8rem; color:#6c757d; margin-top:4px;" id="photos-${
+                s.subtaskNo
+              }">
+                ${
+                  state.photoCount > 0
+                    ? "Uploaded photos: " + state.photoCount
+                    : "No photos uploaded yet"
+                }
               </div>
               <button class="btn-small" style="background:#6c757d;color:white;margin-top:6px;"
                       data-upload="${s.subtaskNo}" ${done ? "disabled" : ""}>
@@ -674,11 +697,15 @@ const res = await callGet("generateSurveyLink", {
               </button>
 
               <div class="field-label">Remarks</div>
-              <textarea id="remarks-${s.subtaskNo}" ${done ? "disabled" : ""}>${state.remarks}</textarea>
+              <textarea id="remarks-${s.subtaskNo}" ${done ? "disabled" : ""}>${
+            state.remarks
+          }</textarea>
 
               <div class="subtask-footer">
                 <label>
-                  <input type="checkbox" id="done-${s.subtaskNo}" ${done ? "checked disabled" : ""} />
+                  <input type="checkbox" id="done-${s.subtaskNo}" ${
+            done ? "checked disabled" : ""
+          } />
                   Mark subtask as done (requires GPS + photo)
                 </label>
                 <div class="error-text" id="error-${s.subtaskNo}"></div>
@@ -695,7 +722,7 @@ const res = await callGet("generateSurveyLink", {
 
       function attachSubtaskHandlers() {
         // Accordion toggle
-        subtasks.forEach(s => {
+        subtasks.forEach((s) => {
           const summary = document.querySelector(
             `.subtask-summary[data-toggle="${s.subtaskNo}"]`
           );
@@ -709,8 +736,10 @@ const res = await callGet("generateSurveyLink", {
         });
 
         // GPS buttons
-        subtasks.forEach(s => {
-          const btnGPS = document.querySelector(`button[data-gps="${s.subtaskNo}"]`);
+        subtasks.forEach((s) => {
+          const btnGPS = document.querySelector(
+            `button[data-gps="${s.subtaskNo}"]`
+          );
           const gpsLabel = document.getElementById(`gps-${s.subtaskNo}`);
           if (btnGPS) {
             btnGPS.addEventListener("click", async () => {
@@ -720,7 +749,9 @@ const res = await callGet("generateSurveyLink", {
                 const state = subtasksState[s.subtaskNo];
                 state.lat = gps.lat;
                 state.lon = gps.lon;
-                gpsLabel.textContent = `📍 ${gps.lat.toFixed(5)}, ${gps.lon.toFixed(5)}`;
+                gpsLabel.textContent = `📍 ${gps.lat.toFixed(
+                  5
+                )}, ${gps.lon.toFixed(5)}`;
                 hideAlert();
                 updateCompleteButtonState();
               } catch (err) {
@@ -731,16 +762,23 @@ const res = await callGet("generateSurveyLink", {
         });
 
         // Add photo buttons
-        subtasks.forEach(s => {
-          const addBtn = document.querySelector(`button[data-addphoto="${s.subtaskNo}"]`);
-          const fileInput = document.querySelector(`input[data-file-input="${s.subtaskNo}"]`);
-          const pendingContainer = document.getElementById(`pending-${s.subtaskNo}`);
+        subtasks.forEach((s) => {
+          const addBtn = document.querySelector(
+            `button[data-addphoto="${s.subtaskNo}"]`
+          );
+          const fileInput = document.querySelector(
+            `input[data-file-input="${s.subtaskNo}"]`
+          );
+          const pendingContainer = document.getElementById(
+            `pending-${s.subtaskNo}`
+          );
 
           if (addBtn && fileInput && pendingContainer) {
             addBtn.addEventListener("click", () => {
               const state = subtasksState[s.subtaskNo];
               const max = s.maxPhotos || 5;
-              const remaining = max - state.photoCount - state.pendingFiles.length;
+              const remaining =
+                max - state.photoCount - state.pendingFiles.length;
               if (remaining <= 0) {
                 showAlert(
                   `Maximum ${max} photos reached for this subtask.`,
@@ -763,7 +801,7 @@ const res = await callGet("generateSurveyLink", {
 
               const state = subtasksState[s.subtaskNo];
               const toAdd = files.slice(0, remaining);
-              toAdd.forEach(file => {
+              toAdd.forEach((file) => {
                 state.pendingFiles.push(file);
                 const idx = state.pendingFiles.length - 1;
                 const chip = document.createElement("div");
@@ -790,14 +828,18 @@ const res = await callGet("generateSurveyLink", {
         });
 
         // Upload buttons
-        subtasks.forEach(s => {
-          const uploadBtn = document.querySelector(`button[data-upload="${s.subtaskNo}"]`);
+        subtasks.forEach((s) => {
+          const uploadBtn = document.querySelector(
+            `button[data-upload="${s.subtaskNo}"]`
+          );
           const photosLabel = document.getElementById(`photos-${s.subtaskNo}`);
-          const pendingContainer = document.getElementById(`pending-${s.subtaskNo}`);
+          const pendingContainer = document.getElementById(
+            `pending-${s.subtaskNo}`
+          );
           if (uploadBtn) {
             uploadBtn.addEventListener("click", async () => {
               const state = subtasksState[s.subtaskNo];
-              const validFiles = state.pendingFiles.filter(f => !!f);
+              const validFiles = state.pendingFiles.filter((f) => !!f);
               if (!validFiles.length) {
                 showAlert(
                   "Please add at least one photo before uploading.",
@@ -823,7 +865,7 @@ const res = await callGet("generateSurveyLink", {
                 taskID: currentTask.id,
                 subtaskNo: s.subtaskNo,
                 staffEmail,
-                files: base64List
+                files: base64List,
               });
 
               if (result.success) {
@@ -846,7 +888,7 @@ const res = await callGet("generateSurveyLink", {
         });
 
         // Done checkboxes
-        subtasks.forEach(s => {
+        subtasks.forEach((s) => {
           const doneCheckbox = document.getElementById(`done-${s.subtaskNo}`);
           const remarksEl = document.getElementById(`remarks-${s.subtaskNo}`);
 
@@ -885,12 +927,12 @@ const res = await callGet("generateSurveyLink", {
               lat: state.lat,
               lon: state.lon,
               remarks,
-              status: "Done"
+              status: "Done",
             });
 
             if (res.success) {
               state.status = "Done";
-              const target = subtasks.find(st => st.subtaskNo == s.subtaskNo);
+              const target = subtasks.find((st) => st.subtaskNo == s.subtaskNo);
               if (target) target.status = "Done";
 
               doneCheckbox.disabled = true;
@@ -935,20 +977,31 @@ const res = await callGet("generateSurveyLink", {
       async function startTask() {
         const startBtn = document.getElementById("startBtn");
         if (!startBtn) return;
+
         startBtn.disabled = true;
         showAlert("Starting task and capturing GPS...", "info");
+
         try {
           const gps = await captureGPS();
+
           const res = await callGet("updateTaskStart", {
             taskID: currentTask.id,
             lat: gps.lat,
-            lon: gps.lon
+            lon: gps.lon,
           });
+
           if (res.success) {
+            // 🔥 Update values
             taskStarted = true;
             currentTask.status = "In Progress";
+
+            // 🔥 FIX: Save updated object!
+            localStorage.setItem("selectedTask", JSON.stringify(currentTask));
+
+            // Refresh UI
             loadTaskFromLocal();
             wireTopButtons();
+
             showAlert("Task started successfully.", "info", true);
           } else {
             showAlert(res.message || "Failed to start task.", "error");
@@ -958,6 +1011,7 @@ const res = await callGet("generateSurveyLink", {
           showAlert("Error starting task: " + err, "error");
           startBtn.disabled = false;
         }
+
         updateCompleteButtonState();
       }
 
@@ -967,7 +1021,7 @@ const res = await callGet("generateSurveyLink", {
           return;
         }
 
-        const allDone = subtasks.every(s => {
+        const allDone = subtasks.every((s) => {
           const st = subtasksState[s.subtaskNo];
           return st && st.status === "Done";
         });
@@ -994,7 +1048,7 @@ const res = await callGet("generateSurveyLink", {
           const res = await callGet("updateTaskComplete", {
             taskID: currentTask.id,
             lat: gps.lat,
-            lon: gps.lon
+            lon: gps.lon,
           });
           if (res.success) {
             showAlert("Task completed successfully.", "info");
@@ -1058,6 +1112,6 @@ const res = await callGet("generateSurveyLink", {
     <!-- Global nav (top + bottom) -->
     <script src="navbar.js"></script>
     <!-- Spacer for bottom nav -->
-    <div style="height: 70px;"></div>
+    <div style="height: 70px"></div>
   </body>
 </html>
