@@ -316,7 +316,7 @@
   <script>
     // 🔗 Use the same Apps Script URL as your staff backend (login / review)
     const SCRIPT_URL =
-      "https://script.google.com/macros/s/AKfycbztvTsbKPvLTpVruMzcQfiCfID98wU1fNn18TManX211_S9Q1ugnbGA9Jx4Yuk9z5eT/exec";
+      "https://script.google.com/macros/s/AKfycbweAim2pQIj49BYxIDNDgDKmaRp4Nf1XA_AHwjFCzexPc7Jp_k2FPUu55Df3kGuazkZ/exec";
 
     const alertBox = document.getElementById("alertBox");
     const taskInfoEl = document.getElementById("taskInfo");
@@ -539,6 +539,8 @@
               state.lon = gps.lon;
               gpsLabel.textContent = `📍 ${gps.lat.toFixed(5)}, ${gps.lon.toFixed(5)}`;
               hideAlert();
+              updateCompleteButtonState();
+
             } catch (err) {
               showAlert(err, "error");
             }
@@ -634,6 +636,8 @@
               pendingContainer.innerHTML = "";
               photosLabel.textContent = `Uploaded photos: ${state.photoCount}`;
               hideAlert();
+              updateCompleteButtonState();
+
             } else {
               showAlert(result.message || "Failed to upload photos.", "error");
             }
