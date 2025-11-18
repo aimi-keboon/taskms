@@ -131,21 +131,20 @@
 
     <script>
       const SCRIPT_URL =
-        "https://script.google.com/macros/s/AKfycbweAim2pQIj49BYxIDNDgDKmaRp4Nf1XA_AHwjFCzexPc7Jp_k2FPUu55Df3kGuazkZ/exec";
+        "https://script.google.com/macros/s/AKfycbymIvXoFWlzk3GiCeHrShYuGJQCM5s1rnd_czNI4-iTFN20woylO7mP9eWAPe2cahGz/exec";
 
       let currentFilter = "today";
 
       function statusBadge(status) {
-  const s = (status || "").toLowerCase();
-  if (s === "done") {
-    return `<span class="status-badge status-done">Done</span>`;
-  }
-  if (s === "in progress") {
-    return `<span class="status-badge status-progress">In Progress</span>`;
-  }
-  return `<span class="status-badge status-new">New</span>`;
-}
-
+        const s = (status || "").toLowerCase();
+        if (s === "done") {
+          return `<span class="status-badge status-done">Done</span>`;
+        }
+        if (s === "in progress") {
+          return `<span class="status-badge status-progress">In Progress</span>`;
+        }
+        return `<span class="status-badge status-new">New</span>`;
+      }
 
       function renderTaskList(tasks) {
         const container = document.getElementById("taskList");
@@ -184,6 +183,8 @@
         });
       }
 
+      let allTasks = [];
+
       async function loadTasks() {
         const email = localStorage.getItem("staff_email");
 
@@ -194,9 +195,8 @@
         }
 
         const query = new URLSearchParams({
-          action: "getTasks",
+          action: "getAllTasks",
           email,
-          filter: currentFilter,
         });
 
         const res = await fetch(`${SCRIPT_URL}?${query}`);
@@ -204,12 +204,45 @@
 
         try {
           const data = JSON.parse(text);
-          if (data.success) renderTaskList(data.tasks);
-          else document.getElementById("taskList").innerHTML = data.message;
+          if (data.success) {
+            allTasks = data.tasks; // store all tasks
+            renderByFilter(); // filter based on tab
+          } else {
+            document.getElementById("taskList").innerHTML = data.message;
+          }
         } catch {
           document.getElementById("taskList").innerHTML =
             "Error loading tasks.";
         }
+      }
+
+      function renderByFilter() {
+        if (!allTasks) return;
+
+        const today = new Date().toISOString().slice(0, 10);
+        let filtered = [];
+
+        switch (currentFilter) {
+          case "today":
+            filtered = allTasks.filter((t) => t.date === today);
+            break;
+
+          case "upcoming":
+            filtered = allTasks.filter(
+              (t) => t.date > today && t.status !== "Done"
+            );
+            break;
+
+          case "completed":
+            filtered = allTasks.filter((t) => t.status === "Done");
+            break;
+
+          case "past":
+            filtered = allTasks.filter((t) => t.date < today);
+            break;
+        }
+
+        renderTaskList(filtered);
       }
 
       function setActiveTab(id) {
@@ -222,25 +255,25 @@
       document.getElementById("tabToday").onclick = () => {
         currentFilter = "today";
         setActiveTab("tabToday");
-        loadTasks();
+        renderByFilter();
       };
 
       document.getElementById("tabUpcoming").onclick = () => {
         currentFilter = "upcoming";
         setActiveTab("tabUpcoming");
-        loadTasks();
+        renderByFilter();
       };
 
       document.getElementById("tabCompleted").onclick = () => {
         currentFilter = "completed";
         setActiveTab("tabCompleted");
-        loadTasks();
+        renderByFilter();
       };
 
       document.getElementById("tabPast").onclick = () => {
         currentFilter = "past";
         setActiveTab("tabPast");
-        loadTasks();
+        renderByFilter();
       };
 
       document.addEventListener("DOMContentLoaded", loadTasks);
