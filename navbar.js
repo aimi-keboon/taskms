@@ -1,8 +1,8 @@
 /* ---------------------------------------------------------
    GLOBAL NAVIGATION BAR (Top + Bottom) for FSMS Staff App
-   This file injects:
+   Includes:
    - Top bar with Logout button
-   - Bottom tab bar (Tasks | Profile)
+   - Bottom tab bar (Tasks | Profile) with SVG icons
    Author: Aimi Misman
 --------------------------------------------------------- */
 
@@ -41,7 +41,7 @@
     </div>
   `;
 
-  /* -------------------- BOTTOM BAR --------------------- */
+  /* -------------------- BOTTOM BAR (SVG icons) --------------------- */
   const isActive = (page) =>
     currentPage === page ? "fsms-tab-active" : "";
 
@@ -59,13 +59,30 @@
       z-index: 999;
     ">
       <div class="fsms-tab ${isActive("tasklist.html")}" data-link="tasklist.html">
-        <div style="font-size: 1.2rem;">📋</div>
-        <div style="font-size: 0.8rem;">Tasks</div>
+        <div class="fsms-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+            <line x1="9" y1="8" x2="15" y2="8"></line>
+            <line x1="9" y1="12" x2="15" y2="12"></line>
+            <line x1="9" y1="16" x2="15" y2="16"></line>
+          </svg>
+        </div>
+        <div class="fsms-label">Tasks</div>
       </div>
 
       <div class="fsms-tab ${isActive("profile.html")}" data-link="profile.html">
-        <div style="font-size: 1.2rem;">👤</div>
-        <div style="font-size: 0.8rem;">Profile</div>
+        <div class="fsms-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+  stroke="currentColor" stroke-width="2" stroke-linecap="round"
+  stroke-linejoin="round">
+  <circle cx="12" cy="8" r="4"></circle>
+  <path d="M4 20c0-4 4-7 8-7s8 3 8 7"></path>
+</svg>
+
+        </div>
+        <div class="fsms-label">Profile</div>
       </div>
     </div>
   `;
@@ -102,12 +119,25 @@
       text-align: center;
       cursor: pointer;
       color: #555;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:3px;
     }
-    .fsms-tab-active {
-      color: #2c5aa0 !important;
+    .fsms-icon svg {
+      stroke: #777;
+      transition: 0.25s;
+    }
+    .fsms-tab-active svg {
+      stroke: #2c5aa0;
+    }
+    .fsms-label {
+      font-size: 0.75rem;
+    }
+    .fsms-tab-active .fsms-label {
+      color: #2c5aa0;
       font-weight: 600;
     }
   `;
   document.head.appendChild(style);
-
 })();
