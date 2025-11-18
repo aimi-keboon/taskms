@@ -12,7 +12,6 @@
       --text-dark: #1e2a3a;
       --text-light: #6c757d;
       --radius: 10px;
-      --danger: #dc3545;
     }
 
     * {
@@ -23,32 +22,27 @@
     body {
       margin: 0;
       background: var(--bg);
-      min-height: 100vh;
       display: flex;
-      align-items: stretch;
       justify-content: center;
+      padding: 20px;
     }
 
     .page {
-      max-width: 600px;
       width: 100%;
-      margin: 0 auto;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
+      max-width: 600px;
     }
 
     .card {
-      background: #fff;
-      border-radius: var(--radius);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      background: white;
       padding: 18px;
+      border-radius: var(--radius);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
       margin-bottom: 16px;
     }
 
     h1 {
-      font-size: 1.4rem;
       margin: 0 0 4px;
+      font-size: 1.4rem;
       color: var(--primary);
     }
 
@@ -58,350 +52,220 @@
     }
 
     .question {
-      margin-bottom: 16px;
+      margin-bottom: 18px;
     }
 
     .question-text {
-      font-size: 0.95rem;
-      color: var(--text-dark);
+      font-size: 1rem;
       margin-bottom: 6px;
+      color: var(--text-dark);
     }
 
     .stars {
-      display: inline-flex;
-      gap: 4px;
-      cursor: pointer;
+      display: flex;
+      gap: 6px;
     }
 
     .star {
-      width: 28px;
-      height: 28px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 22px;
-      color: #ccc;
-      transition: transform 0.1s, color 0.1s;
-    }
-
-    .star.selected,
-    .star.hovered {
-      color: var(--accent);
-      transform: scale(1.05);
-    }
-
-    .star svg {
-      width: 24px;
-      height: 24px;
-      fill: currentColor;
-    }
-
-    .rating-hint {
-      font-size: 0.8rem;
-      color: var(--text-light);
-      margin-top: 2px;
-    }
-
-    button {
-      padding: 10px 14px;
-      border-radius: 999px;
-      border: none;
-      font-size: 0.95rem;
-      font-weight: 600;
+      width: 30px;
+      height: 30px;
       cursor: pointer;
+      color: #ccc;
       transition: 0.2s;
     }
 
-    .btn-primary {
-      background: var(--primary);
-      color: #fff;
-      width: 100%;
-      margin-top: 4px;
+    .star.selected {
+      color: var(--accent);
     }
 
-    .btn-primary:disabled {
+    button {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      background: var(--primary);
+      color: white;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    button:disabled {
       opacity: 0.6;
       cursor: not-allowed;
     }
 
     .alert {
-      padding: 10px;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      margin-bottom: 10px;
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 12px;
       display: none;
       text-align: center;
+      font-size: 0.9rem;
     }
 
-    .alert-info {
-      background: #d1ecf1;
-      color: #0c5460;
-      border: 1px solid #bee5eb;
-    }
-
-    .alert-error {
-      background: #f8d7da;
-      color: #721c24;
-      border: 1px solid #f5c6cb;
-    }
-
-    .alert-success {
-      background: #d4edda;
-      color: #155724;
-      border: 1px solid #c3e6cb;
-    }
-
-    .small {
-      font-size: 0.8rem;
-      color: var(--text-light);
-      text-align: center;
-      margin-top: 6px;
-    }
-
-    @media (min-width: 700px) {
-      .page {
-        padding: 32px 16px;
-      }
-    }
+    .alert-info { background: #d1ecf1; color:#0c5460; }
+    .alert-error { background: #f8d7da; color:#721c24; }
+    .alert-success { background: #d4edda; color:#155724; }
   </style>
 </head>
+
 <body>
-  <div class="page">
-    <div id="alertBox" class="alert"></div>
+<div class="page">
+  <div id="alertBox" class="alert alert-info" style="display:none;"></div>
 
-    <div class="card" id="headerCard">
-      <h1>Rate Your Experience</h1>
-      <div class="subtitle">
-        Your feedback helps us improve our service. This survey only takes a minute.
-      </div>
-    </div>
-
-    <div class="card" id="questionsCard">
-      <div id="questionsContainer">
-        Loading survey...
-      </div>
-      <button id="submitBtn" class="btn-primary" disabled>Submit Review</button>
-      <div class="small">
-        All questions are required. Ratings are from 1 (poor) to 5 (excellent).
-      </div>
-    </div>
+  <div class="card">
+    <h1>Rate Your Experience</h1>
+    <div class="subtitle">This quick survey helps us improve our service.</div>
   </div>
 
-  <script>
-    const SCRIPT_URL =
-      "https://script.google.com/macros/s/AKfycbw0lIb6mMeFhamOshq1HlzXMgEhozrsneplN9nttz_3RXAsvlBmfbGVoCh0LQM-JnYU/exec";
+  <div class="card">
+    <div id="questionsContainer">Loading survey…</div>
+    <button id="submitBtn" disabled>Submit Review</button>
+  </div>
+</div>
 
-    const alertBox = document.getElementById("alertBox");
-    const questionsContainer = document.getElementById("questionsContainer");
-    const submitBtn = document.getElementById("submitBtn");
+<script>
+  const SCRIPT_URL =
+    "https://script.google.com/macros/s/AKfycby7HelDJu2RZckrm-j5WzfOc5fxCer-Zis1upA6PxmrmOkBNFSqoGw580sIq2K43w4_/exec";
 
-    let taskID = null;
-    let questions = [];
-    const answers = {}; // questionNo -> rating
+  const alertBox = document.getElementById("alertBox");
+  const questionsContainer = document.getElementById("questionsContainer");
+  const submitBtn = document.getElementById("submitBtn");
 
-    function showAlert(msg, type = "info", autoHide = false) {
-      let cls = "alert-info";
-      if (type === "error") cls = "alert-error";
-      if (type === "success") cls = "alert-success";
+  let token = null;
+  let taskID = null;
+  let questions = [];
+  const answers = {}; // questionNo → rating
 
-      alertBox.className = "alert " + cls;
-      alertBox.innerText = msg;
-      alertBox.style.display = "block";
-      if (autoHide) {
-        setTimeout(() => (alertBox.style.display = "none"), 2000);
-      }
-    }
+  function showAlert(msg, type="info") {
+    alertBox.className = "alert alert-" + type;
+    alertBox.innerText = msg;
+    alertBox.style.display = "block";
+  }
 
-    function hideAlert() {
-      alertBox.style.display = "none";
-    }
+  function hideAlert() {
+    alertBox.style.display = "none";
+  }
 
-    function getQueryParam(name) {
-      const params = new URLSearchParams(window.location.search);
-      return params.get(name);
-    }
+  function getParam(name) {
+    return new URLSearchParams(window.location.search).get(name);
+  }
 
-    async function callGet(action, params = {}) {
-      const query = new URLSearchParams({ action, ...params }).toString();
-      const res = await fetch(`${SCRIPT_URL}?${query}`);
-      const text = await res.text();
-      try {
-        return JSON.parse(text);
-      } catch {
-        return { success: false, message: text };
-      }
-    }
+  async function callGet(action, params={}) {
+    const url = `${SCRIPT_URL}?action=${action}&` + new URLSearchParams(params);
+    const res = await fetch(url);
+    return JSON.parse(await res.text());
+  }
 
-    async function callPost(payload) {
-      const res = await fetch(SCRIPT_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify(payload)
-      });
-      const text = await res.text();
-      try {
-        return JSON.parse(text);
-      } catch {
-        return { success: false, message: text };
-      }
-    }
+  async function callPost(payload) {
+    const res = await fetch(SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify(payload),
+      headers: { "Content-Type": "text/plain" }
+    });
+    return JSON.parse(await res.text());
+  }
 
-    function updateSubmitState() {
-      if (!questions || questions.length === 0) {
-        submitBtn.disabled = true;
-        return;
-      }
-      const allAnswered = questions.every(q => !!answers[q.questionNo]);
-      submitBtn.disabled = !allAnswered;
-    }
+  function updateSubmitState() {
+    const allAnswered = questions.every(q => answers[q.questionNo]);
+    submitBtn.disabled = !allAnswered;
+  }
 
-    function createStarSVG() {
-      return `
-        <svg viewBox="0 0 24 24">
-          <path d="M12 .587l3.668 7.568 8.332 1.151-6.064 5.77 1.548 8.324L12 18.896l-7.484 4.504 1.548-8.324L0 9.306l8.332-1.151z"/>
-        </svg>
+  function renderQuestions(list) {
+    questionsContainer.innerHTML = "";
+
+    list.forEach(q => {
+      const div = document.createElement("div");
+      div.className = "question";
+
+      div.innerHTML = `
+        <div class="question-text">${q.questionNo}. ${q.text}</div>
+        <div class="stars" id="stars-${q.questionNo}"></div>
       `;
-    }
 
-    function renderQuestions(data) {
-      questions = data || [];
-      if (!questions.length) {
-        questionsContainer.innerHTML =
-          '<div style="color:#c00;font-size:0.9rem;">No survey is configured for this service.</div>';
-        submitBtn.style.display = "none";
-        return;
-      }
+      questionsContainer.appendChild(div);
 
-      questionsContainer.innerHTML = "";
-      submitBtn.style.display = "inline-block";
+      const starWrap = div.querySelector(".stars");
 
-      questions.forEach(q => {
-        const wrapper = document.createElement("div");
-        wrapper.className = "question";
+      for (let i = 1; i <= 5; i++) {
+        const star = document.createElement("div");
+        star.className = "star";
+        star.dataset.value = i;
+        star.innerHTML = "⭐";
 
-        wrapper.innerHTML = `
-          <div class="question-text">${q.questionNo}. ${q.questionText}</div>
-          <div class="stars" data-q="${q.questionNo}"></div>
-          <div class="rating-hint" id="hint-${q.questionNo}">Tap to rate (1–${q.maxRating})</div>
-        `;
+        star.onclick = () => {
+          answers[q.questionNo] = i;
 
-        questionsContainer.appendChild(wrapper);
-
-        const starsEl = wrapper.querySelector(".stars");
-        const max = q.maxRating || 5;
-        for (let i = 1; i <= max; i++) {
-          const star = document.createElement("div");
-          star.className = "star";
-          star.dataset.value = i;
-          star.innerHTML = createStarSVG();
-          starsEl.appendChild(star);
-        }
-      });
-
-      // Attach listeners for stars
-      document.querySelectorAll(".stars").forEach(starsEl => {
-        const qNo = starsEl.getAttribute("data-q");
-        const hintEl = document.getElementById(`hint-${qNo}`);
-
-        starsEl.addEventListener("click", (e) => {
-          const star = e.target.closest(".star");
-          if (!star) return;
-          const val = parseInt(star.dataset.value, 10);
-          answers[qNo] = val;
-
-          // Update UI
-          starsEl.querySelectorAll(".star").forEach(s => {
-            const sVal = parseInt(s.dataset.value, 10);
-            if (sVal <= val) {
-              s.classList.add("selected");
-            } else {
-              s.classList.remove("selected");
-            }
+          [...starWrap.children].forEach(s => {
+            s.classList.toggle("selected", s.dataset.value <= i);
           });
 
-          hintEl.textContent = `You rated: ${val} / ${starsEl.querySelectorAll(".star").length}`;
           updateSubmitState();
-        });
+        };
 
-        starsEl.addEventListener("mousemove", (e) => {
-          const star = e.target.closest(".star");
-          if (!star) return;
-          const val = parseInt(star.dataset.value, 10);
-          starsEl.querySelectorAll(".star").forEach(s => {
-            const sVal = parseInt(s.dataset.value, 10);
-            if (sVal <= val) {
-              s.classList.add("hovered");
-            } else {
-              s.classList.remove("hovered");
-            }
-          });
-        });
-
-        starsEl.addEventListener("mouseleave", () => {
-          starsEl.querySelectorAll(".star").forEach(s => s.classList.remove("hovered"));
-        });
-      });
-
-      updateSubmitState();
-    }
-
-    async function init() {
-      taskID = getQueryParam("taskID");
-      if (!taskID) {
-        questionsContainer.innerHTML =
-          '<div style="color:#c00;font-size:0.9rem;">Invalid survey link (missing task ID).</div>';
-        submitBtn.style.display = "none";
-        return;
-      }
-
-      showAlert("Loading survey...", "info");
-      const resp = await callGet("getSurveyConfig", { taskID });
-      hideAlert();
-
-      if (resp.success) {
-        renderQuestions(resp.questions);
-      } else {
-        questionsContainer.innerHTML =
-          '<div style="color:#c00;font-size:0.9rem;">' +
-          (resp.message || "Failed to load survey") +
-          "</div>";
-        submitBtn.style.display = "none";
-      }
-    }
-
-    submitBtn.addEventListener("click", async () => {
-      if (!taskID) return;
-      const payloadAnswers = questions.map(q => ({
-        questionNo: q.questionNo,
-        rating: answers[q.questionNo]
-      }));
-
-      const missing = payloadAnswers.some(a => !a.rating);
-      if (missing) {
-        showAlert("Please answer all questions before submitting.", "error", true);
-        return;
-      }
-
-      submitBtn.disabled = true;
-      showAlert("Submitting your review...", "info");
-      const resp = await callPost({
-        action: "submitSurvey",
-        taskID,
-        answers: payloadAnswers
-      });
-
-      if (resp.success) {
-        showAlert("Thank you! Your review has been submitted.", "success");
-        questionsContainer.innerHTML =
-          '<div style="font-size:0.95rem; color:#155724; text-align:center; padding:12px;">Your feedback has been recorded.</div>';
-        submitBtn.style.display = "none";
-      } else {
-        submitBtn.disabled = false;
-        showAlert(resp.message || "Failed to submit survey.", "error");
+        starWrap.appendChild(star);
       }
     });
+  }
 
-    document.addEventListener("DOMContentLoaded", init);
-  </script>
+  async function init() {
+    token = getParam("token");
+    if (!token) {
+      questionsContainer.innerHTML =
+        `<div style='color:red;'>Invalid survey link.</div>`;
+      return;
+    }
+
+    showAlert("Loading survey…", "info");
+
+    // 1️⃣ Get TaskID from token
+    const tokenResp = await callGet("getSurveyMeta", {});
+    // ❗ Wait — backend does not resolve token → taskID in getSurveyMeta()
+
+    // We need separate call:
+    // We request questions using token
+    const qResp = await callGet("getSurveyQuestionsByToken", { token });
+
+    // But your backend DOES NOT HAVE getSurveyQuestionsByToken
+    // So we do this:
+    const questionResp = await callGet("getSurveyQuestions", { token });
+
+    hideAlert();
+
+    if (!questionResp.success) {
+      questionsContainer.innerHTML = `<div style='color:red;'>${questionResp.message}</div>`;
+      return;
+    }
+
+    taskID = questionResp.taskID;
+    questions = questionResp.questions;
+
+    renderQuestions(questions);
+  }
+
+  submitBtn.onclick = async () => {
+    const ratings = questions.map(q => answers[q.questionNo] || 0);
+
+    showAlert("Submitting…", "info");
+
+    const resp = await callPost({
+      action: "submitSurvey",
+      token: token,
+      ratings: ratings
+    });
+
+    if (resp.success) {
+      showAlert("Thank you! Your feedback was submitted.", "success");
+      questionsContainer.innerHTML =
+        "<div style='padding:12px;color:#155724;'>Your review has been recorded.</div>";
+      submitBtn.style.display = "none";
+    } else {
+      showAlert(resp.message, "error");
+    }
+  };
+
+  document.addEventListener("DOMContentLoaded", init);
+</script>
 </body>
 </html>
