@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>FSMS Admin Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    :root {
+      --primary: #2c5aa0;
+      --accent: #28a745;
+      --bg: #f4f6fb;
+      --text-dark: #1e2a3a;
+      --text-light: #6c757d;
+      --radius: 12px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: "Inter", Arial, sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+    }
+
+    /* ────────── NAVBAR ────────── */
+    header {
+      background: var(--primary);
+      color: white;
+      padding: 14px 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.16);
+    }
+
+    header h1 {
+      font-size: 1.3rem;
+      font-weight: 700;
+    }
+
+    .nav-right {
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+
+    .logout {
+      color: white;
+      margin-left: 10px;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    /* ────────── MAIN CONTENT ────────── */
+    main {
+      padding: 25px;
+      max-width: 1250px;
+      margin: auto;
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 25px;
+    }
+
+    .kpi-card {
+      background: white;
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      transition: 0.25s ease;
+    }
+
+    .kpi-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 15px rgba(0,0,0,0.12);
+    }
+
+    .kpi-card h3 {
+      color: var(--text-light);
+      font-size: 0.9rem;
+      margin-bottom: 5px;
+    }
+
+    .kpi-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--text-dark);
+    }
+
+    /* Status Box */
+    .section-card {
+      background: white;
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    .status-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .tag {
+      background: #e9ecef;
+      padding: 6px 12px;
+      border-radius: 50px;
+      font-size: 0.85rem;
+      color: var(--text-dark);
+    }
+
+    /* Debug Box */
+    #debugBox {
+      display: none;
+      white-space: pre-wrap;
+      background: #1e1e1e;
+      color: #dcdcdc;
+      padding: 15px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      margin-top: 10px;
+    }
+
+    .debug-toggle {
+      cursor: pointer;
+      font-size: 0.85rem;
+      color: var(--primary);
+      text-decoration: underline;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <h1>FSMS Company Admin Dashboard</h1>
+  <div class="nav-right">
+    <span id="adminName"></span>  
+    (<span id="companyID"></span>)
+    <span class="logout" onclick="logout()">Logout</span>
+  </div>
+</header>
+
+<main>
+
+  <!-- KPI SECTION -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <h3>Total Tasks</h3>
+      <div class="kpi-value" id="kpiTasks">-</div>
+    </div>
+
+    <div class="kpi-card">
+      <h3>Total Staff</h3>
+      <div class="kpi-value" id="kpiStaff">-</div>
+    </div>
+
+    <div class="kpi-card">
+      <h3>Completed (7 Days)</h3>
+      <div class="kpi-value" id="kpiCompleted7">-</div>
+    </div>
+
+    <div class="kpi-card">
+      <h3>Avg Duration (min)</h3>
+      <div class="kpi-value" id="kpiDuration">-</div>
+    </div>
+
+    <div class="kpi-card">
+      <h3>Survey Responses</h3>
+      <div class="kpi-value" id="kpiResponses">-</div>
+    </div>
+
+    <div class="kpi-card">
+      <h3>Avg Rating</h3>
+      <div class="kpi-value" id="kpiRating">-</div>
+    </div>
+  </div>
+
+  <!-- STATUS BOX -->
+  <div class="section-card">
+    <h2>Task Status Breakdown</h2>
+    <div class="status-tags" id="statusTags"></div>
+  </div>
+
+  <!-- DEBUG -->
+  <div class="section-card">
+    <span class="debug-toggle" onclick="toggleDebug()">Show / Hide Raw JSON</span>
+    <pre id="debugBox"></pre>
+  </div>
+
+</main>
+
+<script>
+const ADMIN_API_URL = "https://script.google.com/macros/s/AKfycbye6Xf89R1At0V-kHYYhgGjclaRuRwXunyihbU6546ujDx2B4phfgVqGt5Kd8AJYPGp/exec";
+
+function getSession() {
+  return {
+    email: localStorage.getItem("user_email"),
+    companyID: localStorage.getItem("user_companyID"),
+    name: localStorage.getItem("user_name"),
+    role: localStorage.getItem("user_role")
+  };
+}
+
+function requireLogin() {
+  const s = getSession();
+  if (!s.email) window.location.href = "index.html";
+  return s;
+}
+
+function logout() {
+  localStorage.clear();
+  window.location.href = "index.html";
+}
+
+// Debug toggle
+function toggleDebug() {
+  const box = document.getElementById("debugBox");
+  box.style.display = box.style.display === "block" ? "none" : "block";
+}
+
+window.addEventListener("DOMContentLoaded", async () => {
+  const s = requireLogin();
+
+  document.getElementById("adminName").textContent = s.name || s.email;
+  document.getElementById("companyID").textContent = s.companyID || "-";
+
+  const url = `${ADMIN_API_URL}?action=getDashboardSummary&email=${encodeURIComponent(s.email)}`;
+  const res = await fetch(url);
+  const data = await res.json();
+
+  document.getElementById("debugBox").textContent = JSON.stringify(data, null, 2);
+
+  if (!data.success) {
+    alert("Error loading dashboard: " + data.message);
+    return;
+  }
+
+  const k = data.kpis;
+
+  document.getElementById("kpiTasks").textContent = k.totalTasks;
+  document.getElementById("kpiStaff").textContent = k.totalStaff;
+  document.getElementById("kpiCompleted7").textContent = k.completedLast7;
+  document.getElementById("kpiDuration").textContent = k.avgDurationMinutes;
+  document.getElementById("kpiResponses").textContent = k.totalResponses;
+  document.getElementById("kpiRating").textContent = k.avgRatingOverall;
+
+  // Status breakdown tags
+  const statusBox = document.getElementById("statusTags");
+  statusBox.innerHTML = "";
+  for (const [status, count] of Object.entries(data.statusCounts)) {
+    const tag = document.createElement("div");
+    tag.className = "tag";
+    tag.textContent = `${status}: ${count}`;
+    statusBox.appendChild(tag);
+  }
+});
+</script>
+
+</body>
+</html>
