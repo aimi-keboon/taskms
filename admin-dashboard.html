@@ -1,507 +1,1353 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>FSMS Admin Dashboard</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <title>FSMS Admin Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <style>
-    :root {
-      --primary: #2c5aa0;
-      --accent: #28a745;
-      --bg: #f4f6fb;
-      --text-dark: #1e2a3a;
-      --text-light: #6c757d;
-      --radius: 12px;
-      --danger: #dc3545;
-      --warning: #ffc107;
-      --muted: #e9ecef;
-    }
+    <style>
+      :root {
+        --primary: #2c5aa0;
+        --accent: #28a745;
+        --bg: #f4f6fb;
+        --text-dark: #1e2a3a;
+        --text-light: #6c757d;
+        --radius: 12px;
+        --danger: #dc3545;
+        --warning: #ffc107;
+        --muted: #e9ecef;
+      }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: "Inter", Arial, sans-serif;
-    }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: "Inter", Arial, sans-serif;
+      }
 
-    body { background: var(--bg); }
+      body {
+        background: var(--bg);
+      }
 
-    header {
-      background: var(--primary);
-      color: white;
-      padding: 14px 22px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.16);
-    }
+      /* REMOVED OLD HEADER — navbar.js now handles header + logout */
 
-    header h1 { font-size: 1.3rem; font-weight: 700; }
+      main {
+        padding: 25px;
+        max-width: 1250px;
+        margin: auto;
+      }
 
-    .nav-right {
-      font-size: 0.9rem;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+      .page-title {
+        font-size: 1.1rem;
+        margin-bottom: 6px;
+        font-weight: 600;
+      }
+      .page-subtitle {
+        font-size: 0.88rem;
+        margin-bottom: 18px;
+        color: var(--text-light);
+      }
 
-    .logout {
-      text-decoration: underline;
-      cursor: pointer;
-      margin-left: 10px;
-      color: white;
-    }
-
-    main {
-      padding: 25px;
-      max-width: 1250px;
-      margin: auto;
-    }
-
-    .page-title { font-size: 1.1rem; margin-bottom: 6px; font-weight: 600; }
-    .page-subtitle { font-size: 0.88rem; margin-bottom: 18px; color: var(--text-light); }
-
-    /* KPI GRID */
-    .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 16px;
-      margin-bottom: 25px;
-    }
-
-    .kpi-card {
-      background: white;
-      padding: 18px;
-      border-radius: var(--radius);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    }
-
-    .kpi-card h3 {
-      color: var(--text-light);
-      font-size: 0.9rem;
-      margin-bottom: 5px;
-    }
-
-    .kpi-value {
-      font-size: 1.8rem;
-      font-weight: 700;
-      color: var(--text-dark);
-    }
-
-    .section-card {
-      background: white;
-      border-radius: var(--radius);
-      padding: 20px;
-      margin-bottom: 25px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    }
-
-    .section-header {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 12px;
-    }
-
-    .section-header h2 { font-size: 1rem; font-weight: 600; }
-
-    .status-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 10px;
-    }
-
-    .tag {
-      background: var(--muted);
-      padding: 6px 12px;
-      border-radius: 50px;
-      font-size: 0.85rem;
-    }
-
-    .tag-pill {
-      background: white;
-      padding: 2px 7px;
-      border-radius: 999px;
-      border: 1px solid rgba(0,0,0,0.1);
-      margin-left: 6px;
-      font-size: 0.75rem;
-    }
-
-    /* TABLES */
-    .table-wrapper { overflow-x: auto; }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.82rem;
-    }
-
-    th, td {
-      border-bottom: 1px solid #e5e7eb;
-      padding: 7px;
-      white-space: nowrap;
-      text-align: left;
-    }
-
-    th {
-      background: #f8fafc;
-      font-size: 0.75rem;
-      color: var(--text-light);
-      text-transform: uppercase;
-    }
-
-    tr:nth-child(even) td { background: #fafafa; }
-
-    /* DEBUG */
-    .debug-toggle { cursor: pointer; color: var(--primary); font-size: 0.85rem; }
-    #debugBox {
-      display: none;
-      background: #1e1e1e;
-      padding: 15px;
-      border-radius: 8px;
-      color: #dcdcdc;
-      font-size: 0.85rem;
-      white-space: pre-wrap;
-      margin-top: 10px;
-    }
-
-    /* SURVEY BREAKDOWN */
-    .survey-card {
-      border: 1px solid #e1e4e8;
-      background: #fff;
-      border-radius: 10px;
-      padding: 14px;
-      margin-bottom: 12px;
-      transition: all 0.2s;
-    }
-
-    .survey-header {
-      display: flex;
-      justify-content: space-between;
-      cursor: pointer;
-      padding: 3px 0;
-    }
-
-    .survey-body { display: none; padding-top: 10px; }
-
-    .survey-question {
-      padding: 6px 0;
-      border-bottom: 1px solid #eeeeee;
-    }
-
-    .q-text { font-weight: 600; }
-    .q-rating { color: #f0a100; margin-left: 8px; }
-  </style>
-</head>
-
-<body>
-
-<header>
-  <h1>FSMS Company Admin Dashboard</h1>
-  <div class="nav-right">
-    <span id="adminName"></span>
-    (<span id="companyID"></span>)
-    <span class="logout" onclick="logout()">Logout</span>
-  </div>
-</header>
-
-<main>
-
-  <div class="page-title">Field Service Performance Overview</div>
-  <div class="page-subtitle">Company-level analysis of tasks, staff, subtasks & customer surveys.</div>
-
-  <!-- KPI SECTION -->
-  <div class="kpi-grid">
-    <div class="kpi-card"><h3>Total Tasks</h3><div class="kpi-value" id="kpiTasks">-</div></div>
-    <div class="kpi-card"><h3>Total Staff</h3><div class="kpi-value" id="kpiStaff">-</div></div>
-    <div class="kpi-card"><h3>Completed (7 Days)</h3><div class="kpi-value" id="kpiCompleted7">-</div></div>
-    <div class="kpi-card"><h3>Avg Duration</h3><div class="kpi-value" id="kpiDuration">-</div></div>
-    <div class="kpi-card"><h3>Survey Responses</h3><div class="kpi-value" id="kpiResponses">-</div></div>
-    <div class="kpi-card"><h3>Avg Rating</h3><div class="kpi-value" id="kpiRating">-</div></div>
-  </div>
-
-  <!-- STATUS TAGS -->
-  <div class="section-card">
-    <div class="section-header"><h2>Task Status Breakdown</h2></div>
-    <div id="statusTags" class="status-tags"></div>
-  </div>
-
-  <!-- STAFF PERFORMANCE -->
-  <div class="section-card">
-    <div class="section-header"><h2>Staff Performance</h2></div>
-    <div class="table-wrapper">
-      <table>
-        <thead>
-        <tr>
-          <th>Email</th><th>Name</th><th>Completed</th><th>Avg Duration</th><th>Avg Rating</th><th>Late</th>
-        </tr>
-        </thead>
-        <tbody id="staffTableBody"><tr><td colspan="6">Loading...</td></tr></tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- TASK DURATIONS -->
-  <div class="section-card">
-    <div class="section-header"><h2>Task Durations</h2></div>
-    <div class="table-wrapper">
-      <table>
-        <thead>
-        <tr>
-          <th>TaskID</th><th>Client</th><th>Scheduled</th>
-          <th>Start</th><th>End</th><th>Duration</th><th>Status</th><th>Staff</th>
-        </tr>
-        </thead>
-        <tbody id="taskDurationBody"><tr><td colspan="8">Loading...</td></tr></tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- SUBTASKS -->
-  <div class="section-card">
-    <div class="section-header"><h2>Subtask Details</h2></div>
-    <div class="table-wrapper">
-      <table>
-        <thead>
-        <tr><th>Task</th><th>Subtask</th><th>Status</th><th>Remarks</th><th>Geo</th><th>Photos</th></tr>
-        </thead>
-        <tbody id="subtaskBody"><tr><td colspan="6">Loading...</td></tr></tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- SURVEY BREAKDOWN (WITH QUESTION TEXT) -->
-  <div class="section-card">
-    <div class="section-header"><h2>Customer Survey Breakdown (Per Task)</h2></div>
-    <div id="surveyBreakdown"></div>
-  </div>
-
-  <!-- DEBUG -->
-  <div class="section-card">
-    <span class="debug-toggle" onclick="toggleDebug()">Show Raw JSON</span>
-    <pre id="debugBox"></pre>
-  </div>
-
-</main>
-
-<script>
-
-const ADMIN_API_URL =
- "https://script.google.com/macros/s/AKfycbwQpZSC-qIHNuZN7q1Od2UmvmqegARCuMwYYLB_QIZA1qMT4WPwiq4ugxc56GWxJGrs/exec";
-
-/* ---------------------- SESSION ----------------------- */
-function getSession() {
-  return {
-    email: localStorage.getItem("user_email"),
-    companyID: localStorage.getItem("user_companyID"),
-    name: localStorage.getItem("user_name"),
-  };
+      /* UNIVERSAL FULLSCREEN LOADING OVERLAY */
+#loadingOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 99999;
 }
 
-function requireLogin() {
-  const s = getSession();
-  if (!s.email) location.href = "index.html";
-  return s;
+/* Spinner */
+.loader {
+  width: 48px;
+  height: 48px;
+  border: 5px solid #c8d4e5;
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
 }
 
-function logout() {
-  localStorage.clear();
-  location.href = "index.html";
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-function toggleDebug() {
-  const box = document.getElementById("debugBox");
-  box.style.display = box.style.display === "block" ? "none" : "block";
+/* Hidden state */
+#loadingOverlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease-out;
 }
 
-function formatDateTime(v) {
-  if (!v) return "-";
-  let d = new Date(v);
-  if (isNaN(d)) return v;
-  return d.toLocaleString("en-MY");
-}
 
-/* ---------------------- KPI ----------------------- */
-function renderKpis(k) {
-  document.getElementById("kpiTasks").textContent = k.totalTasks;
-  document.getElementById("kpiStaff").textContent = k.totalStaff;
-  document.getElementById("kpiCompleted7").textContent = k.completedLast7;
-  document.getElementById("kpiDuration").textContent = k.avgDurationMinutes;
-  document.getElementById("kpiResponses").textContent = k.totalResponses;
-  document.getElementById("kpiRating").textContent = k.avgRatingOverall.toFixed(2);
-}
+      /* FILTER BAR */
+      .filter-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
 
-/* ---------------------- STATUS ----------------------- */
-function renderStatus(statusCounts) {
-  const box = document.getElementById("statusTags");
-  box.innerHTML = "";
-  Object.entries(statusCounts).forEach(([s, c]) => {
-    box.innerHTML += `<div class="tag">${s}<span class="tag-pill">${c}</span></div>`;
-  });
-}
+      .filter-bar-left {
+        font-size: 0.9rem;
+        color: var(--text-light);
+      }
 
-/* ---------------------- STAFF ----------------------- */
-function renderStaff(data) {
-  const body = document.getElementById("staffTableBody");
-  const list = data.staff?.kpis || [];
-  body.innerHTML = "";
+      .filter-buttons {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
 
-  list.forEach(st => {
-    body.innerHTML += `
-      <tr>
-        <td>${st.email}</td>
-        <td>${st.name || "-"}</td>
-        <td>${st.completedTasks}</td>
-        <td>${st.avgDurationMinutes}</td>
-        <td>${st.avgRating}</td>
-        <td>${st.lateCount}</td>
-      </tr>`;
-  });
-}
+      .filter-btn {
+        padding: 6px 10px;
+        font-size: 0.8rem;
+        border-radius: 999px;
+        border: 1px solid #d0d7e2;
+        background: white;
+        cursor: pointer;
+        color: var(--text-dark);
+        transition: 0.2s;
+      }
 
-/* ---------------------- TASK DURATIONS ----------------------- */
-function renderTaskDurations(data) {
-  const body = document.getElementById("taskDurationBody");
-  body.innerHTML = "";
+      .filter-btn:hover {
+        background: #e9f0ff;
+      }
 
-  data.tasks.forEach(t => {
-    body.innerHTML += `
-      <tr>
-        <td>${t.taskID}</td>
-        <td>${t.clientName}</td>
-        <td>${formatDateTime(t.scheduledAt)}</td>
-        <td>${formatDateTime(t.startAt)}</td>
-        <td>${formatDateTime(t.endAt)}</td>
-        <td>${t.durationMinutes ?? "-"}</td>
-        <td>${t.status}</td>
-        <td>${(t.assignedStaffEmails || []).join(", ")}</td>
-      </tr>
-    `;
-  });
-}
+      .filter-btn.active {
+        background: var(--primary);
+        color: #fff;
+        border-color: var(--primary);
+      }
 
-/* ---------------------- SUBTASKS ----------------------- */
-function renderSubtasks(data) {
-  const body = document.getElementById("subtaskBody");
-  body.innerHTML = "";
+      .section-card {
+        background: white;
+        border-radius: var(--radius);
+        padding: 20px;
+        margin-bottom: 25px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      }
 
-  data.subtasks.forEach(s => {
-    const photos = s.photoUrls?.length
-      ? s.photoUrls.map((u,i)=>`<a href="${u}" target="_blank">Photo ${i+1}</a>`).join(" | ")
-      : "-";
+      .section-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        align-items: center;
+        gap: 8px;
+      }
 
-    body.innerHTML += `
-      <tr>
-        <td>${s.taskID}</td>
-        <td>${s.subtaskNo}</td>
-        <td>${s.status}</td>
-        <td>${s.remarks || "-"}</td>
-        <td>${s.lat || "-"}, ${s.lon || "-"}</td>
-        <td>${photos}</td>
-      </tr>`;
-  });
-}
+      .section-header h2 {
+        font-size: 1rem;
+        font-weight: 600;
+      }
 
-/* ---------------------- SURVEY BREAKDOWN (WITH QUESTION TEXT) ----------------------- */
-function renderSurveyBreakdown(data) {
-  const container = document.getElementById("surveyBreakdown");
+      /* STATUS BREAKDOWN */
+      .status-bar {
+        margin-bottom: 10px;
+      }
 
-  const tasks = data.tasks || [];
-  const responses = data.survey?.responses || [];
-  const questions = data.surveyQuestions || {}; // NEW
+      .status-bar-label {
+        font-size: 0.85rem;
+        margin-bottom: 4px;
+        color: var(--text-dark);
+      }
 
-  container.innerHTML = "";
+      .status-bar-track {
+        width: 100%;
+        background: #e5e7eb;
+        border-radius: 8px;
+        height: 12px;
+        overflow: hidden;
+      }
 
-  const grouped = {};
-  responses.forEach(r => {
-    if (!grouped[r.taskID]) grouped[r.taskID] = [];
-    grouped[r.taskID].push(r);
-  });
+      .status-bar-fill {
+        height: 12px;
+        border-radius: 8px;
+      }
 
-  tasks.forEach(t => {
-    const taskID = t.taskID;
-    const res = grouped[taskID] || [];
-    const qList = questions[taskID] || [];
+      /* TABLES */
+      .table-wrapper {
+        overflow-x: auto;
+      }
 
-    const avg = res.length
-      ? (res.reduce((a,r)=>a+r.avgRating,0) / res.length).toFixed(2)
-      : "-";
+      .scroll-y {
+        max-height: 300px;
+        overflow-y: auto;
+      }
 
-    const card = document.createElement("div");
-    card.className = "survey-card";
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.82rem;
+      }
 
-    const header = document.createElement("div");
-    header.className = "survey-header";
-    header.innerHTML = `
-      <div>
-        <strong>${taskID}</strong> – ${t.clientName}
-        <div class="muted">Survey Status: ${t.surveyStatus || "-"}</div>
+      th,
+      td {
+        border-bottom: 1px solid #e5e7eb;
+        padding: 7px;
+        white-space: nowrap;
+        text-align: left;
+      }
+
+      th {
+        background: #f8fafc;
+        font-size: 0.75rem;
+        color: var(--text-light);
+        text-transform: uppercase;
+      }
+
+      tr:nth-child(even) td {
+        background: #fafafa;
+      }
+
+      /* DEBUG */
+      .debug-toggle {
+        cursor: pointer;
+        color: var(--primary);
+        font-size: 0.85rem;
+      }
+      #debugBox {
+        display: none;
+        background: #1e1e1e;
+        padding: 15px;
+        border-radius: 8px;
+        color: #dcdcdc;
+        font-size: 0.85rem;
+        white-space: pre-wrap;
+        margin-top: 10px;
+      }
+
+      /* SURVEY BREAKDOWN */
+      .survey-card {
+        border: 1px solid #e1e4e8;
+        background: #fff;
+        border-radius: 10px;
+        padding: 14px;
+        margin-bottom: 12px;
+        transition: all 0.2s;
+      }
+
+      .survey-header {
+        display: flex;
+        justify-content: space-between;
+        cursor: pointer;
+        padding: 3px 0;
+        gap: 10px;
+      }
+
+      .survey-header-main {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .survey-header-main small {
+        font-size: 0.75rem;
+        color: var(--text-light);
+      }
+
+      .survey-body {
+        display: none;
+        padding-top: 10px;
+        font-size: 0.8rem;
+      }
+
+      .muted {
+        color: var(--text-light);
+        font-size: 0.8rem;
+      }
+
+      .survey-scroll {
+        max-height: 300px;
+        overflow-y: auto;
+        padding-right: 4px;
+      }
+
+      /* CHARTS */
+      .chart-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 12px;
+      }
+
+      .chart-card {
+        background: #fff;
+        border-radius: var(--radius);
+        padding: 10px 12px;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+        min-height: 220px;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .chart-card h3 {
+        font-size: 0.85rem;
+        margin-bottom: 6px;
+        color: var(--text-light);
+      }
+
+      .chart-card canvas {
+        max-height: 160px !important;
+        margin-top: 4px;
+      }
+    </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+
+  <body>
+
+    <!-- UNIVERSAL LOADING OVERLAY -->
+<div id="loadingOverlay">
+  <div class="loader"></div>
+</div>
+
+    <!-- NEW GLOBAL NAVBAR -->
+    <div id="globalHeader"></div>
+    <script src="admin-navbar.js"></script>
+
+    <main>
+      <div class="page-title">Field Service Performance Overview</div>
+      <div class="page-subtitle">
+        Company-level analysis of tasks, staff performance, subtasks & surveys.
       </div>
-      <div><strong>${avg}</strong> ⭐ (${res.length})</div>
-    `;
 
-    const body = document.createElement("div");
-    body.className = "survey-body";
+      <!-- Everything below stays unchanged — charts, tables, survey breakdown, debug, etc. -->
 
-    if (!res.length) {
-      body.innerHTML = `<div class="muted">No customer survey submitted.</div>`;
-    } else {
 
-      res.forEach(r => {
-        let block = `
-          <div style="border-top:1px solid #eee; padding-top:10px; margin-top:10px;">
-            <div><strong>Response ID:</strong> ${r.responseID}</div>
-            <div><strong>Submitted:</strong> ${formatDateTime(r.submittedAt)}</div>
-            <div style="margin-top:8px;"><strong>Questions:</strong></div>
-        `;
+      <!-- FILTER BAR -->
+      <div class="filter-bar">
+        <div class="filter-bar-left">
+          Time range applies to tasks, subtasks, surveys & charts.
+        </div>
+        <div class="filter-buttons">
+          <button class="filter-btn active" data-range="all">All</button>
+          <button class="filter-btn" data-range="week">Last 7 days</button>
+          <button class="filter-btn" data-range="month">Last 30 days</button>
+          <button class="filter-btn" data-range="year">Last 12 months</button>
+        </div>
+      </div>
 
-        r.ratings.forEach((rating, idx) => {
-          const q = qList.find(q => Number(q.questionNo) === idx + 1);
+      <!-- VISUAL OVERVIEW (CHARTS) -->
+      <div class="section-card">
+        <div class="section-header">
+          <h2>Visual Overview (Filtered)</h2>
+          <span class="muted">
+            Charts reflect current time range selection.
+          </span>
+        </div>
 
-          block += `
-            <div class="survey-question">
-              <span class="q-text">Q${idx + 1}: ${q ? q.questionText : '(missing question)'}</span>
-              <span class="q-rating">⭐ ${rating}</span>
+        <div class="chart-grid">
+          <div class="chart-card">
+            <h3>Task Status Distribution</h3>
+            <canvas id="statusChart"></canvas>
+          </div>
+
+          <div class="chart-card">
+            <h3>Rating Distribution (1–5)</h3>
+            <canvas id="ratingChart"></canvas>
+          </div>
+
+          <div class="chart-card">
+            <h3>Tasks Completed by Staff (Top 5)</h3>
+            <canvas id="staffTasksChart"></canvas>
+          </div>
+
+          <div class="chart-card">
+            <h3>Avg Rating by Staff (Top 5)</h3>
+            <canvas id="staffRatingChart"></canvas>
+          </div>
+
+
+          <div class="chart-card">
+            <h3>Tasks Completed Over Time</h3>
+            <canvas id="tasksOverTimeChart"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card" style="margin-top: 12px;">
+          <h3>Avg Duration Per Day</h3>
+          <canvas id="avgDurationDailyChart"></canvas>
+        </div>
+
+        <div class="chart-card" style="margin-top: 12px;">
+          <h3>Avg Delay Per Month</h3>
+          <canvas id="avgDelayMonthlyChart"></canvas>
+        </div>
+      </div>
+
+      <!-- STATUS BREAKDOWN -->
+      <div class="section-card">
+        <div class="section-header">
+          <h2>Task Status Breakdown (Filtered)</h2>
+        </div>
+        <div id="statusBreakdownBars"></div>
+      </div>
+
+      <!-- STAFF PERFORMANCE -->
+      <div class="section-card">
+        <div class="section-header">
+          <h2>Staff Performance (Filtered)</h2>
+        </div>
+        <div class="table-wrapper scroll-y">
+          <table>
+            <thead>
+              <tr>
+                <th>Staff Email</th>
+                <th>Name</th>
+                <th>Completed</th>
+                <th>Avg Duration</th>
+                <th>Avg Rating</th>
+                <th>On Time</th>
+                <th>Late</th>
+              </tr>
+            </thead>
+            <tbody id="staffTableBody">
+              <tr>
+                <td colspan="7">Loading...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TASK DURATION -->
+      <div class="section-card">
+        <div class="section-header">
+          <h2>Task Durations (Filtered)</h2>
+        </div>
+        <div class="table-wrapper scroll-y">
+          <table>
+            <thead>
+              <tr>
+                <th>TaskID</th>
+                <th>Client</th>
+                <th>Scheduled</th>
+                <th>Start</th>
+                <th>End</th>
+                <th>Duration (min)</th>
+                <th>Status</th>
+                <th>Staff</th>
+              </tr>
+            </thead>
+            <tbody id="taskDurationBody">
+              <tr>
+                <td colspan="8">Loading...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SUBTASKS -->
+      <div class="section-card">
+        <div class="section-header">
+          <h2>Subtask Details (Filtered by Task)</h2>
+        </div>
+        <div class="table-wrapper scroll-y">
+          <table>
+            <thead>
+              <tr>
+                <th>TaskID</th>
+                <th>Subtask No</th>
+                <th>Status</th>
+                <th>Remarks</th>
+                <th>Geo</th>
+                <th>Photos</th>
+              </tr>
+            </thead>
+            <tbody id="subtaskBody">
+              <tr>
+                <td colspan="6">Loading...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SURVEY BREAKDOWN -->
+      <div class="section-card">
+        <div class="section-header">
+          <h2>Survey Breakdown Per Task (Filtered)</h2>
+        </div>
+        <div id="surveyBreakdownContainer" class="survey-scroll"></div>
+      </div>
+
+      <!-- DEBUG -->
+      <div class="section-card">
+        <span class="debug-toggle" onclick="toggleDebug()">Show Raw JSON</span>
+        <pre id="debugBox"></pre>
+      </div>
+    </main>
+
+    <script>
+      const ADMIN_API_URL =
+        "https://script.google.com/macros/s/AKfycbwQpZSC-qIHNuZN7q1Od2UmvmqegARCuMwYYLB_QIZA1qMT4WPwiq4ugxc56GWxJGrs/exec";
+
+      function getSession() {
+        return {
+          email: localStorage.getItem("user_email"),
+          companyID: localStorage.getItem("user_companyID"),
+          name: localStorage.getItem("user_name"),
+        };
+      }
+
+      function requireLogin() {
+        const s = getSession();
+        if (!s.email) location.href = "index.html";
+        return s;
+      }
+
+      function logout() {
+        localStorage.clear();
+        location.href = "index.html";
+      }
+
+      function toggleDebug() {
+        const b = document.getElementById("debugBox");
+        b.style.display = b.style.display === "block" ? "none" : "block";
+      }
+
+      function formatDateTime(val) {
+        if (!val) return "-";
+        const d = new Date(val);
+        if (isNaN(d)) return val;
+        return d.toLocaleString("en-MY");
+      }
+
+      /* ======== GLOBAL STATE ======== */
+      let rawData = null;
+      let currentRange = "all";
+
+      /* Chart instances */
+      let statusChart,
+        ratingChart,
+        staffTasksChart,
+        staffRatingChart,
+        tasksOverTimeChart,
+        avgDurationDailyChart,
+        avgDelayMonthlyChart;
+
+      /* ======== FILTERING LOGIC ======== */
+      function dateInRange(dateStr, range) {
+        if (!dateStr || range === "all") return true;
+        const d = new Date(dateStr);
+        if (isNaN(d)) return false;
+
+        const now = new Date();
+        const diffMs = now.getTime() - d.getTime();
+        const dayMs = 24 * 60 * 60 * 1000;
+
+        if (range === "week") {
+          return diffMs <= 7 * dayMs;
+        } else if (range === "month") {
+          return diffMs <= 30 * dayMs;
+        } else if (range === "year") {
+          return diffMs <= 365 * dayMs;
+        }
+        return true;
+      }
+
+      function getTaskReferenceDate(t) {
+        return t.endAt || t.startAt || t.scheduledAt;
+      }
+
+      /**
+       * Build a filtered view model from raw backend data
+       */
+      function buildViewModel(raw, range) {
+        if (!raw) return null;
+
+        const tasksAll = raw.tasks || [];
+        const subtasksAll = raw.subtasks || [];
+        const surveyResponsesAll = (raw.survey && raw.survey.responses) || [];
+        const staffDirectory = (raw.staff && raw.staff.list) || [];
+
+        // Filter tasks by reference date
+        const filteredTasks = tasksAll.filter((t) => {
+          const ref = getTaskReferenceDate(t);
+          if (!ref && range !== "all") return false;
+          return dateInRange(ref, range);
+        });
+
+        const taskIDSet = new Set(filteredTasks.map((t) => t.taskID));
+
+        // Filter subtasks linked to filtered tasks
+        const filteredSubtasks = subtasksAll.filter((st) =>
+          taskIDSet.has(st.taskID)
+        );
+
+        // Filter survey responses by submittedAt date
+        const filteredResponses = surveyResponsesAll.filter((r) =>
+          dateInRange(r.submittedAt, range)
+        );
+
+        // Build task map
+        const taskMap = {};
+        filteredTasks.forEach((t) => {
+          taskMap[t.taskID] = t;
+        });
+
+        /* --- KPIs (still computed, but not shown as cards) --- */
+        const totalTasks = filteredTasks.length;
+        const totalStaff =
+          raw.staff && raw.staff.list ? raw.staff.list.length : 0;
+        const completedTasks = filteredTasks.filter(
+          (t) => t.status === "Done"
+        ).length;
+
+        let durationSum = 0;
+        let durationCount = 0;
+        const statusCounts = {};
+
+        let delaySum = 0;
+        let delayCount = 0;
+
+        filteredTasks.forEach((t) => {
+          const status = t.status || "Unknown";
+          statusCounts[status] = (statusCounts[status] || 0) + 1;
+
+          if (t.status === "Done" && t.durationMinutes != null) {
+            durationSum += Number(t.durationMinutes) || 0;
+            durationCount++;
+          }
+
+          if (t.delayMinutes != null) {
+            const d = Number(t.delayMinutes);
+            if (!isNaN(d)) {
+              delaySum += d;
+              delayCount++;
+            }
+          }
+        });
+
+        const avgDurationMinutes = durationCount
+          ? Math.round(durationSum / durationCount)
+          : 0;
+
+        const avgDelayMinutes = delayCount
+          ? Math.round(delaySum / delayCount)
+          : 0;
+
+        /* --- Survey metrics --- */
+        let ratingSum = 0;
+        let ratingCount = 0;
+        const ratingDistribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+
+        filteredResponses.forEach((r) => {
+          const ratings = r.ratings || [];
+          ratings.forEach((val) => {
+            const num = Number(val);
+            if (!isNaN(num) && num >= 1 && num <= 5) {
+              ratingSum += num;
+              ratingCount++;
+              ratingDistribution[num] = (ratingDistribution[num] || 0) + 1;
+            }
+          });
+        });
+
+        const avgRatingOverall = ratingCount
+          ? Number((ratingSum / ratingCount).toFixed(2))
+          : 0;
+        const totalResponses = filteredResponses.length;
+
+        /* --- Staff KPIs from filtered tasks & surveys --- */
+        const staffStats = {};
+
+        function ensureStaff(email) {
+          const key = String(email || "").toLowerCase();
+          if (!key) return null;
+
+          if (!staffStats[key]) {
+            const base =
+              staffDirectory.find(
+                (s) => String(s.email || "").toLowerCase() === key
+              ) || {};
+
+            staffStats[key] = {
+              email: email,
+              name: base.name || "",
+              userID: base.userID || "",
+              phone: base.phone || "",
+              role: base.role || "",
+              active: base.active != null ? base.active : true,
+              totalTasks: 0,
+              completedTasks: 0,
+              totalDuration: 0,
+              durationCount: 0,
+              avgDurationMinutes: 0,
+              ratingSum: 0,
+              ratingCount: 0,
+              avgRating: 0,
+              onTimeCount: 0,
+              lateCount: 0,
+              surveyResponses: 0, // NEW: count of survey responses linked to this staff
+            };
+          }
+          return staffStats[key];
+        }
+
+        // From tasks
+        filteredTasks.forEach((t) => {
+          const emails = t.assignedStaffEmails || [];
+          emails.forEach((e) => {
+            const stat = ensureStaff(e);
+            if (!stat) return;
+            stat.totalTasks++;
+            if (t.status === "Done") {
+              stat.completedTasks++;
+            }
+            if (t.durationMinutes != null) {
+              stat.totalDuration += Number(t.durationMinutes) || 0;
+              stat.durationCount++;
+            }
+            if (t.delayMinutes != null) {
+              const d = Number(t.delayMinutes);
+              if (!isNaN(d)) {
+                if (d > 0) stat.lateCount++;
+                else stat.onTimeCount++;
+              }
+            }
+          });
+        });
+
+        // From survey responses
+        filteredResponses.forEach((r) => {
+          const t = taskMap[r.taskID];
+          if (!t) return;
+          const emails = t.assignedStaffEmails || [];
+          const ratings = r.ratings || [];
+          const localSum = ratings.reduce(
+            (a, val) => a + (Number(val) || 0),
+            0
+          );
+          const localCount = ratings.length;
+
+          emails.forEach((e) => {
+            const stat = ensureStaff(e);
+            if (!stat) return;
+            stat.ratingSum += localSum;
+            stat.ratingCount += localCount;
+            stat.surveyResponses += 1;
+          });
+        });
+
+        const staffKpis = Object.values(staffStats)
+          .map((s) => {
+            s.avgDurationMinutes = s.durationCount
+              ? Math.round(s.totalDuration / s.durationCount)
+              : 0;
+            s.avgRating = s.ratingCount
+              ? Number((s.ratingSum / s.ratingCount).toFixed(2))
+              : 0;
+            return s;
+          })
+          .sort((a, b) => b.completedTasks - a.completedTasks);
+
+        return {
+          kpis: {
+            totalTasks,
+            totalStaff,
+            completedTasks,
+            avgDurationMinutes,
+            avgDelayMinutes,
+            totalResponses,
+            avgRatingOverall,
+          },
+          statusCounts,
+          ratingDistribution,
+          staffKpis,
+          tasks: filteredTasks,
+          subtasks: filteredSubtasks,
+          survey: {
+            totalResponses,
+            avgRatingOverall,
+            ratingDistribution,
+            responses: filteredResponses,
+          },
+        };
+      }
+
+      /* ========== STATUS BREAKDOWN VISUAL ========== */
+      function renderStatus(statusCounts) {
+        const container = document.getElementById("statusBreakdownBars");
+        container.innerHTML = "";
+
+        const entries = Object.entries(statusCounts || {});
+        if (!entries.length) {
+          container.innerHTML =
+            '<div class="muted">No tasks in this range.</div>';
+          return;
+        }
+
+        const total = entries.reduce((a, b) => a + b[1], 0);
+
+        const colors = {
+          Scheduled: "#6c757d",
+          "In Progress": "#007bff",
+          Pending: "#ffc107",
+          "On Hold": "#fd7e14",
+          Done: "#28a745",
+          Cancelled: "#dc3545",
+          Unknown: "#999",
+        };
+
+        entries.forEach(([status, count]) => {
+          const pct = total ? Math.round((count / total) * 100) : 0;
+
+          container.innerHTML += `
+            <div class="status-bar">
+              <div class="status-bar-label">${status} — ${count} (${pct}%)</div>
+              <div class="status-bar-track">
+                <div class="status-bar-fill" style="width:${pct}%; background:${
+            colors[status] || "#888"
+          };"></div>
+              </div>
             </div>
           `;
         });
+      }
 
-        block += `</div>`;
-        body.innerHTML += block;
-      });
+      /* ========== STAFF TABLE ========== */
+      function renderStaff(vm) {
+        const list = vm.staffKpis || [];
+        const body = document.getElementById("staffTableBody");
+        body.innerHTML = "";
+
+        if (!list.length) {
+          body.innerHTML =
+            '<tr><td colspan="7">No staff activity in this range.</td></tr>';
+          return;
+        }
+
+        list.forEach((st) => {
+          body.innerHTML += `
+            <tr>
+              <td>${st.email}</td>
+              <td>${st.name || "-"}</td>
+              <td>${st.completedTasks}</td>
+              <td>${st.avgDurationMinutes}</td>
+              <td>${st.avgRating}</td>
+              <td>${st.onTimeCount}</td>
+              <td>${st.lateCount}</td>
+            </tr>`;
+        });
+      }
+
+      /* ========== TASK DURATIONS ========== */
+      function renderTaskDurations(vm) {
+        const body = document.getElementById("taskDurationBody");
+        body.innerHTML = "";
+
+        const tasks = vm.tasks || [];
+        if (!tasks.length) {
+          body.innerHTML =
+            '<tr><td colspan="8">No tasks in this range.</td></tr>';
+          return;
+        }
+
+        tasks.forEach((t) => {
+          body.innerHTML += `
+            <tr>
+              <td>${t.taskID}</td>
+              <td>${t.clientName}</td>
+              <td>${formatDateTime(t.scheduledAt)}</td>
+              <td>${formatDateTime(t.startAt)}</td>
+              <td>${formatDateTime(t.endAt)}</td>
+              <td>${t.durationMinutes ?? "-"}</td>
+              <td>${t.status}</td>
+              <td>${(t.assignedStaffEmails || []).join(", ")}</td>
+            </tr>`;
+        });
+      }
+
+      /* ========== SUBTASKS ========== */
+      function renderSubtasks(vm) {
+        const body = document.getElementById("subtaskBody");
+        body.innerHTML = "";
+
+        const subtasks = vm.subtasks || [];
+        if (!subtasks.length) {
+          body.innerHTML =
+            '<tr><td colspan="6">No subtasks linked to tasks in this range.</td></tr>';
+          return;
+        }
+
+        subtasks.forEach((s) => {
+          const photos = s.photoUrls?.length
+            ? s.photoUrls
+                .map(
+                  (u, i) => `<a href="${u}" target="_blank">Photo ${i + 1}</a>`
+                )
+                .join(" | ")
+            : "-";
+
+          body.innerHTML += `
+            <tr>
+              <td>${s.taskID}</td>
+              <td>${s.subtaskNo}</td>
+              <td>${s.status}</td>
+              <td>${s.remarks || "-"}</td>
+              <td>${s.lat || "-"}, ${s.lon || "-"}</td>
+              <td>${photos}</td>
+            </tr>`;
+        });
+      }
+
+      /* ========== SURVEY BREAKDOWN ========== */
+      function renderSurveyBreakdown(vm) {
+        const container = document.getElementById("surveyBreakdownContainer");
+        const tasks = vm.tasks || [];
+        const responses = vm.survey?.responses || [];
+        container.innerHTML = "";
+
+        const grouped = {};
+        responses.forEach((r) => {
+          if (!grouped[r.taskID]) grouped[r.taskID] = [];
+          grouped[r.taskID].push(r);
+        });
+
+        if (!tasks.length) {
+          container.innerHTML =
+            '<div class="muted">No tasks / survey responses in this range.</div>';
+          return;
+        }
+
+        tasks.forEach((task) => {
+          const tid = task.taskID;
+          const res = grouped[tid] || [];
+          const avg = res.length
+            ? (res.reduce((a, r) => a + r.avgRating, 0) / res.length).toFixed(
+                2
+              )
+            : "-";
+
+          const card = document.createElement("div");
+          card.className = "survey-card";
+
+          const header = document.createElement("div");
+          header.className = "survey-header";
+          header.innerHTML = `
+            <div class="survey-header-main">
+              <div><strong>${tid}</strong> – ${task.clientName}</div>
+              <small>Survey Status: ${task.surveyStatus || "-"}</small>
+            </div>
+            <div>
+              <strong>${avg}</strong> ⭐
+              <div class="muted" style="text-align:right;">${
+                res.length
+              } response(s)</div>
+            </div>
+          `;
+
+          const body = document.createElement("div");
+          body.className = "survey-body";
+
+          if (!res.length) {
+            body.innerHTML =
+              '<div class="muted">No survey responses for this task in this range.</div>';
+          } else {
+            body.innerHTML = res
+  .map((r) => {
+    const questions = (rawData.surveyQuestions && rawData.surveyQuestions[tid]) || [];
+    const ratings = r.ratings || [];
+
+    let questionBlock = "";
+
+    if (questions.length) {
+      questionBlock = questions
+        .map((q, i) => {
+          const rating = ratings[i] ?? "-";
+          return `
+            <div style="margin-left:12px; padding:2px 0;">
+              • <strong>${q.questionText}</strong>: ${rating}
+            </div>
+          `;
+        })
+        .join("");
+    } else {
+      questionBlock = `<div class="muted">No survey questions found for this task.</div>`;
     }
 
-    header.onclick = () => {
-      body.style.display = body.style.display === "none" ? "block" : "none";
-    };
+    return `
+      <div style="border-top:1px solid #eee; padding-top:8px; margin-top:8px;">
+        <div><strong>Response ID:</strong> ${r.responseID}</div>
+        <div><strong>Submitted At:</strong> ${formatDateTime(r.submittedAt)}</div>
+        <div><strong>Avg Rating:</strong> ${r.avgRating.toFixed(2)}</div>
 
-    card.appendChild(header);
-    card.appendChild(body);
-    container.appendChild(card);
-  });
-}
+        <div style="margin-top:6px;">
+          <strong>Responses:</strong><br/>
+          ${questionBlock}
+        </div>
+      </div>
+    `;
+  })
+  .join("");
 
-/* ---------------------- INIT ----------------------- */
-document.addEventListener("DOMContentLoaded", async () => {
-  const s = requireLogin();
-  document.getElementById("adminName").textContent = s.name;
-  document.getElementById("companyID").textContent = s.companyID;
+          }
 
-  const res = await fetch(`${ADMIN_API_URL}?action=getDashboardSummary&email=${s.email}`);
-  const data = await res.json();
+          header.onclick = () => {
+            body.style.display =
+              body.style.display === "none" ? "block" : "none";
+          };
 
-  document.getElementById("debugBox").textContent = JSON.stringify(data, null, 2);
+          body.style.display = "none";
 
-  renderKpis(data.kpis);
-  renderStatus(data.statusCounts);
-  renderStaff(data);
-  renderTaskDurations(data);
-  renderSubtasks(data);
-  renderSurveyBreakdown(data);
-});
+          card.appendChild(header);
+          card.appendChild(body);
+          container.appendChild(card);
+        });
+      }
 
-</script>
+      /* ========== CHARTS ========== */
+      function renderCharts(vm) {
+        /* --- Status Chart --- */
+        const statusLabels = Object.keys(vm.statusCounts || {});
+        const statusValues = Object.values(vm.statusCounts || {});
+        if (statusChart) statusChart.destroy();
+        statusChart = new Chart(document.getElementById("statusChart"), {
+          type: "doughnut",
+          data: {
+            labels: statusLabels,
+            datasets: [{ data: statusValues }],
+          },
+          options: {
+            plugins: {
+              legend: {
+                position: "bottom",
+                labels: { boxWidth: 10, padding: 8 },
+              },
+            },
+            cutout: "55%",
+            maintainAspectRatio: false,
+          },
+        });
 
-</body>
+        /* --- Rating Chart --- */
+        const ratingDist = vm.ratingDistribution || {};
+        const ratingLabels = ["1", "2", "3", "4", "5"];
+        const ratingValues = ratingLabels.map((x) => ratingDist[x] || 0);
+        if (ratingChart) ratingChart.destroy();
+        ratingChart = new Chart(document.getElementById("ratingChart"), {
+          type: "bar",
+          data: {
+            labels: ratingLabels,
+            datasets: [{ data: ratingValues }],
+          },
+          options: {
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { ticks: { maxRotation: 0, font: { size: 10 } } },
+              y: { beginAtZero: true, ticks: { font: { size: 10 } } },
+            },
+            maintainAspectRatio: false,
+          },
+        });
+
+        /* --- Staff Tasks Chart (Top 5 by completed) --- */
+        const staff = (vm.staffKpis || []).slice(0, 5);
+        const staffLabels = staff.map((s) => s.name || s.email);
+        const staffValues = staff.map((s) => s.completedTasks || 0);
+        if (staffTasksChart) staffTasksChart.destroy();
+        staffTasksChart = new Chart(
+          document.getElementById("staffTasksChart"),
+          {
+            type: "bar",
+            data: {
+              labels: staffLabels,
+              datasets: [{ data: staffValues }],
+            },
+            options: {
+              plugins: { legend: { display: false } },
+              scales: {
+                x: { ticks: { maxRotation: 0, font: { size: 9 } } },
+                y: { beginAtZero: true, ticks: { font: { size: 10 } } },
+              },
+              maintainAspectRatio: false,
+            },
+          }
+        );
+
+        /* --- Staff Rating Chart (Top 5 by ratingCount) --- */
+        const staffSortedByRating = [...(vm.staffKpis || [])]
+          .filter((s) => s.ratingCount > 0)
+          .sort((a, b) => b.ratingCount - a.ratingCount)
+          .slice(0, 5);
+
+        const staffRatingLabels = staffSortedByRating.map(
+          (s) => s.name || s.email
+        );
+        const staffRatingValues = staffSortedByRating.map(
+          (s) => s.avgRating || 0
+        );
+
+        if (staffRatingChart) staffRatingChart.destroy();
+        staffRatingChart = new Chart(
+          document.getElementById("staffRatingChart"),
+          {
+            type: "bar",
+            data: {
+              labels: staffRatingLabels,
+              datasets: [{ data: staffRatingValues }],
+            },
+            options: {
+              plugins: { legend: { display: false } },
+              scales: {
+                x: { ticks: { maxRotation: 0, font: { size: 9 } } },
+                y: { beginAtZero: true, max: 5, ticks: { font: { size: 10 } } },
+              },
+              maintainAspectRatio: false,
+            },
+          }
+        );
+
+        
+        /* --- Tasks Completed Over Time (day-of-month labels) --- */
+        const tasks = vm.tasks || [];
+        const dateMap = {};
+
+        tasks.forEach((t) => {
+          if (t.status !== "Done" || !t.endAt) return;
+          const d = new Date(t.endAt);
+          if (isNaN(d)) return;
+
+          const yyyy = d.getFullYear();
+          const mm = d.getMonth() + 1;
+          const dd = d.getDate();
+
+          const key = `${yyyy}-${mm}-${dd}`;
+          dateMap[key] = (dateMap[key] || 0) + 1;
+        });
+
+        const sortedKeys = Object.keys(dateMap)
+          .map((k) => {
+            const [y, m, d] = k.split("-").map(Number);
+            return { y, m, d, key: k };
+          })
+          .sort(
+            (a, b) =>
+              new Date(a.y, a.m - 1, a.d) - new Date(b.y, b.m - 1, b.d)
+          );
+
+        const xLabels = sortedKeys.map((k) => k.d);
+        const yValues = sortedKeys.map((k) => dateMap[k.key]);
+
+        if (tasksOverTimeChart) tasksOverTimeChart.destroy();
+        tasksOverTimeChart = new Chart(
+          document.getElementById("tasksOverTimeChart"),
+          {
+            type: "line",
+            data: {
+              labels: xLabels,
+              datasets: [
+                {
+                  label: "Completed Tasks",
+                  data: yValues,
+                  tension: 0.3,
+                },
+              ],
+            },
+            options: {
+              plugins: { legend: { display: false } },
+              scales: {
+                x: { ticks: { font: { size: 9 } } },
+                y: { beginAtZero: true, ticks: { font: { size: 10 } } },
+              },
+              maintainAspectRatio: false,
+            },
+          }
+        );
+
+        /* --- Average Duration Per Day --- */
+        const durationMap = {};
+
+        (vm.tasks || []).forEach((t) => {
+          if (t.status !== "Done" || !t.endAt || !t.durationMinutes) return;
+          const d = new Date(t.endAt);
+          if (isNaN(d)) return;
+
+          const yyyy = d.getFullYear();
+          const mm = d.getMonth() + 1;
+          const dd = d.getDate();
+          const key = `${yyyy}-${mm}-${dd}`;
+
+          if (!durationMap[key]) durationMap[key] = [];
+          durationMap[key].push(Number(t.durationMinutes));
+        });
+
+        const durKeys = Object.keys(durationMap)
+          .map((k) => {
+            const [y, m, d] = k.split("-").map(Number);
+            return { y, m, d, key: k };
+          })
+          .sort(
+            (a, b) =>
+              new Date(a.y, a.m - 1, a.d) - new Date(b.y, b.m - 1, b.d)
+          );
+
+        const durLabels = durKeys.map((k) => k.d);
+        const durValues = durKeys.map((k) => {
+          const arr = durationMap[k.key];
+          return Math.round(arr.reduce((a, b) => a + b) / arr.length);
+        });
+
+        if (avgDurationDailyChart) avgDurationDailyChart.destroy();
+        avgDurationDailyChart = new Chart(
+          document.getElementById("avgDurationDailyChart"),
+          {
+            type: "line",
+            data: {
+              labels: durLabels,
+              datasets: [
+                {
+                  label: "Avg Duration (min)",
+                  data: durValues,
+                  tension: 0.3,
+                },
+              ],
+            },
+            options: {
+              plugins: { legend: { display: false } },
+              scales: {
+                x: { ticks: { font: { size: 9 } } },
+                y: { beginAtZero: true },
+              },
+              maintainAspectRatio: false,
+            },
+          }
+        );
+
+        /* --- Average Delay Per Month --- */
+        const delayMap = {};
+
+        (vm.tasks || []).forEach((t) => {
+          if (!t.startAt || t.delayMinutes == null) return;
+          const d = new Date(t.startAt);
+          if (isNaN(d)) return;
+
+          const yyyy = d.getFullYear();
+          const mm = (d.getMonth() + 1).toString().padStart(2, "0");
+          const key = `${yyyy}-${mm}`;
+
+          if (!delayMap[key]) delayMap[key] = [];
+          delayMap[key].push(Number(t.delayMinutes));
+        });
+
+        const delayKeys = Object.keys(delayMap).sort();
+        const monthNames = [
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "May",
+          "Jun",
+          "Jul",
+          "Aug",
+          "Sep",
+          "Oct",
+          "Nov",
+          "Dec",
+        ];
+
+        const delayLabels = delayKeys.map((k) => {
+          const m = Number(k.split("-")[1]);
+          return monthNames[m - 1];
+        });
+
+        const delayValues = delayKeys.map((k) => {
+          const arr = delayMap[k];
+          return Math.round(arr.reduce((a, b) => a + b) / arr.length);
+        });
+
+        if (avgDelayMonthlyChart) avgDelayMonthlyChart.destroy();
+        avgDelayMonthlyChart = new Chart(
+          document.getElementById("avgDelayMonthlyChart"),
+          {
+            type: "bar",
+            data: {
+              labels: delayLabels,
+              datasets: [
+                {
+                  label: "Avg Delay (min)",
+                  data: delayValues,
+                },
+              ],
+            },
+            options: {
+              plugins: { legend: { display: false } },
+              scales: {
+                x: { ticks: { maxRotation: 0, font: { size: 10 } } },
+                y: { beginAtZero: true },
+              },
+              maintainAspectRatio: false,
+            },
+          }
+        );
+      }
+
+      /* ========== FILTER BUTTONS ========== */
+      function initFilters() {
+        const buttons = document.querySelectorAll(".filter-btn");
+        buttons.forEach((btn) => {
+          btn.addEventListener("click", () => {
+            buttons.forEach((b) => b.classList.remove("active"));
+            btn.classList.add("active");
+            currentRange = btn.dataset.range;
+            updateDashboard();
+          });
+        });
+      }
+
+      /* ========== MAIN LOAD & UPDATE ========== */
+      function updateDashboard() {
+        if (!rawData) return;
+        const vm = buildViewModel(rawData, currentRange);
+        if (!vm) return;
+
+        renderStatus(vm.statusCounts);
+        renderStaff(vm);
+        renderTaskDurations(vm);
+        renderSubtasks(vm);
+        renderSurveyBreakdown(vm);
+        renderCharts(vm);
+      }
+
+      document.addEventListener("DOMContentLoaded", async () => {
+        const s = requireLogin();
+
+        const res = await fetch(
+          `${ADMIN_API_URL}?action=getDashboardSummary&email=${encodeURIComponent(
+            s.email
+          )}`
+        );
+        const data = await res.json();
+
+        document.getElementById("debugBox").textContent = JSON.stringify(
+          data,
+          null,
+          2
+        );
+
+        if (!data.success) {
+          alert("Error loading dashboard: " + data.message);
+          return;
+        }
+
+        rawData = data;
+        initFilters();
+        updateDashboard();
+        document.getElementById("loadingOverlay").classList.add("hidden");
+
+      });
+    </script>
+  </body>
 </html>

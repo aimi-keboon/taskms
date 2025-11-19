@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>FSMS Admin – Users</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <style>
+      :root {
+        --primary: #2c5aa0;
+        --accent: #28a745;
+        --bg: #f4f6fb;
+        --text-dark: #1e2a3a;
+        --text-light: #6c757d;
+        --radius: 12px;
+        --danger: #dc3545;
+        --muted: #e9ecef;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: "Inter", Arial, sans-serif;
+      }
+
+      body {
+        background: var(--bg);
+      }
+
+      /* ===== UNIVERSAL FULLSCREEN LOADING OVERLAY ===== */
+      #loadingOverlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.75);
+        backdrop-filter: blur(4px);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 99999;
+      }
+
+      .loader {
+        width: 48px;
+        height: 48px;
+        border: 5px solid #c8d4e5;
+        border-top-color: var(--primary);
+        border-radius: 50%;
+        animation: spin 0.9s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      #loadingOverlay.hidden {
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s ease-out;
+      }
+
+      main {
+        padding: 25px;
+        max-width: 1100px;
+        margin: auto;
+      }
+
+      .page-title {
+        font-size: 1.1rem;
+        margin-bottom: 6px;
+        font-weight: 600;
+      }
+
+      .page-subtitle {
+        font-size: 0.88rem;
+        margin-bottom: 20px;
+        color: var(--text-light);
+      }
+
+      /* ===== TOP TOOLBAR ===== */
+      .toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .toolbar-left {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .toolbar-right {
+        display: flex;
+        gap: 8px;
+      }
+
+      .input-sm,
+      .select-sm {
+        padding: 6px 9px;
+        border-radius: 999px;
+        border: 1px solid #d0d7e2;
+        font-size: 0.8rem;
+        outline: none;
+        min-width: 160px;
+      }
+
+      .input-sm:focus,
+      .select-sm:focus {
+        border-color: var(--primary);
+      }
+
+      .btn-primary {
+        padding: 7px 14px;
+        border-radius: 999px;
+        border: none;
+        cursor: pointer;
+        background: var(--primary);
+        color: #fff;
+        font-size: 0.85rem;
+        font-weight: 500;
+      }
+
+      .btn-primary:hover {
+        opacity: 0.92;
+      }
+
+      .btn-ghost {
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid #d0d7e2;
+        background: #fff;
+        cursor: pointer;
+        font-size: 0.75rem;
+        color: var(--text-dark);
+      }
+
+      .btn-ghost.danger {
+        border-color: var(--danger);
+        color: var(--danger);
+      }
+
+      .btn-ghost:hover {
+        background: #f3f4f6;
+      }
+
+      /* ===== CARD & TABLE ===== */
+      .section-card {
+        background: white;
+        border-radius: var(--radius);
+        padding: 18px 18px 12px;
+        margin-bottom: 25px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+      }
+
+      .section-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .section-header h2 {
+        font-size: 1rem;
+        font-weight: 600;
+      }
+
+      .section-header .muted {
+        font-size: 0.8rem;
+        color: var(--text-light);
+      }
+
+      .table-wrapper {
+        overflow-x: auto;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.82rem;
+      }
+
+      th,
+      td {
+        border-bottom: 1px solid #e5e7eb;
+        padding: 7px;
+        white-space: nowrap;
+        text-align: left;
+      }
+
+      th {
+        background: #f8fafc;
+        font-size: 0.75rem;
+        color: var(--text-light);
+        text-transform: uppercase;
+      }
+
+      tr:nth-child(even) td {
+        background: #fafafa;
+      }
+
+      .pill {
+        display: inline-block;
+        padding: 3px 9px;
+        border-radius: 999px;
+        font-size: 0.7rem;
+      }
+
+      .pill.active {
+        background: rgba(40, 167, 69, 0.12);
+        color: #1f7a35;
+      }
+
+      .pill.inactive {
+        background: #f3f4f6;
+        color: #6b7280;
+      }
+
+      .actions-cell {
+        display: flex;
+        gap: 6px;
+      }
+
+      /* ===== MODAL ===== */
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.4);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+      }
+
+      .modal-backdrop.show {
+        display: flex;
+      }
+
+      .modal {
+        background: #fff;
+        border-radius: 14px;
+        padding: 18px 18px 16px;
+        width: 100%;
+        max-width: 420px;
+        box-shadow: 0 18px 50px rgba(15, 23, 42, 0.25);
+      }
+
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+
+      .modal-title {
+        font-size: 0.98rem;
+        font-weight: 600;
+      }
+
+      .modal-close {
+        border: none;
+        background: transparent;
+        font-size: 1.2rem;
+        cursor: pointer;
+        line-height: 1;
+      }
+
+      .modal-body {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+
+      .form-row {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+
+      .form-row label {
+        font-size: 0.78rem;
+        color: var(--text-light);
+      }
+
+      .form-row input,
+      .form-row select {
+        padding: 7px 9px;
+        border-radius: 8px;
+        border: 1px solid #d0d7e2;
+        font-size: 0.85rem;
+        outline: none;
+      }
+
+      .form-row input:focus,
+      .form-row select:focus {
+        border-color: var(--primary);
+      }
+
+      .form-row .hint {
+        font-size: 0.72rem;
+        color: var(--text-light);
+      }
+
+      .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+      }
+
+      .checkbox-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 4px;
+        font-size: 0.8rem;
+      }
+
+      .error-text {
+        font-size: 0.75rem;
+        color: var(--danger);
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- LOADING OVERLAY -->
+    <div id="loadingOverlay">
+      <div class="loader"></div>
+    </div>
+
+    <!-- GLOBAL NAVBAR (admin-navbar.js) -->
+    <div id="globalHeader"></div>
+    <script src="admin-navbar.js"></script>
+
+    <main>
+      <div class="page-title">User Management</div>
+      <div class="page-subtitle">
+        Create, update and deactivate FSMS staff and admin users.
+      </div>
+
+      <!-- TOOLBAR -->
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <input
+            type="text"
+            id="searchInput"
+            class="input-sm"
+            placeholder="Search name or email..."
+          />
+          <select id="roleFilter" class="select-sm">
+            <option value="">All roles</option>
+            <option value="Staff">Staff</option>
+            <option value="Admin">Admin</option>
+          </select>
+          <select id="statusFilter" class="select-sm">
+            <option value="">All statuses</option>
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+        </div>
+        <div class="toolbar-right">
+          <button class="btn-primary" id="btnAddUser">+ Add New User</button>
+        </div>
+      </div>
+
+      <!-- USERS TABLE -->
+      <div class="section-card">
+        <div class="section-header">
+          <h2>Users</h2>
+          <span class="muted" id="userCountLabel">0 user(s)</span>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Role</th>
+                <th>Active</th>
+                <th style="width: 1%;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="usersTableBody">
+              <tr>
+                <td colspan="6">Loading users...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+
+    <!-- ADD / EDIT USER MODAL -->
+    <div id="userModalBackdrop" class="modal-backdrop">
+      <div class="modal">
+        <div class="modal-header">
+          <div class="modal-title" id="userModalTitle">Add User</div>
+          <button class="modal-close" id="userModalClose">&times;</button>
+        </div>
+        <form id="userForm">
+          <div class="modal-body">
+            <input type="hidden" id="userID" />
+
+            <div class="form-row">
+              <label for="name">Name <span style="color: var(--danger);">*</span></label>
+              <input type="text" id="name" required />
+            </div>
+
+            <div class="form-row">
+              <label for="email">Email <span style="color: var(--danger);">*</span></label>
+              <input type="email" id="email" required />
+              <div class="hint">This should match the login email used by the user.</div>
+            </div>
+
+            <div class="form-row">
+              <label for="phone">Phone</label>
+              <input type="text" id="phone" placeholder="e.g. 60123456789" />
+            </div>
+
+            <div class="form-row">
+              <label for="role">Role</label>
+              <select id="role">
+                <option value="Staff">Staff</option>
+                <option value="Admin">Admin</option>
+              </select>
+            </div>
+
+            <div class="form-row">
+              <label>Active</label>
+              <div class="checkbox-row">
+                <input type="checkbox" id="active" checked />
+                <span>Active user (can be assigned tasks).</span>
+              </div>
+            </div>
+
+            <div class="error-text" id="userFormError" style="display:none;"></div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn-ghost" id="userModalCancel">
+              Cancel
+            </button>
+            <button type="submit" class="btn-primary">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      const ADMIN_API_URL =
+        "https://script.google.com/macros/s/AKfycbzctnn9E48rwbnHifS44GG7lvSOu7wUOOSrRTMRd_p_S0A6dGOXfiR8yYuCtcYYxlxB/exec";
+
+      function getSession() {
+        return {
+          email: localStorage.getItem("user_email"),
+          companyID: localStorage.getItem("user_companyID"),
+          name: localStorage.getItem("user_name"),
+        };
+      }
+
+      function requireLogin() {
+        const s = getSession();
+        if (!s.email) location.href = "index.html";
+        return s;
+      }
+
+      function setLoading(isLoading) {
+        const overlay = document.getElementById("loadingOverlay");
+        if (!overlay) return;
+        if (isLoading) {
+          overlay.classList.remove("hidden");
+        } else {
+          overlay.classList.add("hidden");
+        }
+      }
+
+      /* ===== STATE ===== */
+      let rawUsers = []; // from backend
+      let filteredUsers = [];
+      let currentSession = null;
+
+      /* ===== RENDER TABLE ===== */
+      function renderUsersTable() {
+        const tbody = document.getElementById("usersTableBody");
+        const countLabel = document.getElementById("userCountLabel");
+
+        if (!filteredUsers.length) {
+          tbody.innerHTML =
+            '<tr><td colspan="6">No users found for current filters.</td></tr>';
+          countLabel.textContent = "0 user(s)";
+          return;
+        }
+
+        tbody.innerHTML = "";
+        filteredUsers.forEach((u) => {
+          const tr = document.createElement("tr");
+
+          const tdName = document.createElement("td");
+          tdName.textContent = u.name || "-";
+
+          const tdEmail = document.createElement("td");
+          tdEmail.textContent = u.email || "-";
+
+          const tdPhone = document.createElement("td");
+          tdPhone.textContent = u.phone || "-";
+
+          const tdRole = document.createElement("td");
+          tdRole.textContent = u.role || "-";
+
+          const tdActive = document.createElement("td");
+          const pill = document.createElement("span");
+          pill.className = "pill " + (u.active ? "active" : "inactive");
+          pill.textContent = u.active ? "Active" : "Inactive";
+          tdActive.appendChild(pill);
+
+          const tdActions = document.createElement("td");
+          tdActions.className = "actions-cell";
+
+          const btnEdit = document.createElement("button");
+          btnEdit.type = "button";
+          btnEdit.className = "btn-ghost";
+          btnEdit.textContent = "Edit";
+          btnEdit.onclick = () => openUserModal(u);
+
+          const btnDelete = document.createElement("button");
+          btnDelete.type = "button";
+          btnDelete.className = "btn-ghost danger";
+          btnDelete.textContent = "Delete";
+          btnDelete.onclick = () => confirmDeleteUser(u);
+
+          const btnToggle = document.createElement("button");
+          btnToggle.type = "button";
+          btnToggle.className = "btn-ghost";
+          btnToggle.textContent = u.active ? "Deactivate" : "Activate";
+          btnToggle.onclick = () => toggleUserActive(u);
+
+          tdActions.appendChild(btnEdit);
+          tdActions.appendChild(btnToggle);
+          tdActions.appendChild(btnDelete);
+
+          tr.appendChild(tdName);
+          tr.appendChild(tdEmail);
+          tr.appendChild(tdPhone);
+          tr.appendChild(tdRole);
+          tr.appendChild(tdActive);
+          tr.appendChild(tdActions);
+
+          tbody.appendChild(tr);
+        });
+
+        countLabel.textContent = filteredUsers.length + " user(s)";
+      }
+
+      /* ===== FILTERING ===== */
+      function applyFilters() {
+        const search = document
+          .getElementById("searchInput")
+          .value.trim()
+          .toLowerCase();
+        const role = document.getElementById("roleFilter").value;
+        const status = document.getElementById("statusFilter").value; // "true" / "false" / ""
+
+        filteredUsers = rawUsers.filter((u) => {
+          const matchesSearch =
+            !search ||
+            (u.name || "").toLowerCase().includes(search) ||
+            (u.email || "").toLowerCase().includes(search);
+
+          const matchesRole = !role || (u.role || "") === role;
+
+          const matchesStatus =
+            !status || String(!!u.active) === String(status === "true");
+
+          return matchesSearch && matchesRole && matchesStatus;
+        });
+
+        renderUsersTable();
+      }
+
+      /* ===== MODAL HELPERS ===== */
+      function openUserModal(user) {
+        const backdrop = document.getElementById("userModalBackdrop");
+        const title = document.getElementById("userModalTitle");
+        const formError = document.getElementById("userFormError");
+
+        formError.style.display = "none";
+        formError.textContent = "";
+
+        if (user) {
+          title.textContent = "Edit User";
+          document.getElementById("userID").value = user.userID || "";
+          document.getElementById("name").value = user.name || "";
+          document.getElementById("email").value = user.email || "";
+          document.getElementById("phone").value = user.phone || "";
+          document.getElementById("role").value = user.role || "Staff";
+          document.getElementById("active").checked = !!user.active;
+        } else {
+          title.textContent = "Add User";
+          document.getElementById("userID").value = "";
+          document.getElementById("name").value = "";
+          document.getElementById("email").value = "";
+          document.getElementById("phone").value = "";
+          document.getElementById("role").value = "Staff";
+          document.getElementById("active").checked = true;
+        }
+
+        backdrop.classList.add("show");
+      }
+
+      function closeUserModal() {
+        const backdrop = document.getElementById("userModalBackdrop");
+        backdrop.classList.remove("show");
+      }
+
+      /* ===== BACKEND CALLS (ADJUST actions AS NEEDED) ===== */
+
+      async function loadUsers() {
+        setLoading(true);
+        try {
+          const params = new URLSearchParams({
+            action: "getUsers", // TODO: match your Apps Script action name
+            companyID: currentSession.companyID || "",
+          });
+
+          const res = await fetch(`${ADMIN_API_URL}?${params.toString()}`);
+          const data = await res.json();
+
+          if (!data.success) {
+            alert("Error loading users: " + (data.message || "Unknown error"));
+            rawUsers = [];
+          } else {
+            // Expecting data.users = [{ userID, name, email, phone, role, active }, ...]
+            rawUsers = data.users || [];
+          }
+          applyFilters();
+        } catch (err) {
+          console.error(err);
+          alert("Error loading users. Check console.");
+          rawUsers = [];
+          applyFilters();
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      async function saveUser(payload) {
+        setLoading(true);
+        try {
+          const params = new URLSearchParams({
+            action: payload.userID ? "updateUser" : "createUser", // TODO: adjust to your backend
+          });
+
+          const res = await fetch(`${ADMIN_API_URL}?${params.toString()}`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          });
+
+          const data = await res.json();
+          if (!data.success) {
+            throw new Error(data.message || "Failed to save user");
+          }
+
+          // Reload list
+          await loadUsers();
+          closeUserModal();
+        } catch (err) {
+          console.error(err);
+          const formError = document.getElementById("userFormError");
+          formError.style.display = "block";
+          formError.textContent = err.message || "Failed to save user.";
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      async function toggleUserActive(user) {
+        if (!user) return;
+        const newStatus = !user.active;
+        if (
+          !confirm(
+            `Are you sure you want to ${
+              newStatus ? "activate" : "deactivate"
+            } this user?`
+          )
+        ) {
+          return;
+        }
+
+        setLoading(true);
+        try {
+          const payload = {
+            userID: user.userID,
+            active: newStatus,
+          };
+
+          const params = new URLSearchParams({
+            action: "setUserActive", // TODO: match your backend
+          });
+
+          const res = await fetch(`${ADMIN_API_URL}?${params.toString()}`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          });
+
+          const data = await res.json();
+          if (!data.success) {
+            throw new Error(data.message || "Failed to update status");
+          }
+
+          await loadUsers();
+        } catch (err) {
+          console.error(err);
+          alert(err.message || "Failed to update status");
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      async function confirmDeleteUser(user) {
+        if (!user) return;
+        if (
+          !confirm(
+            `Delete user "${user.name || user.email}"? This cannot be undone.`
+          )
+        ) {
+          return;
+        }
+
+        setLoading(true);
+        try {
+          const payload = {
+            userID: user.userID,
+          };
+
+          const params = new URLSearchParams({
+            action: "deleteUser", // TODO: match your backend
+          });
+
+          const res = await fetch(`${ADMIN_API_URL}?${params.toString()}`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          });
+
+          const data = await res.json();
+          if (!data.success) {
+            throw new Error(data.message || "Failed to delete user");
+          }
+
+          await loadUsers();
+        } catch (err) {
+          console.error(err);
+          alert(err.message || "Failed to delete user");
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      /* ===== EVENT BINDINGS ===== */
+      document.addEventListener("DOMContentLoaded", async () => {
+        currentSession = requireLogin();
+
+        // Filters
+        document
+          .getElementById("searchInput")
+          .addEventListener("input", applyFilters);
+        document
+          .getElementById("roleFilter")
+          .addEventListener("change", applyFilters);
+        document
+          .getElementById("statusFilter")
+          .addEventListener("change", applyFilters);
+
+        // Add User button
+        document
+          .getElementById("btnAddUser")
+          .addEventListener("click", () => openUserModal(null));
+
+        // Modal controls
+        document
+          .getElementById("userModalClose")
+          .addEventListener("click", closeUserModal);
+        document
+          .getElementById("userModalCancel")
+          .addEventListener("click", (e) => {
+            e.preventDefault();
+            closeUserModal();
+          });
+
+        // Form submit
+        document
+          .getElementById("userForm")
+          .addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const formError = document.getElementById("userFormError");
+            formError.style.display = "none";
+            formError.textContent = "";
+
+            const userID = document.getElementById("userID").value.trim();
+            const name = document.getElementById("name").value.trim();
+            const email = document.getElementById("email").value.trim();
+            const phone = document.getElementById("phone").value.trim();
+            const role = document.getElementById("role").value;
+            const active = document.getElementById("active").checked;
+
+            if (!name || !email) {
+              formError.style.display = "block";
+              formError.textContent = "Name and email are required.";
+              return;
+            }
+
+            const payload = {
+              userID: userID || "", // backend can treat empty as new
+              name,
+              email,
+              phone,
+              role,
+              active,
+              companyID: currentSession.companyID || "",
+            };
+
+            await saveUser(payload);
+          });
+
+        // Initial load
+        await loadUsers();
+      });
+    </script>
+  </body>
+</html>
