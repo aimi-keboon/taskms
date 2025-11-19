@@ -26,7 +26,6 @@
       background: var(--bg);
     }
 
-    /* ────────── NAVBAR ────────── */
     header {
       background: var(--primary);
       color: white;
@@ -54,10 +53,9 @@
       text-decoration: underline;
     }
 
-    /* ────────── MAIN CONTENT ────────── */
     main {
       padding: 25px;
-      max-width: 1250px;
+      max-width: 1350px;
       margin: auto;
     }
 
@@ -93,7 +91,6 @@
       color: var(--text-dark);
     }
 
-    /* Status Box */
     .section-card {
       background: white;
       border-radius: var(--radius);
@@ -117,7 +114,45 @@
       color: var(--text-dark);
     }
 
-    /* Debug Box */
+    /* NEW TABLE STYLES */
+    .section-subtitle {
+      font-size: 0.85rem;
+      color: var(--text-light);
+      margin-top: 4px;
+    }
+
+    .table-wrapper {
+      margin-top: 12px;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+
+    th, td {
+      padding: 8px 10px;
+      border-bottom: 1px solid #e9ecef;
+      text-align: left;
+    }
+
+    th {
+      color: var(--text-light);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-size: 0.78rem;
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: #e9ecef;
+      font-size: 0.75rem;
+    }
+
     #debugBox {
       display: none;
       white-space: pre-wrap;
@@ -143,7 +178,7 @@
 <header>
   <h1>FSMS Company Admin Dashboard</h1>
   <div class="nav-right">
-    <span id="adminName"></span>  
+    <span id="adminName"></span>
     (<span id="companyID"></span>)
     <span class="logout" onclick="logout()">Logout</span>
   </div>
@@ -153,41 +188,83 @@
 
   <!-- KPI SECTION -->
   <div class="kpi-grid">
-    <div class="kpi-card">
-      <h3>Total Tasks</h3>
-      <div class="kpi-value" id="kpiTasks">-</div>
-    </div>
-
-    <div class="kpi-card">
-      <h3>Total Staff</h3>
-      <div class="kpi-value" id="kpiStaff">-</div>
-    </div>
-
-    <div class="kpi-card">
-      <h3>Completed (7 Days)</h3>
-      <div class="kpi-value" id="kpiCompleted7">-</div>
-    </div>
-
-    <div class="kpi-card">
-      <h3>Avg Duration (min)</h3>
-      <div class="kpi-value" id="kpiDuration">-</div>
-    </div>
-
-    <div class="kpi-card">
-      <h3>Survey Responses</h3>
-      <div class="kpi-value" id="kpiResponses">-</div>
-    </div>
-
-    <div class="kpi-card">
-      <h3>Avg Rating</h3>
-      <div class="kpi-value" id="kpiRating">-</div>
-    </div>
+    <div class="kpi-card"><h3>Total Tasks</h3><div class="kpi-value" id="kpiTasks">-</div></div>
+    <div class="kpi-card"><h3>Total Staff</h3><div class="kpi-value" id="kpiStaff">-</div></div>
+    <div class="kpi-card"><h3>Completed (7 Days)</h3><div class="kpi-value" id="kpiCompleted7">-</div></div>
+    <div class="kpi-card"><h3>Avg Duration (min)</h3><div class="kpi-value" id="kpiDuration">-</div></div>
+    <div class="kpi-card"><h3>Survey Responses</h3><div class="kpi-value" id="kpiResponses">-</div></div>
+    <div class="kpi-card"><h3>Avg Rating</h3><div class="kpi-value" id="kpiRating">-</div></div>
   </div>
 
   <!-- STATUS BOX -->
   <div class="section-card">
     <h2>Task Status Breakdown</h2>
     <div class="status-tags" id="statusTags"></div>
+  </div>
+
+  <!-- TASK COMPLETION TIME -->
+  <div class="section-card">
+    <h2>Task Completion Time</h2>
+    <p class="section-subtitle">StartTime → EndTime → Duration</p>
+
+    <div class="table-wrapper">
+      <table id="taskDurationTable">
+        <thead>
+          <tr>
+            <th>Task</th>
+            <th>Client</th>
+            <th>Status</th>
+            <th>Start</th>
+            <th>End</th>
+            <th>Duration</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SUBTASKS -->
+  <div class="section-card">
+    <h2>Subtasks Overview</h2>
+    <p class="section-subtitle">Includes lat/lon, remarks, photos.</p>
+
+    <div class="table-wrapper">
+      <table id="subtasksTable">
+        <thead>
+          <tr>
+            <th>Task</th>
+            <th>Subtask</th>
+            <th>Status</th>
+            <th>Lat/Lon</th>
+            <th>Remarks</th>
+            <th>Photos</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SURVEY DETAILS -->
+  <div class="section-card">
+    <h2>Survey Details (Per Task)</h2>
+    <p class="section-subtitle">Survey questions + responses.</p>
+
+    <div class="table-wrapper">
+      <table id="surveyTable">
+        <thead>
+          <tr>
+            <th>Task</th>
+            <th>Required?</th>
+            <th>Status</th>
+            <th>Questions</th>
+            <th>Responses</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
   </div>
 
   <!-- DEBUG -->
@@ -199,8 +276,9 @@
 </main>
 
 <script>
-const ADMIN_API_URL = "https://script.google.com/macros/s/AKfycbwvYgfklWglqOiVwuZkJKDKZ2PMbMcnkI_RuQdxxlnVURngDsSsOoBsB2HorNEVUje4/exec";
+const ADMIN_API_URL = "https://script.google.com/macros/s/AKfycbzEZlXzOfBygbykgWijhGqI8_89o3T1gXV-H1oGg9l1FJiAqbo_e1ClyB9w3qLIiR7X/exec";
 
+/********************** SESSION CHECK **********************/
 function getSession() {
   return {
     email: localStorage.getItem("user_email"),
@@ -221,17 +299,17 @@ function logout() {
   window.location.href = "index.html";
 }
 
-// Debug toggle
 function toggleDebug() {
-  const box = document.getElementById("debugBox");
-  box.style.display = box.style.display === "block" ? "none" : "block";
+  const d = document.getElementById("debugBox");
+  d.style.display = d.style.display === "block" ? "none" : "block";
 }
 
+/********************** INIT LOAD **********************/
 window.addEventListener("DOMContentLoaded", async () => {
   const s = requireLogin();
 
-  document.getElementById("adminName").textContent = s.name || s.email;
-  document.getElementById("companyID").textContent = s.companyID || "-";
+  document.getElementById("adminName").textContent = s.name;
+  document.getElementById("companyID").textContent = s.companyID;
 
   const url = `${ADMIN_API_URL}?action=getDashboardSummary&email=${encodeURIComponent(s.email)}`;
   const res = await fetch(url);
@@ -240,29 +318,122 @@ window.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("debugBox").textContent = JSON.stringify(data, null, 2);
 
   if (!data.success) {
-    alert("Error loading dashboard: " + data.message);
+    alert("Failed: " + data.message);
     return;
   }
 
-  const k = data.kpis;
+  renderKPIs(data.kpis);
+  renderStatus(data.statusCounts);
+  renderTaskDurations(data.tasksDetail);
+  renderSubtasks(data.subtasksDetail);
+  renderSurveyTable(data.surveyDetail);
+});
 
+/********************** RENDER HELPERS **********************/
+function renderKPIs(k) {
   document.getElementById("kpiTasks").textContent = k.totalTasks;
   document.getElementById("kpiStaff").textContent = k.totalStaff;
   document.getElementById("kpiCompleted7").textContent = k.completedLast7;
   document.getElementById("kpiDuration").textContent = k.avgDurationMinutes;
   document.getElementById("kpiResponses").textContent = k.totalResponses;
   document.getElementById("kpiRating").textContent = k.avgRatingOverall;
+}
 
-  // Status breakdown tags
-  const statusBox = document.getElementById("statusTags");
-  statusBox.innerHTML = "";
-  for (const [status, count] of Object.entries(data.statusCounts)) {
-    const tag = document.createElement("div");
-    tag.className = "tag";
-    tag.textContent = `${status}: ${count}`;
-    statusBox.appendChild(tag);
+function renderStatus(obj) {
+  const box = document.getElementById("statusTags");
+  box.innerHTML = "";
+  Object.entries(obj).forEach(([s,c]) => {
+    const t = document.createElement("div");
+    t.className = "tag";
+    t.textContent = `${s}: ${c}`;
+    box.appendChild(t);
+  });
+}
+
+function fmtDate(iso) {
+  if (!iso) return "-";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "-";
+  return d.toLocaleString("en-MY");
+}
+
+function renderTaskDurations(list) {
+  const tbody = document.querySelector("#taskDurationTable tbody");
+  tbody.innerHTML = "";
+  const arr = (list || []).filter(x => x.durationMinutes != null);
+
+  if (!arr.length) {
+    tbody.innerHTML = `<tr><td colspan="6">No completed tasks found.</td></tr>`;
+    return;
   }
-});
+
+  arr.sort((a,b) => b.durationMinutes - a.durationMinutes);
+
+  arr.forEach(t => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${t.taskID}</td>
+      <td>${t.clientName || "-"}</td>
+      <td><span class="pill">${t.status}</span></td>
+      <td>${fmtDate(t.startTime)}</td>
+      <td>${fmtDate(t.endTime)}</td>
+      <td>${t.durationMinutes}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderSubtasks(list) {
+  const tbody = document.querySelector("#subtasksTable tbody");
+  tbody.innerHTML = "";
+  if (!list || !list.length) {
+    tbody.innerHTML = `<tr><td colspan="6">No subtasks found.</td></tr>`;
+    return;
+  }
+
+  list.forEach(s => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${s.taskID}</td>
+      <td>${s.subtaskNo}</td>
+      <td><span class="pill">${s.status}</span></td>
+      <td>${s.lat || "-"}, ${s.lon || "-"}</td>
+      <td>${s.remarks || "-"}</td>
+      <td>${s.photoUrls.length} photo(s)</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderSurveyTable(detail) {
+  const tbody = document.querySelector("#surveyTable tbody");
+  tbody.innerHTML = "";
+
+  const tasks = Object.keys(detail || {});
+  if (!tasks.length) {
+    tbody.innerHTML = `<tr><td colspan="5">No survey data available.</td></tr>`;
+    return;
+  }
+
+  tasks.forEach(tid => {
+    const s = detail[tid];
+    const tr = document.createElement("tr");
+
+    const questions = s.questions.map(q => `${q.qno}. ${q.text}`).join("<br>");
+    const responses = s.responses.map((r,i) =>
+      `(${i+1}) Ratings: ${JSON.stringify(r.ratings)}`
+    ).join("<br>");
+
+    tr.innerHTML = `
+      <td>${tid}</td>
+      <td>${s.required ? "Yes" : "No"}</td>
+      <td>${s.status}</td>
+      <td>${questions || "-"}</td>
+      <td>${responses || "-"}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
 </script>
 
 </body>
