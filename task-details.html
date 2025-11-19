@@ -29,16 +29,6 @@
         flex-direction: column;
       }
 
-      header {
-        background: linear-gradient(135deg, var(--primary), #1e3d72);
-        color: white;
-        padding: 18px 20px;
-        text-align: center;
-        font-weight: 600;
-        font-size: 1.2rem;
-        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
-      }
-
       .container {
         padding: 15px;
         flex: 1;
@@ -350,10 +340,59 @@
         font-size: 0.8rem;
         color: var(--text-light);
       }
+
+      /* 🔥 Global loading overlay */
+      .loading-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.35);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+      }
+
+      .loading-box {
+        background: #ffffff;
+        padding: 18px 22px;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        min-width: 180px;
+      }
+
+      .spinner {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        border: 3px solid #e9ecef;
+        border-top-color: var(--primary);
+        animation: spin 0.8s linear infinite;
+      }
+
+      .loading-text {
+        font-size: 0.9rem;
+        color: var(--text-dark);
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
     </style>
   </head>
   <body>
-    <header>Task Details</header>
+    <!-- 🔥 Global loading overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+      <div class="loading-box">
+        <div class="spinner"></div>
+        <div id="loadingText" class="loading-text">Loading...</div>
+      </div>
+    </div>
 
     <div class="container">
       <div id="alertBox" class="alert"></div>
@@ -365,9 +404,8 @@
       <!-- 🔹 Survey block -->
       <div class="survey-wrapper">
         <div class="survey-header">Customer Survey</div>
-        <div id="surveyStatusText" class="survey-status-line">
-          Checking survey status...
-        </div>
+        <div id="surveyStatusText" class="survey-status-line"></div>
+
         <button id="sendSurveyBtn" class="btn-survey" style="display: none">
           Generate Survey Link
         </button>
@@ -382,9 +420,9 @@
     <footer>© 2025 Synergy Alliance – Field Service Monitoring System</footer>
 
     <script>
-      // 🔗 Same Apps Script URL as other staff pages
+      // 🔗 Apps Script URL
       const SCRIPT_URL =
-        "https://script.google.com/macros/s/AKfycbz0MoHRClMnKGBFbHuSm7rmd-Ny9OiA7sJt8fBYrV1iM3aR2kutCSZEnaI4Q7NuXbGG/exec";
+        "https://script.google.com/macros/s/AKfycby3CwVPeAvSy8VEWjx2eLppveuUkn3F-GHZR6tZCs-YR-OTFavLUKEvk3svDiS5zI9o/exec";
 
       const alertBox = document.getElementById("alertBox");
       const taskInfoEl = document.getElementById("taskInfo");
@@ -392,6 +430,9 @@
 
       const surveyStatusTextEl = document.getElementById("surveyStatusText");
       const sendSurveyBtn = document.getElementById("sendSurveyBtn");
+
+      const loadingOverlay = document.getElementById("loadingOverlay");
+      const loadingTextEl = document.getElementById("loadingText");
 
       let currentTask = null;
       let taskStarted = false;
@@ -405,6 +446,17 @@
         status: "Not Required", // Not Required | Not Sent | Pending | Submitted
       };
 
+      /* ---------- GLOBAL LOADING OVERLAY ---------- */
+      function showLoading(message = "Loading...") {
+        if (loadingTextEl) loadingTextEl.textContent = message;
+        if (loadingOverlay) loadingOverlay.style.display = "flex";
+      }
+
+      function hideLoading() {
+        if (loadingOverlay) loadingOverlay.style.display = "none";
+      }
+
+      /* ---------- ALERTS (mainly for errors / short info) ---------- */
       function showAlert(message, type = "info", autoHide = false) {
         alertBox.className =
           "alert " + (type === "error" ? "alert-error" : "alert-info");
@@ -438,6 +490,8 @@
         const status = currentTask.status || "New";
 
         taskStarted = status === "In Progress" || status === "Done";
+        // If task is already done, force-disable complete button later
+        const isCompletedTask = status === "Done";
 
         taskInfoEl.innerHTML = `
           <h3>${currentTask.client}</h3>
@@ -532,6 +586,12 @@
 
         const canComplete = allDone && isSurveyCompletedOrNotRequired();
 
+        // 🔥 NEW FIX: If task is DONE, force disable complete button
+        if (currentTask.status === "Done") {
+          completeBtn.disabled = true;
+          return;
+        }
+
         completeBtn.disabled = !canComplete;
       }
 
@@ -573,18 +633,24 @@
 
       async function loadSurveyMeta() {
         if (!currentTask) return;
+
+        showLoading("Checking survey status...");
+
         const res = await callGet("getSurveyMeta", { taskID: currentTask.id });
+
+        hideLoading();
+
         if (res.success) {
           surveyMeta.required = !!res.required;
           surveyMeta.link = res.link || "";
           surveyMeta.status =
             res.status || (res.required ? "Not Sent" : "Not Required");
         } else {
-          // If backend fails, default to not required so we don't hard-block
           surveyMeta.required = false;
           surveyMeta.link = "";
           surveyMeta.status = "Not Required";
         }
+
         renderSurveyUI();
         updateCompleteButtonState();
       }
@@ -592,20 +658,22 @@
       async function handleGenerateSurveyLink() {
         if (!currentTask) return;
         sendSurveyBtn.disabled = true;
-        showAlert("Generating survey link...", "info");
-        const baseUrl = window.location.origin; // <-- Dynamic!
+        showLoading("Generating survey link...");
+        const baseUrl = window.location.origin; // dynamic if you ever use it
         const res = await callGet("generateSurveyLink", {
           taskID: currentTask.id,
           baseUrl,
         });
 
+        hideLoading();
+
         if (res.success) {
           surveyMeta.required = true;
           surveyMeta.link = res.link || "";
           surveyMeta.status = res.status || "Pending";
-          hideAlert();
           renderSurveyUI();
           updateCompleteButtonState();
+          showAlert("Survey link generated.", "info", true);
         } else {
           showAlert(res.message || "Failed to generate survey link.", "error");
           sendSurveyBtn.disabled = false;
@@ -649,13 +717,10 @@
           card.className = "subtask-accordion";
           card.innerHTML = `
             <div class="subtask-summary" data-toggle="${s.subtaskNo}">
-              <div class="subtask-title">[${s.subtaskNo}] ${s.title}</div>
+              <div class="subtask-title">${s.subtaskNo}</div>
+
               <div class="subtask-summary-right">
-                ${
-                  state.required
-                    ? '<span style="color:#dc3545;font-weight:600;">Required</span>'
-                    : ""
-                }
+                <span style="color:#dc3545;font-weight:600;">*</span>
                 ${statusPill(state.status)}
               </div>
             </div>
@@ -670,9 +735,8 @@
               </button>
               <div class="gps-line" id="gps-${s.subtaskNo}">${gpsText}</div>
 
-              <div class="field-label">Photos (min 1, max ${
-                s.maxPhotos || 5
-              })</div>
+              <div class="field-label">Photos (min 1, max 5)</div>
+
               <button class="btn-small btn-photo" data-addphoto="${
                 s.subtaskNo
               }" ${done ? "disabled" : ""}>
@@ -744,7 +808,7 @@
           if (btnGPS) {
             btnGPS.addEventListener("click", async () => {
               try {
-                showAlert("Capturing GPS...", "info");
+                showLoading("Capturing GPS...");
                 const gps = await captureGPS();
                 const state = subtasksState[s.subtaskNo];
                 state.lat = gps.lat;
@@ -752,9 +816,10 @@
                 gpsLabel.textContent = `📍 ${gps.lat.toFixed(
                   5
                 )}, ${gps.lon.toFixed(5)}`;
-                hideAlert();
+                hideLoading();
                 updateCompleteButtonState();
               } catch (err) {
+                hideLoading();
                 showAlert(err, "error");
               }
             });
@@ -776,7 +841,8 @@
           if (addBtn && fileInput && pendingContainer) {
             addBtn.addEventListener("click", () => {
               const state = subtasksState[s.subtaskNo];
-              const max = s.maxPhotos || 5;
+              const max = 5;
+
               const remaining =
                 max - state.photoCount - state.pendingFiles.length;
               if (remaining <= 0) {
@@ -849,39 +915,46 @@
                 return;
               }
 
-              showAlert("Uploading photos...", "info");
+              showLoading("Uploading photos...");
 
               const base64List = [];
-              for (let file of validFiles) {
-                const b64 = await fileToDataURL(file);
-                base64List.push(b64);
-              }
+              try {
+                for (let file of validFiles) {
+                  const b64 = await fileToDataURL(file);
+                  base64List.push(b64);
+                }
 
-              const staffEmail =
-                localStorage.getItem("staff_email") || "unknown";
+                const staffEmail =
+                  localStorage.getItem("staff_email") || "unknown";
 
-              const result = await callPost({
-                action: "uploadSubtaskPhotos",
-                taskID: currentTask.id,
-                subtaskNo: s.subtaskNo,
-                staffEmail,
-                files: base64List,
-              });
+                const result = await callPost({
+                  action: "uploadSubtaskPhotos",
+                  taskID: currentTask.id,
+                  subtaskNo: s.subtaskNo,
+                  staffEmail,
+                  files: base64List,
+                });
 
-              if (result.success) {
-                state.photoCount += result.urls
-                  ? result.urls.length
-                  : validFiles.length;
-                state.pendingFiles = [];
-                pendingContainer.innerHTML = "";
-                photosLabel.textContent = `Uploaded photos: ${state.photoCount}`;
-                hideAlert();
-                updateCompleteButtonState();
-              } else {
-                showAlert(
-                  result.message || "Failed to upload photos.",
-                  "error"
-                );
+                hideLoading();
+
+                if (result.success) {
+                  state.photoCount += result.urls
+                    ? result.urls.length
+                    : validFiles.length;
+                  state.pendingFiles = [];
+                  pendingContainer.innerHTML = "";
+                  photosLabel.textContent = `Uploaded photos: ${state.photoCount}`;
+                  updateCompleteButtonState();
+                  showAlert("Photos uploaded.", "info", true);
+                } else {
+                  showAlert(
+                    result.message || "Failed to upload photos.",
+                    "error"
+                  );
+                }
+              } catch (err) {
+                hideLoading();
+                showAlert("Failed to upload photos.", "error");
               }
             });
           }
@@ -919,7 +992,7 @@
             }
 
             const remarks = remarksEl.value.trim();
-            showAlert("Saving subtask status...", "info");
+            showLoading("Saving subtask status...");
 
             const res = await callGet("updateSubtaskMeta", {
               taskID: currentTask.id,
@@ -929,6 +1002,8 @@
               remarks,
               status: "Done",
             });
+
+            hideLoading();
 
             if (res.success) {
               state.status = "Done";
@@ -979,7 +1054,7 @@
         if (!startBtn) return;
 
         startBtn.disabled = true;
-        showAlert("Starting task and capturing GPS...", "info");
+        showLoading("Starting task and capturing GPS...");
 
         try {
           const gps = await captureGPS();
@@ -990,12 +1065,12 @@
             lon: gps.lon,
           });
 
+          hideLoading();
+
           if (res.success) {
-            // 🔥 Update values
+            // Update values
             taskStarted = true;
             currentTask.status = "In Progress";
-
-            // 🔥 FIX: Save updated object!
             localStorage.setItem("selectedTask", JSON.stringify(currentTask));
 
             // Refresh UI
@@ -1008,6 +1083,7 @@
             startBtn.disabled = false;
           }
         } catch (err) {
+          hideLoading();
           showAlert("Error starting task: " + err, "error");
           startBtn.disabled = false;
         }
@@ -1042,7 +1118,8 @@
           return;
         }
 
-        showAlert("Completing task and capturing final GPS...", "info");
+        showLoading("Completing task and capturing final GPS...");
+
         try {
           const gps = await captureGPS();
           const res = await callGet("updateTaskComplete", {
@@ -1050,6 +1127,7 @@
             lat: gps.lat,
             lon: gps.lon,
           });
+          hideLoading();
           if (res.success) {
             showAlert("Task completed successfully.", "info");
             setTimeout(() => {
@@ -1060,6 +1138,7 @@
             showAlert(res.message || "Failed to complete task.", "error");
           }
         } catch (err) {
+          hideLoading();
           showAlert("Error completing task: " + err, "error");
         }
       }
@@ -1095,11 +1174,11 @@
         await loadSurveyMeta();
 
         // Load subtasks
-        showAlert("Loading subtasks...", "info");
+        showLoading("Loading subtasks...");
         const res = await callGet("getSubtasks", { taskID: currentTask.id });
+        hideLoading();
         if (res.success) {
           subtasks = res.subtasks || [];
-          hideAlert();
           renderSubtasks();
         } else {
           showAlert(res.message || "Failed to load subtasks.", "error");
