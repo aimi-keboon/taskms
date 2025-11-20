@@ -388,7 +388,7 @@
                 <th>Phone</th>
                 <th>Role</th>
                 <th>Active</th>
-                <th style="width: 1%;">Actions</th>
+                <th style="width: 1%">Actions</th>
               </tr>
             </thead>
             <tbody id="usersTableBody">
@@ -413,14 +413,20 @@
             <input type="hidden" id="userID" />
 
             <div class="form-row">
-              <label for="name">Name <span style="color: var(--danger);">*</span></label>
+              <label for="name"
+                >Name <span style="color: var(--danger)">*</span></label
+              >
               <input type="text" id="name" required />
             </div>
 
             <div class="form-row">
-              <label for="email">Email <span style="color: var(--danger);">*</span></label>
+              <label for="email"
+                >Email <span style="color: var(--danger)">*</span></label
+              >
               <input type="email" id="email" required />
-              <div class="hint">This should match the login email used by the user.</div>
+              <div class="hint">
+                This should match the login email used by the user.
+              </div>
             </div>
 
             <div class="form-row">
@@ -444,7 +450,11 @@
               </div>
             </div>
 
-            <div class="error-text" id="userFormError" style="display:none;"></div>
+            <div
+              class="error-text"
+              id="userFormError"
+              style="display: none"
+            ></div>
           </div>
 
           <div class="modal-footer">
@@ -459,7 +469,7 @@
 
     <script>
       const ADMIN_API_URL =
-        "https://script.google.com/macros/s/AKfycbzctnn9E48rwbnHifS44GG7lvSOu7wUOOSrRTMRd_p_S0A6dGOXfiR8yYuCtcYYxlxB/exec";
+        "https://script.google.com/macros/s/AKfycbz_vtPT_yfEMs8DLitkTWIs05vfW6Qx_Sqe1h9rTLOB1JeFipa9AUX1UmY6wjW09yXc/exec";
 
       function getSession() {
         return {
@@ -658,30 +668,27 @@
         setLoading(true);
         try {
           const params = new URLSearchParams({
-            action: payload.userID ? "updateUser" : "createUser", // TODO: adjust to your backend
+            action: payload.userID ? "updateUser" : "createUser",
           });
 
-          const res = await fetch(`${ADMIN_API_URL}?${params.toString()}`, {
+          await fetch(`${ADMIN_API_URL}?${params.toString()}`, {
             method: "POST",
+            mode: "no-cors",
             headers: {
               "Content-Type": "application/json",
             },
             body: JSON.stringify(payload),
           });
 
-          const data = await res.json();
-          if (!data.success) {
-            throw new Error(data.message || "Failed to save user");
-          }
-
-          // Reload list
+          // We cannot read a response in no-cors mode.
+          // Just reload the users table.
           await loadUsers();
           closeUserModal();
         } catch (err) {
           console.error(err);
           const formError = document.getElementById("userFormError");
           formError.style.display = "block";
-          formError.textContent = err.message || "Failed to save user.";
+          formError.textContent = "Failed to save user.";
         } finally {
           setLoading(false);
         }
@@ -689,6 +696,7 @@
 
       async function toggleUserActive(user) {
         if (!user) return;
+
         const newStatus = !user.active;
         if (
           !confirm(
@@ -708,26 +716,22 @@
           };
 
           const params = new URLSearchParams({
-            action: "setUserActive", // TODO: match your backend
+            action: "setUserActive",
           });
 
-          const res = await fetch(`${ADMIN_API_URL}?${params.toString()}`, {
+          await fetch(`${ADMIN_API_URL}?${params.toString()}`, {
             method: "POST",
+            mode: "no-cors",
             headers: {
               "Content-Type": "application/json",
             },
             body: JSON.stringify(payload),
           });
 
-          const data = await res.json();
-          if (!data.success) {
-            throw new Error(data.message || "Failed to update status");
-          }
-
           await loadUsers();
         } catch (err) {
           console.error(err);
-          alert(err.message || "Failed to update status");
+          alert("Failed to update status");
         } finally {
           setLoading(false);
         }
@@ -750,26 +754,22 @@
           };
 
           const params = new URLSearchParams({
-            action: "deleteUser", // TODO: match your backend
+            action: "deleteUser",
           });
 
-          const res = await fetch(`${ADMIN_API_URL}?${params.toString()}`, {
+          await fetch(`${ADMIN_API_URL}?${params.toString()}`, {
             method: "POST",
+            mode: "no-cors",
             headers: {
               "Content-Type": "application/json",
             },
             body: JSON.stringify(payload),
           });
 
-          const data = await res.json();
-          if (!data.success) {
-            throw new Error(data.message || "Failed to delete user");
-          }
-
           await loadUsers();
         } catch (err) {
           console.error(err);
-          alert(err.message || "Failed to delete user");
+          alert("Failed to delete user");
         } finally {
           setLoading(false);
         }

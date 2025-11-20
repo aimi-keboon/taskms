@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<body>
+<h2>POST Tester</h2>
+<button onclick="testPost()">Send POST</button>
+<pre id="out"></pre>
+
+<script>
+async function testPost() {
+  const res = await fetch("https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec", {
+    method: "POST",
+    mode: "no-cors",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      action: "createUser",
+      name: "Test User",
+      email: "test@x.com",
+      companyID: "SY001"
+    })
+  });
+
+  document.getElementById("out").innerText = "POST sent. If no response → CORS issue.";
+}
+</script>
+</body>
+</html>
