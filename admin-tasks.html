@@ -535,9 +535,63 @@
       </div>
     </div>
 
+    <!-- ADMIN SUBTASKS MODAL -->
+<div id="subtasksModalBackdrop" class="modal-backdrop">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">
+        Subtasks – <span id="subtasksTaskIDLabel"></span>
+      </div>
+      <button class="modal-close" id="subtasksModalClose">&times;</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="section-header" style="padding: 0; margin-bottom: 8px;">
+        <h2 style="font-size: 0.9rem;">Subtasks List</h2>
+        <button class="btn-primary" id="btnAddSubtask" type="button">
+          + Add Subtask
+        </button>
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <th>Title</th>
+<th>Status</th>
+<th>Photos</th>
+<th style="width: 1%;">Actions</th>
+
+          </thead>
+          <tbody id="subtasksTableBody">
+            <tr><td colspan="5">No subtasks yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <hr style="margin: 10px 0; border: none; border-top: 1px solid #e5e7eb;" />
+
+      <div id="subtaskEditorContainer">
+
+  <div class="form-row" style="margin-top: 12px;">
+    <label>Add New Subtask</label>
+    <div style="display: flex; gap: 8px;">
+      <input id="newSubtaskTitleInput" type="text" placeholder="Enter subtask title" style="flex: 1;">
+      <button type="button" class="btn-primary" id="btnCreateSubtask">Add</button>
+    </div>
+    <div class="error-text" id="subtaskAddError" style="display:none; margin-top:3px;"></div>
+  </div>
+
+</div>
+
+
+    </div>
+  </div>
+</div>
+
+
     <script>
       const ADMIN_API_URL =
-        "https://script.google.com/macros/s/AKfycbwd6bktxfeNy8R8hwlZy8Mv6fLlomknDyKzMV5tsa6XiD9mCograiF-8HSTiIsb-9E/exec"; // you will replace this
+        "https://script.google.com/macros/s/AKfycbxB-jvq-Y3xqurd0soPMECOxlPvJR2rAxhdZp8IsU4FOF5X_u2q86JOXrggrMl_LS0/exec"; // you will replace this
 
       function getSession() {
         return {
@@ -655,22 +709,31 @@
           );
 
           const tdActions = document.createElement("td");
-          tdActions.className = "actions-cell";
+tdActions.className = "actions-cell";
 
-          const btnEdit = document.createElement("button");
-          btnEdit.type = "button";
-          btnEdit.className = "btn-ghost";
-          btnEdit.textContent = "Edit";
-          btnEdit.onclick = () => openTaskModal(t);
+// NEW: Manage Subtasks button (does not touch scheduled time)
+const btnSubtasks = document.createElement("button");
+btnSubtasks.type = "button";
+btnSubtasks.className = "btn-ghost";
+btnSubtasks.textContent = "Subtasks";
+btnSubtasks.onclick = () => openSubtasksModal(t);
 
-          const btnDelete = document.createElement("button");
-          btnDelete.type = "button";
-          btnDelete.className = "btn-ghost danger";
-          btnDelete.textContent = "Delete";
-          btnDelete.onclick = () => confirmDeleteTask(t);
+const btnEdit = document.createElement("button");
+btnEdit.type = "button";
+btnEdit.className = "btn-ghost";
+btnEdit.textContent = "Edit";
+btnEdit.onclick = () => openTaskModal(t);
 
-          tdActions.appendChild(btnEdit);
-          tdActions.appendChild(btnDelete);
+const btnDelete = document.createElement("button");
+btnDelete.type = "button";
+btnDelete.className = "btn-ghost danger";
+btnDelete.textContent = "Delete";
+btnDelete.onclick = () => confirmDeleteTask(t);
+
+tdActions.appendChild(btnSubtasks);
+tdActions.appendChild(btnEdit);
+tdActions.appendChild(btnDelete);
+
 
           tr.appendChild(tdTaskID);
           tr.appendChild(tdClient);
@@ -686,6 +749,267 @@
 
         countLabel.textContent = filteredTasks.length + " task(s)";
       }
+/* ===== SUBTASKS – ADMIN STATE ===== */
+let currentSubtasksTaskID = null;
+let currentSubtasks = [];
+
+/* ===== SUBTASKS – RENDER TABLE ===== */
+function renderSubtasksTable() {
+  const tbody = document.getElementById("subtasksTableBody");
+
+  if (!currentSubtasks || currentSubtasks.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4">No subtasks yet.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = "";
+
+  currentSubtasks.forEach((s) => {
+    const tr = document.createElement("tr");
+
+    /* NORMAL VIEW MODE */
+    if (!s._editMode) {
+      const tdTitle = document.createElement("td");
+      tdTitle.textContent = s.title || "-";
+
+      const tdStatus = document.createElement("td");
+      tdStatus.textContent = s.status || "New";
+
+      const tdPhotos = document.createElement("td");
+      tdPhotos.textContent = (s.photoCount || 0) + " photo(s)";
+
+      const tdActions = document.createElement("td");
+      tdActions.className = "actions-cell";
+
+      const btnEdit = document.createElement("button");
+      btnEdit.className = "btn-ghost";
+      btnEdit.textContent = "Edit";
+      btnEdit.onclick = () => {
+        s._editMode = true;
+        renderSubtasksTable();
+      };
+
+      const btnDelete = document.createElement("button");
+      btnDelete.className = "btn-ghost danger";
+      btnDelete.textContent = "Delete";
+      btnDelete.onclick = () => confirmDeleteSubtask(s);
+
+      tdActions.appendChild(btnEdit);
+      tdActions.appendChild(btnDelete);
+
+      tr.appendChild(tdTitle);
+      tr.appendChild(tdStatus);
+      tr.appendChild(tdPhotos);
+      tr.appendChild(tdActions);
+    }
+
+    /* INLINE EDIT MODE */
+    else {
+      const tdEdit = document.createElement("td");
+      tdEdit.colSpan = 4;
+
+      tdEdit.innerHTML = `
+        <div style="display:flex; gap:8px;">
+          <input 
+            type="text" 
+            id="editInput_${s.title}" 
+            value="${s.title}" 
+            style="flex:1;"
+          >
+          <button class="btn-primary" id="saveEdit_${s.title}">Save</button>
+          <button class="btn-ghost" id="cancelEdit_${s.title}">Cancel</button>
+        </div>
+      `;
+
+      tr.appendChild(tdEdit);
+
+      setTimeout(() => {
+        document.getElementById(`saveEdit_${s.title}`).onclick = () => saveInlineEdit(s);
+        document.getElementById(`cancelEdit_${s.title}`).onclick = () => {
+          s._editMode = false;
+          renderSubtasksTable();
+        };
+      }, 0);
+    }
+
+    tbody.appendChild(tr);
+  });
+}
+
+/* ===== SUBTASKS – LOAD FROM BACKEND ===== */
+async function loadSubtasksAdmin(taskID) {
+  if (!taskID) return;
+
+  setLoading(true);
+  try {
+    const params = new URLSearchParams({
+      action: "getSubtasksAdmin",
+      taskID
+    });
+
+    const res = await fetch(`${ADMIN_API_URL}?${params.toString()}`, {
+      method: "GET",
+      mode: "cors"
+    });
+
+    const data = await res.json();
+
+    if (!data.success) {
+      currentSubtasks = [];
+      alert("Error loading subtasks: " + (data.message || "Unknown error"));
+    } else {
+      currentSubtasks = data.subtasks || [];
+    }
+  } catch (err) {
+    console.error("Error loading subtasks:", err);
+    currentSubtasks = [];
+    alert("Error loading subtasks. Check console.");
+  } finally {
+    setLoading(false);
+    renderSubtasksTable();
+  }
+}
+
+/* ===== SUBTASKS – INLINE EDIT SAVE ===== */
+async function saveInlineEdit(subtask) {
+  const input = document.getElementById(`editInput_${subtask.title}`);
+  const newTitle = (input.value || "").trim();
+
+  if (!newTitle) {
+    alert("Title cannot be empty.");
+    return;
+  }
+
+  const payload = {
+    action: "updateSubtaskAdmin",
+    taskID: currentSubtasksTaskID,
+    titleExisting: subtask.title,
+    title: newTitle
+  };
+
+  setLoading(true);
+  try {
+    const params = new URLSearchParams({ action: "updateSubtaskAdmin" });
+
+    await fetch(`${ADMIN_API_URL}?${params}`, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    await loadSubtasksAdmin(currentSubtasksTaskID);
+  } catch (e) {
+    console.error(e);
+    alert("Failed to update subtask.");
+  } finally {
+    setLoading(false);
+  }
+}
+
+/* ===== SUBTASKS – OPEN MODAL ===== */
+function openSubtasksModal(task) {
+  if (!task || !task.taskID) return;
+
+  currentSubtasksTaskID = task.taskID;
+
+  document.getElementById("subtasksTaskIDLabel").textContent = task.taskID;
+
+  // clear new input
+  document.getElementById("newSubtaskTitleInput").value = "";
+  document.getElementById("subtaskAddError").style.display = "none";
+
+  document
+    .getElementById("subtasksModalBackdrop")
+    .classList.add("show");
+
+  loadSubtasksAdmin(task.taskID);
+}
+
+/* ===== SUBTASKS – CLOSE MODAL ===== */
+function closeSubtasksModal() {
+  document
+    .getElementById("subtasksModalBackdrop")
+    .classList.remove("show");
+
+  currentSubtasks = [];
+  currentSubtasksTaskID = null;
+}
+
+/* ===== SUBTASKS – CREATE NEW ===== */
+document.getElementById("btnCreateSubtask").onclick = async () => {
+  const title = document.getElementById("newSubtaskTitleInput").value.trim();
+  const errorEl = document.getElementById("subtaskAddError");
+
+  errorEl.style.display = "none";
+
+  if (!title) {
+    errorEl.textContent = "Title cannot be empty.";
+    errorEl.style.display = "block";
+    return;
+  }
+
+  const payload = {
+    action: "createSubtaskAdmin",
+    taskID: currentSubtasksTaskID,
+    title
+  };
+
+  setLoading(true);
+  try {
+    const params = new URLSearchParams({ action: "createSubtaskAdmin" });
+
+    await fetch(`${ADMIN_API_URL}?${params}`, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    document.getElementById("newSubtaskTitleInput").value = "";
+    await loadSubtasksAdmin(currentSubtasksTaskID);
+  } catch (err) {
+    console.error(err);
+    errorEl.textContent = "Failed to create subtask.";
+    errorEl.style.display = "block";
+  } finally {
+    setLoading(false);
+  }
+};
+
+/* ===== SUBTASKS – DELETE ===== */
+async function confirmDeleteSubtask(subtask) {
+  if (!currentSubtasksTaskID || !subtask || !subtask.title) return;
+
+  if (!confirm(`Delete Subtask "${subtask.title}"? This cannot be undone.`))
+    return;
+
+  setLoading(true);
+  try {
+    const payload = {
+      action: "deleteSubtaskAdmin",
+      taskID: currentSubtasksTaskID,
+      title: subtask.title
+    };
+
+    const params = new URLSearchParams({ action: "deleteSubtaskAdmin" });
+
+    await fetch(`${ADMIN_API_URL}?${params}`, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    await loadSubtasksAdmin(currentSubtasksTaskID);
+  } catch (err) {
+    console.error(err);
+    alert("Failed to delete subtask.");
+  } finally {
+    setLoading(false);
+  }
+}
+
 
       /* ===== FILTERING ===== */
       function applyFilters() {
@@ -870,6 +1194,8 @@
 
           const params = new URLSearchParams({ action });
 
+
+
           await fetch(`${ADMIN_API_URL}?${params.toString()}`, {
             method: "POST",
             mode: "no-cors",
@@ -949,6 +1275,20 @@
             e.preventDefault();
             closeTaskModal();
           });
+// SUBTASKS MODAL CONTROLS
+document
+  .getElementById("subtasksModalClose")
+  .addEventListener("click", closeSubtasksModal);
+
+// Add subtask button simply focuses the input
+document
+  .getElementById("btnAddSubtask")
+  .addEventListener("click", (e) => {
+    e.preventDefault();
+    document.getElementById("newSubtaskTitleInput").focus();
+  });
+
+  
 
         // Form submit
         document
