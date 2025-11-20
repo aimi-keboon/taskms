@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>FSMS Admin – Tasks</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <style>
+      :root {
+        --primary: #2c5aa0;
+        --accent: #28a745;
+        --bg: #f4f6fb;
+        --text-dark: #1e2a3a;
+        --text-light: #6c757d;
+        --radius: 12px;
+        --danger: #dc3545;
+        --muted: #e9ecef;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: "Inter", Arial, sans-serif;
+      }
+
+      body {
+        background: var(--bg);
+      }
+
+      /* ===== UNIVERSAL FULLSCREEN LOADING OVERLAY ===== */
+      #loadingOverlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.75);
+        backdrop-filter: blur(4px);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 99999;
+      }
+
+      .loader {
+        width: 48px;
+        height: 48px;
+        border: 5px solid #c8d4e5;
+        border-top-color: var(--primary);
+        border-radius: 50%;
+        animation: spin 0.9s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      #loadingOverlay.hidden {
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s ease-out;
+      }
+
+      main {
+        padding: 25px;
+        max-width: 1200px;
+        margin: auto;
+      }
+
+      .page-title {
+        font-size: 1.1rem;
+        margin-bottom: 6px;
+        font-weight: 600;
+      }
+
+      .page-subtitle {
+        font-size: 0.88rem;
+        margin-bottom: 20px;
+        color: var(--text-light);
+      }
+
+      /* ===== TOP TOOLBAR ===== */
+      .toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .toolbar-left {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .toolbar-right {
+        display: flex;
+        gap: 8px;
+      }
+
+      .input-sm,
+      .select-sm {
+        padding: 6px 9px;
+        border-radius: 999px;
+        border: 1px solid #d0d7e2;
+        font-size: 0.8rem;
+        outline: none;
+        min-width: 160px;
+      }
+
+      .input-sm:focus,
+      .select-sm:focus {
+        border-color: var(--primary);
+      }
+
+      .btn-primary {
+        padding: 7px 14px;
+        border-radius: 999px;
+        border: none;
+        cursor: pointer;
+        background: var(--primary);
+        color: #fff;
+        font-size: 0.85rem;
+        font-weight: 500;
+      }
+
+      .btn-primary:hover {
+        opacity: 0.92;
+      }
+
+      .btn-ghost {
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid #d0d7e2;
+        background: #fff;
+        cursor: pointer;
+        font-size: 0.75rem;
+        color: var(--text-dark);
+      }
+
+      .btn-ghost.danger {
+        border-color: var(--danger);
+        color: var(--danger);
+      }
+
+      .btn-ghost:hover {
+        background: #f3f4f6;
+      }
+
+      /* ===== CARD & TABLE ===== */
+      .section-card {
+        background: white;
+        border-radius: var(--radius);
+        padding: 18px 18px 12px;
+        margin-bottom: 25px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+      }
+
+      .section-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .section-header h2 {
+        font-size: 1rem;
+        font-weight: 600;
+      }
+
+      .section-header .muted {
+        font-size: 0.8rem;
+        color: var(--text-light);
+      }
+
+      .table-wrapper {
+        overflow-x: auto;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.82rem;
+      }
+
+      th,
+      td {
+        border-bottom: 1px solid #e5e7eb;
+        padding: 7px;
+        white-space: nowrap;
+        text-align: left;
+      }
+
+      th {
+        background: #f8fafc;
+        font-size: 0.75rem;
+        color: var(--text-light);
+        text-transform: uppercase;
+      }
+
+      tr:nth-child(even) td {
+        background: #fafafa;
+      }
+
+      .pill {
+        display: inline-block;
+        padding: 3px 9px;
+        border-radius: 999px;
+        font-size: 0.7rem;
+      }
+
+      .pill.status-new {
+        background: #e0f2fe;
+        color: #1d4ed8;
+      }
+
+      .pill.status-inprogress {
+        background: #fef3c7;
+        color: #92400e;
+      }
+
+      .pill.status-done {
+        background: #dcfce7;
+        color: #166534;
+      }
+
+      .pill.survey-yes {
+        background: rgba(40, 167, 69, 0.1);
+        color: #1f7a35;
+      }
+
+      .pill.survey-no {
+        background: #f3f4f6;
+        color: #6b7280;
+      }
+
+      .actions-cell {
+        display: flex;
+        gap: 6px;
+      }
+
+      .checkbox-list {
+        background: #fff;
+        border: 1px solid #d0d7e2;
+        border-radius: 8px;
+        padding: 10px;
+        max-height: 140px;
+        overflow-y: auto;
+      }
+
+      .checkbox-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 0;
+        font-size: 0.85rem;
+      }
+
+      /* ===== MODAL ===== */
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.4);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+      }
+
+      .modal-backdrop.show {
+        display: flex;
+      }
+
+      .modal {
+        background: #fff;
+        border-radius: 14px;
+        padding: 18px 18px 16px;
+        width: 100%;
+        max-width: 520px;
+        box-shadow: 0 18px 50px rgba(15, 23, 42, 0.25);
+      }
+
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+
+      .modal-title {
+        font-size: 0.98rem;
+        font-weight: 600;
+      }
+
+      .modal-close {
+        border: none;
+        background: transparent;
+        font-size: 1.2rem;
+        cursor: pointer;
+        line-height: 1;
+      }
+
+      .modal-body {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+
+      .form-row {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+
+      .form-row label {
+        font-size: 0.78rem;
+        color: var(--text-light);
+      }
+
+      .form-row input,
+      .form-row select,
+      .form-row textarea {
+        padding: 7px 9px;
+        border-radius: 8px;
+        border: 1px solid #d0d7e2;
+        font-size: 0.85rem;
+        outline: none;
+      }
+
+      .form-row input:focus,
+      .form-row select:focus,
+      .form-row textarea:focus {
+        border-color: var(--primary);
+      }
+
+      .form-row .hint {
+        font-size: 0.72rem;
+        color: var(--text-light);
+      }
+
+      .form-inline {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .form-inline .form-row {
+        flex: 1;
+      }
+
+      .modal-footer {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .checkbox-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 4px;
+        font-size: 0.8rem;
+      }
+
+      .error-text {
+        font-size: 0.75rem;
+        color: var(--danger);
+      }
+
+      .badge {
+        display: inline-block;
+        font-size: 0.72rem;
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: #f3f4f6;
+        color: #4b5563;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- LOADING OVERLAY -->
+    <div id="loadingOverlay">
+      <div class="loader"></div>
+    </div>
+
+    <!-- GLOBAL NAVBAR (admin-navbar.js) -->
+    <div id="globalHeader"></div>
+    <script src="admin-navbar.js"></script>
+
+    <main>
+      <div class="page-title">Task Management</div>
+      <div class="page-subtitle">
+        Create, update and assign FSMS tasks for your company.
+      </div>
+
+      <!-- TOOLBAR -->
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <input
+            type="text"
+            id="searchInput"
+            class="input-sm"
+            placeholder="Search TaskID / client / location..."
+          />
+          <select id="statusFilter" class="select-sm">
+            <option value="">All statuses</option>
+            <option value="New">New</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Done">Done</option>
+          </select>
+          <select id="surveyFilter" class="select-sm">
+            <option value="">Survey: Any</option>
+            <option value="yes">Required</option>
+            <option value="no">Not required</option>
+          </select>
+        </div>
+        <div class="toolbar-right">
+          <button class="btn-primary" id="btnAddTask">+ Add New Task</button>
+        </div>
+      </div>
+
+      <!-- TASKS TABLE -->
+      <div class="section-card">
+        <div class="section-header">
+          <h2>Tasks</h2>
+          <span class="muted" id="taskCountLabel">0 task(s)</span>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Task ID</th>
+                <th>Client</th>
+                <th>Location</th>
+                <th>Scheduled</th>
+                <th>Assigned Staff</th>
+                <th>Status</th>
+                <th>Survey</th>
+                <th style="width: 1%">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="tasksTableBody">
+              <tr>
+                <td colspan="8">Loading tasks...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+
+    <!-- ADD / EDIT TASK MODAL -->
+    <div id="taskModalBackdrop" class="modal-backdrop">
+      <div class="modal">
+        <div class="modal-header">
+          <div class="modal-title" id="taskModalTitle">Add Task</div>
+          <button class="modal-close" id="taskModalClose">&times;</button>
+        </div>
+        <form id="taskForm">
+          <div class="modal-body">
+            <input type="hidden" id="taskIDHidden" />
+
+            <div class="form-row">
+              <label>Assigned Staff</label>
+              <div id="assignedStaffContainer" class="checkbox-list"></div>
+              <div class="hint">Select one or multiple staff.</div>
+            </div>
+
+            <div class="form-row">
+              <label for="clientName">
+                Client Name
+                <span style="color: var(--danger)">*</span>
+              </label>
+              <input type="text" id="clientName" required />
+            </div>
+
+            <div class="form-row">
+              <label for="location">
+                Location
+                <span style="color: var(--danger)">*</span>
+              </label>
+              <input type="text" id="location" required />
+            </div>
+
+            <div class="form-row">
+              <label for="scheduledTime">
+                Scheduled Time
+                <span style="color: var(--danger)">*</span>
+              </label>
+              <input type="datetime-local" id="scheduledTime" required />
+            </div>
+
+            <div class="form-row">
+              <label>Survey Required</label>
+              <div class="checkbox-row">
+                <input type="checkbox" id="surveyRequired" />
+                <span>Require customer survey for this task.</span>
+              </div>
+            </div>
+
+            <div class="form-inline">
+              <div class="form-row">
+                <label>Status (read only)</label>
+                <span class="badge" id="statusDisplay">New</span>
+              </div>
+              <div class="form-row">
+                <label>Survey Status (read only)</label>
+                <span class="badge" id="surveyStatusDisplay">-</span>
+              </div>
+            </div>
+
+            <div
+              class="error-text"
+              id="taskFormError"
+              style="display: none"
+            ></div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn-ghost" id="taskModalCancel">
+              Cancel
+            </button>
+            <button type="submit" class="btn-primary">Save Task</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      const ADMIN_API_URL =
+        "https://script.google.com/macros/s/AKfycbwd6bktxfeNy8R8hwlZy8Mv6fLlomknDyKzMV5tsa6XiD9mCograiF-8HSTiIsb-9E/exec"; // you will replace this
+
+      function getSession() {
+        return {
+          email: localStorage.getItem("user_email"),
+          companyID: localStorage.getItem("user_companyID"),
+          name: localStorage.getItem("user_name"),
+        };
+      }
+
+      function requireLogin() {
+        const s = getSession();
+        if (!s.email) location.href = "index.html";
+        return s;
+      }
+
+      function setLoading(isLoading) {
+        const overlay = document.getElementById("loadingOverlay");
+        if (!overlay) return;
+        if (isLoading) overlay.classList.remove("hidden");
+        else overlay.classList.add("hidden");
+      }
+
+      /* ===== STATE ===== */
+      let currentSession = null;
+      let rawTasks = [];
+      let filteredTasks = [];
+      let staffList = []; // from getUsers: [{userID,name,email,role,active}, ...]
+
+      /* ===== HELPERS ===== */
+      function formatDisplayDateTime(str) {
+        if (!str) return "-";
+        // input is "yyyy-MM-ddTHH:mm"
+        return str.replace("T", " ");
+      }
+
+      function buildStatusPill(status) {
+        const span = document.createElement("span");
+        const s = (status || "New").toLowerCase();
+        span.classList.add("pill");
+        if (s === "done") span.classList.add("status-done");
+        else if (s === "in progress") span.classList.add("status-inprogress");
+        else span.classList.add("status-new");
+        span.textContent = status || "New";
+        return span;
+      }
+
+      function buildSurveyPill(required, surveyStatus) {
+        const wrap = document.createElement("div");
+        const p1 = document.createElement("span");
+        p1.classList.add("pill");
+        p1.classList.add(required ? "survey-yes" : "survey-no");
+        p1.textContent = required ? "Required" : "Not required";
+        wrap.appendChild(p1);
+
+        if (required) {
+          const p2 = document.createElement("span");
+          p2.classList.add("badge");
+          p2.style.marginLeft = "4px";
+          p2.textContent = surveyStatus || "Pending";
+          wrap.appendChild(p2);
+        }
+
+        return wrap;
+      }
+
+      function findStaffNameByEmail(email) {
+        const found = staffList.find(
+          (s) => (s.email || "").toLowerCase() === (email || "").toLowerCase()
+        );
+        return found ? found.name : email;
+      }
+
+      function renderAssignedStaffCell(emails) {
+        if (!emails || !emails.length) return "-";
+        return emails.map(findStaffNameByEmail).join(", ");
+      }
+
+      /* ===== RENDER TABLE ===== */
+      function renderTasksTable() {
+        const tbody = document.getElementById("tasksTableBody");
+        const countLabel = document.getElementById("taskCountLabel");
+
+        if (!filteredTasks.length) {
+          tbody.innerHTML =
+            '<tr><td colspan="8">No tasks found for current filters.</td></tr>';
+          countLabel.textContent = "0 task(s)";
+          return;
+        }
+
+        tbody.innerHTML = "";
+        filteredTasks.forEach((t) => {
+          const tr = document.createElement("tr");
+
+          const tdTaskID = document.createElement("td");
+          tdTaskID.textContent = t.taskID || "-";
+
+          const tdClient = document.createElement("td");
+          tdClient.textContent = t.clientName || "-";
+
+          const tdLoc = document.createElement("td");
+          tdLoc.textContent = t.location || "-";
+
+          const tdSched = document.createElement("td");
+          tdSched.textContent = formatDisplayDateTime(t.scheduledTime);
+
+          const tdStaff = document.createElement("td");
+          tdStaff.textContent = renderAssignedStaffCell(t.assignedStaff);
+
+          const tdStatus = document.createElement("td");
+          tdStatus.appendChild(buildStatusPill(t.status));
+
+          const tdSurvey = document.createElement("td");
+          tdSurvey.appendChild(
+            buildSurveyPill(!!t.surveyRequired, t.surveyStatus)
+          );
+
+          const tdActions = document.createElement("td");
+          tdActions.className = "actions-cell";
+
+          const btnEdit = document.createElement("button");
+          btnEdit.type = "button";
+          btnEdit.className = "btn-ghost";
+          btnEdit.textContent = "Edit";
+          btnEdit.onclick = () => openTaskModal(t);
+
+          const btnDelete = document.createElement("button");
+          btnDelete.type = "button";
+          btnDelete.className = "btn-ghost danger";
+          btnDelete.textContent = "Delete";
+          btnDelete.onclick = () => confirmDeleteTask(t);
+
+          tdActions.appendChild(btnEdit);
+          tdActions.appendChild(btnDelete);
+
+          tr.appendChild(tdTaskID);
+          tr.appendChild(tdClient);
+          tr.appendChild(tdLoc);
+          tr.appendChild(tdSched);
+          tr.appendChild(tdStaff);
+          tr.appendChild(tdStatus);
+          tr.appendChild(tdSurvey);
+          tr.appendChild(tdActions);
+
+          tbody.appendChild(tr);
+        });
+
+        countLabel.textContent = filteredTasks.length + " task(s)";
+      }
+
+      /* ===== FILTERING ===== */
+      function applyFilters() {
+        const search = document
+          .getElementById("searchInput")
+          .value.trim()
+          .toLowerCase();
+        const status = document.getElementById("statusFilter").value;
+        const surveyFilter = document.getElementById("surveyFilter").value; // "", "yes", "no"
+
+        filteredTasks = rawTasks.filter((t) => {
+          const text = (
+            (t.taskID || "") +
+            " " +
+            (t.clientName || "") +
+            " " +
+            (t.location || "")
+          )
+            .toLowerCase()
+            .trim();
+
+          const matchesSearch = !search || text.includes(search);
+          const matchesStatus = !status || (t.status || "") === status;
+
+          const required = !!t.surveyRequired;
+          const matchesSurvey =
+            !surveyFilter ||
+            (surveyFilter === "yes" && required) ||
+            (surveyFilter === "no" && !required);
+
+          return matchesSearch && matchesStatus && matchesSurvey;
+        });
+
+        renderTasksTable();
+      }
+
+      /* ===== MODAL HELPERS ===== */
+      function populateStaffCheckboxes(selectedEmails = []) {
+        const container = document.getElementById("assignedStaffContainer");
+        container.innerHTML = "";
+
+        const staffOnly = staffList.filter(
+          (s) => s.role === "Staff" && s.active
+        );
+
+        staffOnly.forEach((s) => {
+          const wrap = document.createElement("div");
+          wrap.className = "checkbox-item";
+
+          const cb = document.createElement("input");
+          cb.type = "checkbox";
+          cb.value = s.email;
+          cb.checked = selectedEmails.includes(s.email);
+
+          const label = document.createElement("label");
+          label.textContent = `${s.name} (${s.email})`;
+
+          wrap.appendChild(cb);
+          wrap.appendChild(label);
+          container.appendChild(wrap);
+        });
+      }
+
+      function getSelectedStaffEmails() {
+        const checkboxes = document.querySelectorAll(
+          "#assignedStaffContainer input[type='checkbox']"
+        );
+        return Array.from(checkboxes)
+          .filter((cb) => cb.checked)
+          .map((cb) => cb.value);
+      }
+
+      function openTaskModal(task) {
+        const backdrop = document.getElementById("taskModalBackdrop");
+        const title = document.getElementById("taskModalTitle");
+
+        if (task) {
+          // EDIT MODE
+          title.textContent = "Edit Task";
+
+          document.getElementById("taskIDHidden").value = task.taskID || "";
+          document.getElementById("clientName").value = task.clientName || "";
+          document.getElementById("location").value = task.location || "";
+          document.getElementById("scheduledTime").value =
+            task.scheduledTime || "";
+          document.getElementById("surveyRequired").checked =
+            !!task.surveyRequired;
+
+          populateStaffCheckboxes(task.assignedStaff || []);
+        } else {
+          // NEW TASK MODE
+          title.textContent = "Add New Task";
+
+          document.getElementById("taskIDHidden").value = "";
+          document.getElementById("clientName").value = "";
+          document.getElementById("location").value = "";
+          document.getElementById("scheduledTime").value = "";
+          document.getElementById("surveyRequired").checked = false;
+
+          populateStaffCheckboxes([]);
+        }
+
+        backdrop.classList.add("show");
+      }
+
+      function closeTaskModal() {
+        const backdrop = document.getElementById("taskModalBackdrop");
+        backdrop.classList.remove("show");
+
+        // Reset form
+        document.getElementById("taskForm").reset();
+        document.getElementById("taskIDHidden").value = "";
+      }
+
+      /* ===== BACKEND CALLS ===== */
+
+      async function loadStaff() {
+        setLoading(true);
+        try {
+          const params = new URLSearchParams({
+            action: "getUsers",
+            companyID: currentSession.companyID || "",
+          });
+          const res = await fetch(`${ADMIN_API_URL}?${params.toString()}`, {
+            method: "GET",
+            mode: "cors",
+          });
+
+          const data = await res.json();
+
+          if (data.success) {
+            staffList = (data.users || []).filter((u) => u.active);
+          } else {
+            staffList = [];
+          }
+        } catch (err) {
+          console.error("Error loading staff:", err);
+          staffList = [];
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      async function loadTasks() {
+        setLoading(true);
+        try {
+          const params = new URLSearchParams({
+            action: "getTasksAdmin",
+            companyID: currentSession.companyID || "",
+          });
+
+          const res = await fetch(`${ADMIN_API_URL}?${params.toString()}`, {
+            method: "GET",
+            mode: "cors",
+          });
+
+          const data = await res.json();
+
+          if (!data.success) {
+            alert("Error loading tasks: " + (data.message || "Unknown error"));
+            rawTasks = [];
+          } else {
+            rawTasks = data.tasks || [];
+          }
+
+          applyFilters();
+        } catch (err) {
+          console.error(err);
+          alert("Error loading tasks. Check console.");
+          rawTasks = [];
+          applyFilters();
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      async function saveTask(payload) {
+        setLoading(true);
+        try {
+          const isEdit = !!payload.taskIDExisting;
+          const action = isEdit ? "updateTaskAdmin" : "createTaskAdmin";
+
+          const params = new URLSearchParams({ action });
+
+          await fetch(`${ADMIN_API_URL}?${params.toString()}`, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+
+          // cannot read res in no-cors → assume success
+          await loadTasks();
+          closeTaskModal();
+        } catch (err) {
+          console.error(err);
+          const formError = document.getElementById("taskFormError");
+          formError.style.display = "block";
+          formError.textContent = "Failed to save task.";
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      async function confirmDeleteTask(task) {
+        if (!task) return;
+        if (!confirm(`Delete task "${task.taskID}"? This cannot be undone.`))
+          return;
+
+        setLoading(true);
+        try {
+          const payload = { taskID: task.taskID };
+
+          const params = new URLSearchParams({
+            action: "deleteTaskAdmin",
+          });
+
+          await fetch(`${ADMIN_API_URL}?${params.toString()}`, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+
+          await loadTasks();
+        } catch (err) {
+          console.error(err);
+          alert("Failed to delete task");
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      /* ===== EVENT BINDINGS ===== */
+      document.addEventListener("DOMContentLoaded", async () => {
+        currentSession = requireLogin();
+
+        // Filters
+        document
+          .getElementById("searchInput")
+          .addEventListener("input", applyFilters);
+        document
+          .getElementById("statusFilter")
+          .addEventListener("change", applyFilters);
+        document
+          .getElementById("surveyFilter")
+          .addEventListener("change", applyFilters);
+
+        // Add Task button
+        document
+          .getElementById("btnAddTask")
+          .addEventListener("click", () => openTaskModal(null));
+
+        // Modal controls
+        document
+          .getElementById("taskModalClose")
+          .addEventListener("click", closeTaskModal);
+        document
+          .getElementById("taskModalCancel")
+          .addEventListener("click", (e) => {
+            e.preventDefault();
+            closeTaskModal();
+          });
+
+        // Form submit
+        document
+          .getElementById("taskForm")
+          .addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const formError = document.getElementById("taskFormError");
+            formError.style.display = "none";
+            formError.textContent = "";
+
+            const taskIDHidden = document
+              .getElementById("taskIDHidden")
+              .value.trim();
+            const taskIDInput = document
+              .getElementById("taskIDHidden")
+              .value.trim();
+
+            const clientName = document
+              .getElementById("clientName")
+              .value.trim();
+            const location = document.getElementById("location").value.trim();
+            const scheduledTime =
+              document.getElementById("scheduledTime").value;
+
+            const surveyRequired =
+              document.getElementById("surveyRequired").checked;
+
+            if (!clientName || !location || !scheduledTime) {
+              formError.style.display = "block";
+              formError.textContent =
+                "Client name, location and scheduled time are required.";
+              return;
+            }
+
+            const assignedStaff = getSelectedStaffEmails();
+
+            const payload = {
+              taskIDExisting: taskIDHidden,
+              taskID: taskIDHidden,
+
+              clientName,
+              location,
+              scheduledTime,
+              surveyRequired,
+              assignedStaff,
+              companyID: currentSession.companyID || "",
+            };
+
+            await saveTask(payload);
+          });
+
+        // Initial load: staff then tasks
+        await loadStaff();
+        await loadTasks();
+      });
+    </script>
+  </body>
+</html>
