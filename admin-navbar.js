@@ -30,10 +30,6 @@ function renderGlobalHeader() {
     { label: "Dashboard", file: "admin-dashboard.html" },
     { label: "Users", file: "admin-users.html" },
     { label: "Tasks", file: "admin-tasks.html" },
-    { label: "Subtasks", file: "admin-subtasks.html" },
-    { label: "Surveys", file: "admin-surveys.html" },
-    { label: "KPI", file: "admin-kpi.html" },
-    { label: "Settings", file: "admin-settings.html" },
   ];
 
   container.innerHTML = `

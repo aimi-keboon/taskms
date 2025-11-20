@@ -536,62 +536,149 @@
     </div>
 
     <!-- ADMIN SUBTASKS MODAL -->
-<div id="subtasksModalBackdrop" class="modal-backdrop">
-  <div class="modal">
-    <div class="modal-header">
-      <div class="modal-title">
-        Subtasks – <span id="subtasksTaskIDLabel"></span>
+    <div id="subtasksModalBackdrop" class="modal-backdrop">
+      <div class="modal">
+        <div class="modal-header">
+          <div class="modal-title">
+            Subtasks – <span id="subtasksTaskIDLabel"></span>
+          </div>
+          <button class="modal-close" id="subtasksModalClose">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="section-header" style="padding: 0; margin-bottom: 8px">
+            <h2 style="font-size: 0.9rem">Subtasks List</h2>
+            <button class="btn-primary" id="btnAddSubtask" type="button">
+              + Add Subtask
+            </button>
+          </div>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <th>Title</th>
+                <th>Status</th>
+                <th>Photos</th>
+                <th style="width: 1%">Actions</th>
+              </thead>
+              <tbody id="subtasksTableBody">
+                <tr>
+                  <td colspan="5">No subtasks yet.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <hr
+            style="margin: 10px 0; border: none; border-top: 1px solid #e5e7eb"
+          />
+
+          <div id="subtaskEditorContainer">
+            <div class="form-row" style="margin-top: 12px">
+              <label>Add New Subtask</label>
+              <div style="display: flex; gap: 8px">
+                <input
+                  id="newSubtaskTitleInput"
+                  type="text"
+                  placeholder="Enter subtask title"
+                  style="flex: 1"
+                />
+                <button type="button" class="btn-primary" id="btnCreateSubtask">
+                  Add
+                </button>
+              </div>
+              <div
+                class="error-text"
+                id="subtaskAddError"
+                style="display: none; margin-top: 3px"
+              ></div>
+            </div>
+          </div>
+        </div>
       </div>
-      <button class="modal-close" id="subtasksModalClose">&times;</button>
     </div>
 
-    <div class="modal-body">
-      <div class="section-header" style="padding: 0; margin-bottom: 8px;">
-        <h2 style="font-size: 0.9rem;">Subtasks List</h2>
-        <button class="btn-primary" id="btnAddSubtask" type="button">
-          + Add Subtask
-        </button>
+    <!-- ADMIN SURVEY QUESTIONS MODAL -->
+    <div id="surveyModalBackdrop" class="modal-backdrop">
+      <div class="modal">
+        <!-- HEADER -->
+        <div class="modal-header">
+          <div class="modal-title">
+            Survey Questions – <span id="surveyTaskIDLabel"></span>
+          </div>
+          <button class="modal-close" id="surveyModalClose">&times;</button>
+        </div>
+
+        <!-- BODY -->
+        <div class="modal-body">
+          <!-- TABLE TITLE -->
+          <div class="section-header" style="padding: 0; margin-bottom: 8px">
+            <h2 style="font-size: 0.9rem">Questions</h2>
+          </div>
+
+          <!-- QUESTIONS TABLE -->
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>No</th>
+                  <th>Question</th>
+                  <th style="width: 1%">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="surveyQuestionsTableBody">
+                <tr>
+                  <td colspan="3">No questions yet.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <hr
+            style="margin: 10px 0; border: none; border-top: 1px solid #e5e7eb"
+          />
+
+          <!-- ADD / EDIT FORM -->
+          <div class="form-row">
+            <label>Add / Edit Question</label>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap">
+              <input
+                type="number"
+                id="surveyQuestionNoInput"
+                placeholder="Question No"
+                style="width: 120px"
+              />
+              <input
+                type="text"
+                id="surveyQuestionTextInput"
+                placeholder="Question text"
+                style="flex: 1; min-width: 0"
+              />
+            </div>
+
+            <div
+              class="error-text"
+              id="surveyFormError"
+              style="display: none; margin-top: 3px"
+            ></div>
+          </div>
+        </div>
+
+        <!-- FOOTER -->
+        <div class="modal-footer">
+          <button type="button" class="btn-ghost" id="surveyModalCancel">
+            Close
+          </button>
+          <button type="button" class="btn-primary" id="surveySaveBtn">
+            Save Question
+          </button>
+        </div>
       </div>
-
-      <div class="table-wrapper">
-        <table>
-          <thead>
-            <th>Title</th>
-<th>Status</th>
-<th>Photos</th>
-<th style="width: 1%;">Actions</th>
-
-          </thead>
-          <tbody id="subtasksTableBody">
-            <tr><td colspan="5">No subtasks yet.</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <hr style="margin: 10px 0; border: none; border-top: 1px solid #e5e7eb;" />
-
-      <div id="subtaskEditorContainer">
-
-  <div class="form-row" style="margin-top: 12px;">
-    <label>Add New Subtask</label>
-    <div style="display: flex; gap: 8px;">
-      <input id="newSubtaskTitleInput" type="text" placeholder="Enter subtask title" style="flex: 1;">
-      <button type="button" class="btn-primary" id="btnCreateSubtask">Add</button>
     </div>
-    <div class="error-text" id="subtaskAddError" style="display:none; margin-top:3px;"></div>
-  </div>
-
-</div>
-
-
-    </div>
-  </div>
-</div>
-
 
     <script>
       const ADMIN_API_URL =
-        "https://script.google.com/macros/s/AKfycbxB-jvq-Y3xqurd0soPMECOxlPvJR2rAxhdZp8IsU4FOF5X_u2q86JOXrggrMl_LS0/exec"; // you will replace this
+        "https://script.google.com/macros/s/AKfycbxhdHki9-OQeElMrxkIsywlUHUkDsSWuPiMobTPSpl1xEvjruSty1RH5lRdoX086ouq/exec"; // you will replace this
 
       function getSession() {
         return {
@@ -709,31 +796,38 @@
           );
 
           const tdActions = document.createElement("td");
-tdActions.className = "actions-cell";
+          tdActions.className = "actions-cell";
 
-// NEW: Manage Subtasks button (does not touch scheduled time)
-const btnSubtasks = document.createElement("button");
-btnSubtasks.type = "button";
-btnSubtasks.className = "btn-ghost";
-btnSubtasks.textContent = "Subtasks";
-btnSubtasks.onclick = () => openSubtasksModal(t);
+          // Subtasks
+          const btnSubtasks = document.createElement("button");
+          btnSubtasks.type = "button";
+          btnSubtasks.className = "btn-ghost";
+          btnSubtasks.textContent = "Subtasks";
+          btnSubtasks.onclick = () => openSubtasksModal(t);
 
-const btnEdit = document.createElement("button");
-btnEdit.type = "button";
-btnEdit.className = "btn-ghost";
-btnEdit.textContent = "Edit";
-btnEdit.onclick = () => openTaskModal(t);
+          // NEW: Survey Questions
+          const btnSurvey = document.createElement("button");
+          btnSurvey.type = "button";
+          btnSurvey.className = "btn-ghost";
+          btnSurvey.textContent = "Survey Qs";
+          btnSurvey.onclick = () => openSurveyModal(t);
 
-const btnDelete = document.createElement("button");
-btnDelete.type = "button";
-btnDelete.className = "btn-ghost danger";
-btnDelete.textContent = "Delete";
-btnDelete.onclick = () => confirmDeleteTask(t);
+          const btnEdit = document.createElement("button");
+          btnEdit.type = "button";
+          btnEdit.className = "btn-ghost";
+          btnEdit.textContent = "Edit";
+          btnEdit.onclick = () => openTaskModal(t);
 
-tdActions.appendChild(btnSubtasks);
-tdActions.appendChild(btnEdit);
-tdActions.appendChild(btnDelete);
+          const btnDelete = document.createElement("button");
+          btnDelete.type = "button";
+          btnDelete.className = "btn-ghost danger";
+          btnDelete.textContent = "Delete";
+          btnDelete.onclick = () => confirmDeleteTask(t);
 
+          tdActions.appendChild(btnSubtasks);
+          tdActions.appendChild(btnSurvey);
+          tdActions.appendChild(btnEdit);
+          tdActions.appendChild(btnDelete);
 
           tr.appendChild(tdTaskID);
           tr.appendChild(tdClient);
@@ -749,66 +843,64 @@ tdActions.appendChild(btnDelete);
 
         countLabel.textContent = filteredTasks.length + " task(s)";
       }
-/* ===== SUBTASKS – ADMIN STATE ===== */
-let currentSubtasksTaskID = null;
-let currentSubtasks = [];
+      /* ===== SUBTASKS – ADMIN STATE ===== */
+      let currentSubtasksTaskID = null;
+      let currentSubtasks = [];
 
-/* ===== SUBTASKS – RENDER TABLE ===== */
-function renderSubtasksTable() {
-  const tbody = document.getElementById("subtasksTableBody");
+      /* ===== SUBTASKS – RENDER TABLE ===== */
+      function renderSubtasksTable() {
+        const tbody = document.getElementById("subtasksTableBody");
 
-  if (!currentSubtasks || currentSubtasks.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="4">No subtasks yet.</td></tr>';
-    return;
-  }
+        if (!currentSubtasks || currentSubtasks.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4">No subtasks yet.</td></tr>';
+          return;
+        }
 
-  tbody.innerHTML = "";
+        tbody.innerHTML = "";
 
-  currentSubtasks.forEach((s) => {
-    const tr = document.createElement("tr");
+        currentSubtasks.forEach((s) => {
+          const tr = document.createElement("tr");
 
-    /* NORMAL VIEW MODE */
-    if (!s._editMode) {
-      const tdTitle = document.createElement("td");
-      tdTitle.textContent = s.title || "-";
+          /* NORMAL VIEW MODE */
+          if (!s._editMode) {
+            const tdTitle = document.createElement("td");
+            tdTitle.textContent = s.title || "-";
 
-      const tdStatus = document.createElement("td");
-      tdStatus.textContent = s.status || "New";
+            const tdStatus = document.createElement("td");
+            tdStatus.textContent = s.status || "New";
 
-      const tdPhotos = document.createElement("td");
-      tdPhotos.textContent = (s.photoCount || 0) + " photo(s)";
+            const tdPhotos = document.createElement("td");
+            tdPhotos.textContent = (s.photoCount || 0) + " photo(s)";
 
-      const tdActions = document.createElement("td");
-      tdActions.className = "actions-cell";
+            const tdActions = document.createElement("td");
+            tdActions.className = "actions-cell";
 
-      const btnEdit = document.createElement("button");
-      btnEdit.className = "btn-ghost";
-      btnEdit.textContent = "Edit";
-      btnEdit.onclick = () => {
-        s._editMode = true;
-        renderSubtasksTable();
-      };
+            const btnEdit = document.createElement("button");
+            btnEdit.className = "btn-ghost";
+            btnEdit.textContent = "Edit";
+            btnEdit.onclick = () => {
+              s._editMode = true;
+              renderSubtasksTable();
+            };
 
-      const btnDelete = document.createElement("button");
-      btnDelete.className = "btn-ghost danger";
-      btnDelete.textContent = "Delete";
-      btnDelete.onclick = () => confirmDeleteSubtask(s);
+            const btnDelete = document.createElement("button");
+            btnDelete.className = "btn-ghost danger";
+            btnDelete.textContent = "Delete";
+            btnDelete.onclick = () => confirmDeleteSubtask(s);
 
-      tdActions.appendChild(btnEdit);
-      tdActions.appendChild(btnDelete);
+            tdActions.appendChild(btnEdit);
+            tdActions.appendChild(btnDelete);
 
-      tr.appendChild(tdTitle);
-      tr.appendChild(tdStatus);
-      tr.appendChild(tdPhotos);
-      tr.appendChild(tdActions);
-    }
+            tr.appendChild(tdTitle);
+            tr.appendChild(tdStatus);
+            tr.appendChild(tdPhotos);
+            tr.appendChild(tdActions);
+          } else {
+            /* INLINE EDIT MODE */
+            const tdEdit = document.createElement("td");
+            tdEdit.colSpan = 4;
 
-    /* INLINE EDIT MODE */
-    else {
-      const tdEdit = document.createElement("td");
-      tdEdit.colSpan = 4;
-
-      tdEdit.innerHTML = `
+            tdEdit.innerHTML = `
         <div style="display:flex; gap:8px;">
           <input 
             type="text" 
@@ -821,195 +913,436 @@ function renderSubtasksTable() {
         </div>
       `;
 
-      tr.appendChild(tdEdit);
+            tr.appendChild(tdEdit);
 
-      setTimeout(() => {
-        document.getElementById(`saveEdit_${s.title}`).onclick = () => saveInlineEdit(s);
-        document.getElementById(`cancelEdit_${s.title}`).onclick = () => {
-          s._editMode = false;
+            setTimeout(() => {
+              document.getElementById(`saveEdit_${s.title}`).onclick = () =>
+                saveInlineEdit(s);
+              document.getElementById(`cancelEdit_${s.title}`).onclick = () => {
+                s._editMode = false;
+                renderSubtasksTable();
+              };
+            }, 0);
+          }
+
+          tbody.appendChild(tr);
+        });
+      }
+
+      /* ===== SUBTASKS – LOAD FROM BACKEND ===== */
+      async function loadSubtasksAdmin(taskID) {
+        if (!taskID) return;
+
+        setLoading(true);
+        try {
+          const params = new URLSearchParams({
+            action: "getSubtasksAdmin",
+            taskID,
+          });
+
+          const res = await fetch(`${ADMIN_API_URL}?${params.toString()}`, {
+            method: "GET",
+            mode: "cors",
+          });
+
+          const data = await res.json();
+
+          if (!data.success) {
+            currentSubtasks = [];
+            alert(
+              "Error loading subtasks: " + (data.message || "Unknown error")
+            );
+          } else {
+            currentSubtasks = data.subtasks || [];
+          }
+        } catch (err) {
+          console.error("Error loading subtasks:", err);
+          currentSubtasks = [];
+          alert("Error loading subtasks. Check console.");
+        } finally {
+          setLoading(false);
           renderSubtasksTable();
+        }
+      }
+
+      /* ===== SUBTASKS – INLINE EDIT SAVE ===== */
+      async function saveInlineEdit(subtask) {
+        const input = document.getElementById(`editInput_${subtask.title}`);
+        const newTitle = (input.value || "").trim();
+
+        if (!newTitle) {
+          alert("Title cannot be empty.");
+          return;
+        }
+
+        const payload = {
+          action: "updateSubtaskAdmin",
+          taskID: currentSubtasksTaskID,
+          titleExisting: subtask.title,
+          title: newTitle,
         };
-      }, 0);
-    }
 
-    tbody.appendChild(tr);
-  });
-}
+        setLoading(true);
+        try {
+          const params = new URLSearchParams({ action: "updateSubtaskAdmin" });
 
-/* ===== SUBTASKS – LOAD FROM BACKEND ===== */
-async function loadSubtasksAdmin(taskID) {
-  if (!taskID) return;
+          await fetch(`${ADMIN_API_URL}?${params}`, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
 
-  setLoading(true);
-  try {
-    const params = new URLSearchParams({
-      action: "getSubtasksAdmin",
-      taskID
-    });
+          await loadSubtasksAdmin(currentSubtasksTaskID);
+        } catch (e) {
+          console.error(e);
+          alert("Failed to update subtask.");
+        } finally {
+          setLoading(false);
+        }
+      }
 
-    const res = await fetch(`${ADMIN_API_URL}?${params.toString()}`, {
-      method: "GET",
-      mode: "cors"
-    });
+      /* ===== SUBTASKS – OPEN MODAL ===== */
+      function openSubtasksModal(task) {
+        if (!task || !task.taskID) return;
 
-    const data = await res.json();
+        currentSubtasksTaskID = task.taskID;
 
-    if (!data.success) {
-      currentSubtasks = [];
-      alert("Error loading subtasks: " + (data.message || "Unknown error"));
-    } else {
-      currentSubtasks = data.subtasks || [];
-    }
-  } catch (err) {
-    console.error("Error loading subtasks:", err);
-    currentSubtasks = [];
-    alert("Error loading subtasks. Check console.");
-  } finally {
-    setLoading(false);
-    renderSubtasksTable();
-  }
-}
+        document.getElementById("subtasksTaskIDLabel").textContent =
+          task.taskID;
 
-/* ===== SUBTASKS – INLINE EDIT SAVE ===== */
-async function saveInlineEdit(subtask) {
-  const input = document.getElementById(`editInput_${subtask.title}`);
-  const newTitle = (input.value || "").trim();
+        // clear new input
+        document.getElementById("newSubtaskTitleInput").value = "";
+        document.getElementById("subtaskAddError").style.display = "none";
 
-  if (!newTitle) {
-    alert("Title cannot be empty.");
-    return;
-  }
+        document.getElementById("subtasksModalBackdrop").classList.add("show");
 
-  const payload = {
-    action: "updateSubtaskAdmin",
-    taskID: currentSubtasksTaskID,
-    titleExisting: subtask.title,
-    title: newTitle
-  };
+        loadSubtasksAdmin(task.taskID);
+      }
 
-  setLoading(true);
-  try {
-    const params = new URLSearchParams({ action: "updateSubtaskAdmin" });
+      /* ===== SUBTASKS – CLOSE MODAL ===== */
+      function closeSubtasksModal() {
+        document
+          .getElementById("subtasksModalBackdrop")
+          .classList.remove("show");
 
-    await fetch(`${ADMIN_API_URL}?${params}`, {
-      method: "POST",
-      mode: "no-cors",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
+        currentSubtasks = [];
+        currentSubtasksTaskID = null;
+      }
 
-    await loadSubtasksAdmin(currentSubtasksTaskID);
-  } catch (e) {
-    console.error(e);
-    alert("Failed to update subtask.");
-  } finally {
-    setLoading(false);
-  }
-}
+      /* ===== SUBTASKS – CREATE NEW ===== */
+      document.getElementById("btnCreateSubtask").onclick = async () => {
+        const title = document
+          .getElementById("newSubtaskTitleInput")
+          .value.trim();
+        const errorEl = document.getElementById("subtaskAddError");
 
-/* ===== SUBTASKS – OPEN MODAL ===== */
-function openSubtasksModal(task) {
-  if (!task || !task.taskID) return;
+        errorEl.style.display = "none";
 
-  currentSubtasksTaskID = task.taskID;
+        if (!title) {
+          errorEl.textContent = "Title cannot be empty.";
+          errorEl.style.display = "block";
+          return;
+        }
 
-  document.getElementById("subtasksTaskIDLabel").textContent = task.taskID;
+        const payload = {
+          action: "createSubtaskAdmin",
+          taskID: currentSubtasksTaskID,
+          title,
+        };
 
-  // clear new input
-  document.getElementById("newSubtaskTitleInput").value = "";
-  document.getElementById("subtaskAddError").style.display = "none";
+        setLoading(true);
+        try {
+          const params = new URLSearchParams({ action: "createSubtaskAdmin" });
 
-  document
-    .getElementById("subtasksModalBackdrop")
-    .classList.add("show");
+          await fetch(`${ADMIN_API_URL}?${params}`, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
 
-  loadSubtasksAdmin(task.taskID);
-}
+          document.getElementById("newSubtaskTitleInput").value = "";
+          await loadSubtasksAdmin(currentSubtasksTaskID);
+        } catch (err) {
+          console.error(err);
+          errorEl.textContent = "Failed to create subtask.";
+          errorEl.style.display = "block";
+        } finally {
+          setLoading(false);
+        }
+      };
 
-/* ===== SUBTASKS – CLOSE MODAL ===== */
-function closeSubtasksModal() {
-  document
-    .getElementById("subtasksModalBackdrop")
-    .classList.remove("show");
+      /* ===== SUBTASKS – DELETE ===== */
+      async function confirmDeleteSubtask(subtask) {
+        if (!currentSubtasksTaskID || !subtask || !subtask.title) return;
 
-  currentSubtasks = [];
-  currentSubtasksTaskID = null;
-}
+        if (
+          !confirm(`Delete Subtask "${subtask.title}"? This cannot be undone.`)
+        )
+          return;
 
-/* ===== SUBTASKS – CREATE NEW ===== */
-document.getElementById("btnCreateSubtask").onclick = async () => {
-  const title = document.getElementById("newSubtaskTitleInput").value.trim();
-  const errorEl = document.getElementById("subtaskAddError");
+        setLoading(true);
+        try {
+          const payload = {
+            action: "deleteSubtaskAdmin",
+            taskID: currentSubtasksTaskID,
+            title: subtask.title,
+          };
 
-  errorEl.style.display = "none";
+          const params = new URLSearchParams({ action: "deleteSubtaskAdmin" });
 
-  if (!title) {
-    errorEl.textContent = "Title cannot be empty.";
-    errorEl.style.display = "block";
-    return;
-  }
+          await fetch(`${ADMIN_API_URL}?${params}`, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
 
-  const payload = {
-    action: "createSubtaskAdmin",
-    taskID: currentSubtasksTaskID,
-    title
-  };
+          await loadSubtasksAdmin(currentSubtasksTaskID);
+        } catch (err) {
+          console.error(err);
+          alert("Failed to delete subtask.");
+        } finally {
+          setLoading(false);
+        }
+      }
 
-  setLoading(true);
-  try {
-    const params = new URLSearchParams({ action: "createSubtaskAdmin" });
+      /* ===== SURVEY QUESTIONS – ADMIN STATE ===== */
+      let currentSurveyTaskID = null;
+      let currentSurveyQuestions = [];
+      let editingSurveyQuestionNo = null; // null = create mode
 
-    await fetch(`${ADMIN_API_URL}?${params}`, {
-      method: "POST",
-      mode: "no-cors",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
+      /* ===== SURVEY QUESTIONS – RENDER TABLE ===== */
+      function renderSurveyQuestionsTable() {
+        const tbody = document.getElementById("surveyQuestionsTableBody");
 
-    document.getElementById("newSubtaskTitleInput").value = "";
-    await loadSubtasksAdmin(currentSubtasksTaskID);
-  } catch (err) {
-    console.error(err);
-    errorEl.textContent = "Failed to create subtask.";
-    errorEl.style.display = "block";
-  } finally {
-    setLoading(false);
-  }
-};
+        if (!currentSurveyQuestions || currentSurveyQuestions.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="3">No questions yet.</td></tr>';
+          return;
+        }
 
-/* ===== SUBTASKS – DELETE ===== */
-async function confirmDeleteSubtask(subtask) {
-  if (!currentSubtasksTaskID || !subtask || !subtask.title) return;
+        tbody.innerHTML = "";
 
-  if (!confirm(`Delete Subtask "${subtask.title}"? This cannot be undone.`))
-    return;
+        currentSurveyQuestions.forEach((q) => {
+          const tr = document.createElement("tr");
 
-  setLoading(true);
-  try {
-    const payload = {
-      action: "deleteSubtaskAdmin",
-      taskID: currentSubtasksTaskID,
-      title: subtask.title
-    };
+          const tdNo = document.createElement("td");
+          tdNo.textContent = q.questionNo;
 
-    const params = new URLSearchParams({ action: "deleteSubtaskAdmin" });
+          const tdText = document.createElement("td");
+          tdText.textContent = q.questionText;
 
-    await fetch(`${ADMIN_API_URL}?${params}`, {
-      method: "POST",
-      mode: "no-cors",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
+          const tdActions = document.createElement("td");
+          tdActions.className = "actions-cell";
 
-    await loadSubtasksAdmin(currentSubtasksTaskID);
-  } catch (err) {
-    console.error(err);
-    alert("Failed to delete subtask.");
-  } finally {
-    setLoading(false);
-  }
-}
+          const btnEdit = document.createElement("button");
+          btnEdit.className = "btn-ghost";
+          btnEdit.textContent = "Edit";
+          btnEdit.onclick = () => {
+            editingSurveyQuestionNo = q.questionNo;
+            document.getElementById("surveyQuestionNoInput").value =
+              q.questionNo;
+            document.getElementById("surveyQuestionTextInput").value =
+              q.questionText;
+            const err = document.getElementById("surveyFormError");
+            err.style.display = "none";
+            err.textContent = "";
+            document.getElementById("surveySaveBtn").textContent =
+              "Update Question";
+          };
 
+          const btnDelete = document.createElement("button");
+          btnDelete.className = "btn-ghost danger";
+          btnDelete.textContent = "Delete";
+          btnDelete.onclick = () => confirmDeleteSurveyQuestion(q);
+
+          tdActions.appendChild(btnEdit);
+          tdActions.appendChild(btnDelete);
+
+          tr.appendChild(tdNo);
+          tr.appendChild(tdText);
+          tr.appendChild(tdActions);
+
+          tbody.appendChild(tr);
+        });
+      }
+
+      /* ===== SURVEY QUESTIONS – LOAD FROM BACKEND ===== */
+      async function loadSurveyQuestionsAdmin(taskID) {
+        if (!taskID) return;
+
+        setLoading(true);
+        try {
+          const params = new URLSearchParams({
+            action: "getSurveyQuestions",
+            taskID: taskID,
+          });
+
+          const res = await fetch(`${ADMIN_API_URL}?${params.toString()}`, {
+            method: "GET",
+            mode: "cors",
+          });
+
+          const data = await res.json();
+
+          if (!data.success) {
+            currentSurveyQuestions = [];
+            alert(
+              "Error loading survey questions: " +
+                (data.message || "Unknown error")
+            );
+          } else {
+            currentSurveyQuestions = data.questions || [];
+          }
+        } catch (err) {
+          console.error("Error loading survey questions:", err);
+          currentSurveyQuestions = [];
+          alert("Error loading survey questions. Check console.");
+        } finally {
+          setLoading(false);
+          renderSurveyQuestionsTable();
+        }
+      }
+
+      /* ===== SURVEY QUESTIONS – OPEN / CLOSE MODAL ===== */
+      function openSurveyModal(task) {
+        if (!task || !task.taskID) return;
+
+        currentSurveyTaskID = task.taskID;
+        editingSurveyQuestionNo = null;
+
+        document.getElementById("surveyTaskIDLabel").textContent = task.taskID;
+
+        document.getElementById("surveyQuestionNoInput").value = "";
+        document.getElementById("surveyQuestionTextInput").value = "";
+        const err = document.getElementById("surveyFormError");
+        err.style.display = "none";
+        err.textContent = "";
+        document.getElementById("surveySaveBtn").textContent = "Save Question";
+
+        document.getElementById("surveyModalBackdrop").classList.add("show");
+
+        loadSurveyQuestionsAdmin(task.taskID);
+      }
+
+      function closeSurveyModal() {
+        document.getElementById("surveyModalBackdrop").classList.remove("show");
+
+        currentSurveyTaskID = null;
+        currentSurveyQuestions = [];
+        editingSurveyQuestionNo = null;
+      }
+
+      /* ===== SURVEY QUESTIONS – CREATE / UPDATE ===== */
+      async function handleSurveySave() {
+        const err = document.getElementById("surveyFormError");
+        err.style.display = "none";
+        err.textContent = "";
+
+        if (!currentSurveyTaskID) {
+          err.style.display = "block";
+          err.textContent = "No task selected.";
+          return;
+        }
+
+        const noVal = document
+          .getElementById("surveyQuestionNoInput")
+          .value.trim();
+        const textVal = document
+          .getElementById("surveyQuestionTextInput")
+          .value.trim();
+
+        if (!noVal || !textVal) {
+          err.style.display = "block";
+          err.textContent = "Question No and text are required.";
+          return;
+        }
+
+        const questionNo = Number(noVal);
+        if (!Number.isFinite(questionNo) || questionNo <= 0) {
+          err.style.display = "block";
+          err.textContent = "Question No must be a positive number.";
+          return;
+        }
+
+        const isEdit = editingSurveyQuestionNo !== null;
+
+        const payload = {
+          action: isEdit ? "updateSurveyQuestion" : "createSurveyQuestion",
+          taskID: currentSurveyTaskID,
+          questionNo: questionNo,
+          questionText: textVal,
+        };
+
+        if (isEdit) {
+          payload.questionNoExisting = editingSurveyQuestionNo;
+        }
+
+        setLoading(true);
+        try {
+          const params = new URLSearchParams({
+            action: payload.action,
+          });
+
+          await fetch(`${ADMIN_API_URL}?${params.toString()}`, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+
+          // assume success → reload list
+          document.getElementById("surveyQuestionNoInput").value = "";
+          document.getElementById("surveyQuestionTextInput").value = "";
+          editingSurveyQuestionNo = null;
+          document.getElementById("surveySaveBtn").textContent =
+            "Save Question";
+
+          await loadSurveyQuestionsAdmin(currentSurveyTaskID);
+        } catch (e) {
+          console.error("Error saving survey question:", e);
+          err.style.display = "block";
+          err.textContent = "Failed to save question.";
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      /* ===== SURVEY QUESTIONS – DELETE ===== */
+      async function confirmDeleteSurveyQuestion(q) {
+        if (!currentSurveyTaskID || !q || q.questionNo == null) return;
+
+        if (!confirm(`Delete Question ${q.questionNo}? This cannot be undone.`))
+          return;
+
+        setLoading(true);
+        try {
+          const payload = {
+            action: "deleteSurveyQuestion",
+            taskID: currentSurveyTaskID,
+            questionNo: q.questionNo,
+          };
+
+          const params = new URLSearchParams({
+            action: "deleteSurveyQuestion",
+          });
+
+          await fetch(`${ADMIN_API_URL}?${params.toString()}`, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+
+          await loadSurveyQuestionsAdmin(currentSurveyTaskID);
+        } catch (err) {
+          console.error("Error deleting survey question:", err);
+          alert("Failed to delete question.");
+        } finally {
+          setLoading(false);
+        }
+      }
 
       /* ===== FILTERING ===== */
       function applyFilters() {
@@ -1194,8 +1527,6 @@ async function confirmDeleteSubtask(subtask) {
 
           const params = new URLSearchParams({ action });
 
-
-
           await fetch(`${ADMIN_API_URL}?${params.toString()}`, {
             method: "POST",
             mode: "no-cors",
@@ -1275,20 +1606,36 @@ async function confirmDeleteSubtask(subtask) {
             e.preventDefault();
             closeTaskModal();
           });
-// SUBTASKS MODAL CONTROLS
-document
-  .getElementById("subtasksModalClose")
-  .addEventListener("click", closeSubtasksModal);
+        // SUBTASKS MODAL CONTROLS
+        document
+          .getElementById("subtasksModalClose")
+          .addEventListener("click", closeSubtasksModal);
 
-// Add subtask button simply focuses the input
-document
-  .getElementById("btnAddSubtask")
-  .addEventListener("click", (e) => {
-    e.preventDefault();
-    document.getElementById("newSubtaskTitleInput").focus();
-  });
+        // Add subtask button simply focuses the input
+        document
+          .getElementById("btnAddSubtask")
+          .addEventListener("click", (e) => {
+            e.preventDefault();
+            document.getElementById("newSubtaskTitleInput").focus();
+          });
+        // SURVEY MODAL CONTROLS
+        document
+          .getElementById("surveyModalClose")
+          .addEventListener("click", closeSurveyModal);
 
-  
+        document
+          .getElementById("surveyModalCancel")
+          .addEventListener("click", (e) => {
+            e.preventDefault();
+            closeSurveyModal();
+          });
+
+        document
+          .getElementById("surveySaveBtn")
+          .addEventListener("click", (e) => {
+            e.preventDefault();
+            handleSurveySave();
+          });
 
         // Form submit
         document
