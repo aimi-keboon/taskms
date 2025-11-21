@@ -49,43 +49,42 @@
       }
 
       /* UNIVERSAL FULLSCREEN LOADING OVERLAY */
-#loadingOverlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(4px);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 99999;
-}
+      #loadingOverlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.75);
+        backdrop-filter: blur(4px);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 99999;
+      }
 
-/* Spinner */
-.loader {
-  width: 48px;
-  height: 48px;
-  border: 5px solid #c8d4e5;
-  border-top-color: var(--primary);
-  border-radius: 50%;
-  animation: spin 0.9s linear infinite;
-}
+      /* Spinner */
+      .loader {
+        width: 48px;
+        height: 48px;
+        border: 5px solid #c8d4e5;
+        border-top-color: var(--primary);
+        border-radius: 50%;
+        animation: spin 0.9s linear infinite;
+      }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
 
-/* Hidden state */
-#loadingOverlay.hidden {
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.25s ease-out;
-}
-
+      /* Hidden state */
+      #loadingOverlay.hidden {
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s ease-out;
+      }
 
       /* FILTER BAR */
       .filter-bar {
@@ -302,14 +301,17 @@
     </style>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- MAP LIBRARY (Leaflet) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   </head>
 
   <body>
-
     <!-- UNIVERSAL LOADING OVERLAY -->
-<div id="loadingOverlay">
-  <div class="loader"></div>
-</div>
+    <div id="loadingOverlay">
+      <div class="loader"></div>
+    </div>
 
     <!-- NEW GLOBAL NAVBAR -->
     <div id="globalHeader"></div>
@@ -320,9 +322,20 @@
       <div class="page-subtitle">
         Company-level analysis of tasks, staff performance, subtasks & surveys.
       </div>
+      <!-- PENDING SURVEYS -->
+      <div class="section-card">
+        <div class="section-header">
+          <h2>Pending Surveys (Action Required)</h2>
+          <span class="muted"
+            >Surveys that were generated but haven’t been submitted.</span
+          >
+        </div>
 
+        <div id="pendingSurveyContainer">
+          <div class="muted">Loading...</div>
+        </div>
+      </div>
       <!-- Everything below stays unchanged — charts, tables, survey breakdown, debug, etc. -->
-
 
       <!-- FILTER BAR -->
       <div class="filter-bar">
@@ -367,22 +380,43 @@
             <canvas id="staffRatingChart"></canvas>
           </div>
 
-
           <div class="chart-card">
             <h3>Tasks Completed Over Time</h3>
             <canvas id="tasksOverTimeChart"></canvas>
           </div>
         </div>
 
-        <div class="chart-card" style="margin-top: 12px;">
+        <div class="chart-card" style="margin-top: 12px">
           <h3>Avg Duration Per Day</h3>
           <canvas id="avgDurationDailyChart"></canvas>
         </div>
 
-        <div class="chart-card" style="margin-top: 12px;">
+        <div class="chart-card" style="margin-top: 12px">
           <h3>Avg Delay Per Month</h3>
           <canvas id="avgDelayMonthlyChart"></canvas>
         </div>
+      </div>
+      <!-- MAP VIEW (Daily Filter) -->
+      <div class="section-card">
+        <div class="section-header">
+          <h2>Task & Subtask Map (Daily View)</h2>
+
+          <input
+            type="date"
+            id="mapDatePicker"
+            style="
+              padding: 6px 10px;
+              border: 1px solid #ccc;
+              border-radius: 6px;
+              font-size: 0.85rem;
+            "
+          />
+        </div>
+
+        <div
+          id="mapContainer"
+          style="height: 450px; border-radius: 12px; overflow: hidden"
+        ></div>
       </div>
 
       <!-- STATUS BREAKDOWN -->
@@ -491,7 +525,7 @@
 
     <script>
       const ADMIN_API_URL =
-        "https://script.google.com/macros/s/AKfycbwd6bktxfeNy8R8hwlZy8Mv6fLlomknDyKzMV5tsa6XiD9mCograiF-8HSTiIsb-9E/exec";
+        "https://script.google.com/macros/s/AKfycbygaG216P0vl8nR8GRZzfJ75L2KuSxfE7q4NlGdE3TmKZ6tFJXvtN8RLTsPYbwAXHal/exec";
 
       function getSession() {
         return {
@@ -805,15 +839,15 @@
           const pct = total ? Math.round((count / total) * 100) : 0;
 
           container.innerHTML += `
-            <div class="status-bar">
-              <div class="status-bar-label">${status} — ${count} (${pct}%)</div>
-              <div class="status-bar-track">
-                <div class="status-bar-fill" style="width:${pct}%; background:${
+                  <div class="status-bar">
+                    <div class="status-bar-label">${status} — ${count} (${pct}%)</div>
+                    <div class="status-bar-track">
+                      <div class="status-bar-fill" style="width:${pct}%; background:${
             colors[status] || "#888"
           };"></div>
-              </div>
-            </div>
-          `;
+                    </div>
+                  </div>
+                `;
         });
       }
 
@@ -831,15 +865,15 @@
 
         list.forEach((st) => {
           body.innerHTML += `
-            <tr>
-              <td>${st.email}</td>
-              <td>${st.name || "-"}</td>
-              <td>${st.completedTasks}</td>
-              <td>${st.avgDurationMinutes}</td>
-              <td>${st.avgRating}</td>
-              <td>${st.onTimeCount}</td>
-              <td>${st.lateCount}</td>
-            </tr>`;
+                  <tr>
+                    <td>${st.email}</td>
+                    <td>${st.name || "-"}</td>
+                    <td>${st.completedTasks}</td>
+                    <td>${st.avgDurationMinutes}</td>
+                    <td>${st.avgRating}</td>
+                    <td>${st.onTimeCount}</td>
+                    <td>${st.lateCount}</td>
+                  </tr>`;
         });
       }
 
@@ -857,16 +891,16 @@
 
         tasks.forEach((t) => {
           body.innerHTML += `
-            <tr>
-              <td>${t.taskID}</td>
-              <td>${t.clientName}</td>
-              <td>${formatDateTime(t.scheduledAt)}</td>
-              <td>${formatDateTime(t.startAt)}</td>
-              <td>${formatDateTime(t.endAt)}</td>
-              <td>${t.durationMinutes ?? "-"}</td>
-              <td>${t.status}</td>
-              <td>${(t.assignedStaffEmails || []).join(", ")}</td>
-            </tr>`;
+                  <tr>
+                    <td>${t.taskID}</td>
+                    <td>${t.clientName}</td>
+                    <td>${formatDateTime(t.scheduledAt)}</td>
+                    <td>${formatDateTime(t.startAt)}</td>
+                    <td>${formatDateTime(t.endAt)}</td>
+                    <td>${t.durationMinutes ?? "-"}</td>
+                    <td>${t.status}</td>
+                    <td>${(t.assignedStaffEmails || []).join(", ")}</td>
+                  </tr>`;
         });
       }
 
@@ -892,14 +926,14 @@
             : "-";
 
           body.innerHTML += `
-            <tr>
-              <td>${s.taskID}</td>
-              <td>${s.subtaskNo}</td>
-              <td>${s.status}</td>
-              <td>${s.remarks || "-"}</td>
-              <td>${s.lat || "-"}, ${s.lon || "-"}</td>
-              <td>${photos}</td>
-            </tr>`;
+                  <tr>
+                    <td>${s.taskID}</td>
+                    <td>${s.subtaskNo}</td>
+                    <td>${s.status}</td>
+                    <td>${s.remarks || "-"}</td>
+                    <td>${s.lat || "-"}, ${s.lon || "-"}</td>
+                    <td>${photos}</td>
+                  </tr>`;
         });
       }
 
@@ -926,9 +960,7 @@
           const tid = task.taskID;
           const res = grouped[tid] || [];
           const avg = res.length
-            ? (res.reduce((a, r) => a + r.avgRating, 0) / res.length).toFixed(
-                2
-              )
+            ? (res.reduce((a, r) => a + r.avgRating, 0) / res.length).toFixed(2)
             : "-";
 
           const card = document.createElement("div");
@@ -937,17 +969,17 @@
           const header = document.createElement("div");
           header.className = "survey-header";
           header.innerHTML = `
-            <div class="survey-header-main">
-              <div><strong>${tid}</strong> – ${task.clientName}</div>
-              <small>Survey Status: ${task.surveyStatus || "-"}</small>
-            </div>
-            <div>
-              <strong>${avg}</strong> ⭐
-              <div class="muted" style="text-align:right;">${
-                res.length
-              } response(s)</div>
-            </div>
-          `;
+                  <div class="survey-header-main">
+                    <div><strong>${tid}</strong> – ${task.clientName}</div>
+                    <small>Survey Status: ${task.surveyStatus || "-"}</small>
+                  </div>
+                  <div>
+                    <strong>${avg}</strong> ⭐
+                    <div class="muted" style="text-align:right;">${
+                      res.length
+                    } response(s)</div>
+                  </div>
+                `;
 
           const body = document.createElement("div");
           body.className = "survey-body";
@@ -957,42 +989,45 @@
               '<div class="muted">No survey responses for this task in this range.</div>';
           } else {
             body.innerHTML = res
-  .map((r) => {
-    const questions = (rawData.surveyQuestions && rawData.surveyQuestions[tid]) || [];
-    const ratings = r.ratings || [];
+              .map((r) => {
+                const questions =
+                  (rawData.surveyQuestions && rawData.surveyQuestions[tid]) ||
+                  [];
+                const ratings = r.ratings || [];
 
-    let questionBlock = "";
+                let questionBlock = "";
 
-    if (questions.length) {
-      questionBlock = questions
-        .map((q, i) => {
-          const rating = ratings[i] ?? "-";
-          return `
-            <div style="margin-left:12px; padding:2px 0;">
-              • <strong>${q.questionText}</strong>: ${rating}
+                if (questions.length) {
+                  questionBlock = questions
+                    .map((q, i) => {
+                      const rating = ratings[i] ?? "-";
+                      return `
+                  <div style="margin-left:12px; padding:2px 0;">
+                    • <strong>${q.questionText}</strong>: ${rating}
+                  </div>
+                `;
+                    })
+                    .join("");
+                } else {
+                  questionBlock = `<div class="muted">No survey questions found for this task.</div>`;
+                }
+
+                return `
+            <div style="border-top:1px solid #eee; padding-top:8px; margin-top:8px;">
+              <div><strong>Response ID:</strong> ${r.responseID}</div>
+              <div><strong>Submitted At:</strong> ${formatDateTime(
+                r.submittedAt
+              )}</div>
+              <div><strong>Avg Rating:</strong> ${r.avgRating.toFixed(2)}</div>
+
+              <div style="margin-top:6px;">
+                <strong>Responses:</strong><br/>
+                ${questionBlock}
+              </div>
             </div>
           `;
-        })
-        .join("");
-    } else {
-      questionBlock = `<div class="muted">No survey questions found for this task.</div>`;
-    }
-
-    return `
-      <div style="border-top:1px solid #eee; padding-top:8px; margin-top:8px;">
-        <div><strong>Response ID:</strong> ${r.responseID}</div>
-        <div><strong>Submitted At:</strong> ${formatDateTime(r.submittedAt)}</div>
-        <div><strong>Avg Rating:</strong> ${r.avgRating.toFixed(2)}</div>
-
-        <div style="margin-top:6px;">
-          <strong>Responses:</strong><br/>
-          ${questionBlock}
-        </div>
-      </div>
-    `;
-  })
-  .join("");
-
+              })
+              .join("");
           }
 
           header.onclick = () => {
@@ -1110,7 +1145,6 @@
           }
         );
 
-        
         /* --- Tasks Completed Over Time (day-of-month labels) --- */
         const tasks = vm.tasks || [];
         const dateMap = {};
@@ -1134,8 +1168,7 @@
             return { y, m, d, key: k };
           })
           .sort(
-            (a, b) =>
-              new Date(a.y, a.m - 1, a.d) - new Date(b.y, b.m - 1, b.d)
+            (a, b) => new Date(a.y, a.m - 1, a.d) - new Date(b.y, b.m - 1, b.d)
           );
 
         const xLabels = sortedKeys.map((k) => k.d);
@@ -1190,8 +1223,7 @@
             return { y, m, d, key: k };
           })
           .sort(
-            (a, b) =>
-              new Date(a.y, a.m - 1, a.d) - new Date(b.y, b.m - 1, b.d)
+            (a, b) => new Date(a.y, a.m - 1, a.d) - new Date(b.y, b.m - 1, b.d)
           );
 
         const durLabels = durKeys.map((k) => k.d);
@@ -1319,6 +1351,25 @@
         renderSubtasks(vm);
         renderSurveyBreakdown(vm);
         renderCharts(vm);
+        renderPendingSurveys(vm);
+
+        // Map needs all data regardless of current filter, so pass "all"
+        let selectedDate = document.getElementById("mapDatePicker").value;
+
+        // Auto-fallback if empty
+        if (!selectedDate) {
+          selectedDate = getMalaysiaToday();
+          document.getElementById("mapDatePicker").value = selectedDate;
+        }
+
+        renderTaskMap(buildViewModel(rawData, "all"), selectedDate);
+      }
+      function getMalaysiaToday() {
+        const now = new Date();
+        // convert to UTC+8 (Malaysia)
+        const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+        const malaysia = new Date(utc + 8 * 60 * 60 * 1000);
+        return malaysia.toISOString().split("T")[0];
       }
 
       document.addEventListener("DOMContentLoaded", async () => {
@@ -1344,10 +1395,333 @@
 
         rawData = data;
         initFilters();
-        updateDashboard();
+
+        // 🌟 Set today automatically if user hasn't picked a date yet
+        const mapPicker = document.getElementById("mapDatePicker");
+        if (!mapPicker.value) {
+          mapPicker.value = getMalaysiaToday();
+        }
+
+        // Delay dashboard load until overlay is removed
+        setTimeout(() => {
+          updateDashboard();
+        }, 300);
+
         document.getElementById("loadingOverlay").classList.add("hidden");
 
+        // Fix Leaflet render after overlay hides
+        setTimeout(() => {
+          if (map) map.invalidateSize();
+        }, 400);
       });
+
+      /* ============================================================
+         MAP VIEW (Leaflet)
+         ============================================================ */
+      let map;
+      let taskLayer = L.layerGroup();
+      let subtaskLayer = L.layerGroup();
+      let mapLayerControl = null;
+
+      /* Utility: assign colors per task */
+      const MAP_COLORS = [
+        "red",
+        "blue",
+        "green",
+        "purple",
+        "orange",
+        "cyan",
+        "magenta",
+        "brown",
+        "teal",
+        "pink",
+      ];
+
+      function renderTaskMap(vm, selectedDate) {
+        if (!selectedDate) return;
+
+        // Initialize map ONCE
+        if (!map) {
+          const container = document.getElementById("mapContainer");
+          if (!container) return;
+
+          // Ensure the container is visible with real height
+          if (container.clientHeight < 100) {
+            setTimeout(() => renderTaskMap(vm, selectedDate), 200);
+            return;
+          }
+
+          map = L.map("mapContainer", {
+            center: [3.139, 101.6869],
+            zoom: 10,
+            zoomControl: true,
+          });
+
+          L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            maxZoom: 19,
+          }).addTo(map);
+        }
+
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          maxZoom: 19,
+        }).addTo(map);
+
+        // 🔥 Important: allow Leaflet to detect actual size after render
+        setTimeout(() => map.invalidateSize(), 300);
+
+        taskLayer.clearLayers();
+        subtaskLayer.clearLayers();
+
+        const list = vm.tasks || [];
+
+        // Filter by exact date
+        const filtered = list.filter((t) => {
+          const refs = [t.scheduledAt, t.startAt, t.endAt].filter(Boolean);
+
+          return refs.some((ref) => {
+            const d = new Date(ref);
+            return !isNaN(d) && d.toISOString().split("T")[0] === selectedDate;
+          });
+        });
+
+        if (!filtered.length) return;
+
+        // Assign each TaskID a color
+        const colorMap = {};
+        let counter = 0;
+
+        filtered.forEach((t) => {
+          colorMap[t.taskID] = MAP_COLORS[counter % MAP_COLORS.length];
+          counter++;
+        });
+
+        const markers = [];
+
+        /* ---------- 1. TASK START / END POINTS (Triangles) ---------- */
+        filtered.forEach((t) => {
+          const color = colorMap[t.taskID];
+
+          // Start marker (triangle up)
+          if (
+            !isNaN(t.startLat) &&
+            !isNaN(t.startLon) &&
+            t.startLat !== "" &&
+            t.startLon !== ""
+          ) {
+            const icon = L.divIcon({
+              html: `<div style="
+      width:0;height:0;
+      border-left:10px solid transparent;
+      border-right:10px solid transparent;
+      border-bottom:18px solid ${color};
+  "></div>`,
+              iconSize: [0, 0],
+              iconAnchor: [10, 18],
+              popupAnchor: [0, -10],
+              className: "no-default-icon",
+            });
+
+            const m = L.marker([t.startLat, t.startLon], { icon }).bindPopup(
+              `<strong>${t.taskID}</strong><br>Start – ${t.clientName}`
+            );
+            taskLayer.addLayer(m);
+            markers.push(m);
+          }
+
+          // End marker (triangle down)
+          if (t.endLat && t.endLon) {
+            const icon = L.divIcon({
+              html: `<div style="
+      width:0;height:0;
+      border-left:10px solid transparent;
+      border-right:10px solid transparent;
+      border-top:18px solid ${color};
+  "></div>`,
+              iconSize: [0, 0],
+              iconAnchor: [10, 0],
+              popupAnchor: [0, -10],
+              className: "no-default-icon",
+            });
+
+            const m = L.marker([t.endLat, t.endLon], { icon }).bindPopup(
+              `<strong>${t.taskID}</strong><br>End – ${t.clientName}`
+            );
+            taskLayer.addLayer(m);
+            markers.push(m);
+          }
+        });
+
+        /* ---------- 2. SUBTASKS (Circles) ---------- */
+        vm.subtasks.forEach((s) => {
+          const t = filtered.find((x) => x.taskID === s.taskID);
+          if (!t) return;
+
+          const color = colorMap[t.taskID];
+
+          if (s.lat && s.lon) {
+            const icon = L.divIcon({
+              html: `<div style="
+      width:14px;height:14px;
+      border-radius:50%;
+      background:${color};
+      border:2px solid white;
+  "></div>`,
+              iconSize: [14, 14],
+              iconAnchor: [7, 7],
+              popupAnchor: [0, -7],
+              className: "no-default-icon",
+            });
+
+            const m = L.marker([s.lat, s.lon], { icon }).bindPopup(`
+                <strong>${s.taskID}</strong><br>
+                Subtask ${s.subtaskNo}<br>
+                Status: ${s.status}<br>
+                Remarks: ${s.remarks || "-"}
+              `);
+
+            subtaskLayer.addLayer(m);
+            markers.push(m);
+          }
+        });
+
+        // Add layers to map
+        taskLayer.addTo(map);
+
+        // ⭐ Ensure layer control exists only once
+        if (!mapLayerControl) {
+          mapLayerControl = L.control
+            .layers(
+              {},
+              {
+                "Task Start/End": taskLayer,
+                Subtasks: subtaskLayer,
+              }
+            )
+            .addTo(map);
+        } else {
+          // Update existing layer control, not add a new one
+          mapLayerControl.remove();
+
+          mapLayerControl = L.control
+            .layers(
+              {},
+              {
+                "Task Start/End": taskLayer,
+                Subtasks: subtaskLayer,
+              }
+            )
+            .addTo(map);
+        }
+
+        if (markers.length) {
+          const group = L.featureGroup(markers);
+          const bounds = group.getBounds();
+
+          // Run AFTER browser paints markers
+          setTimeout(() => {
+            map.fitBounds(bounds, { padding: [50, 50], maxZoom: 17 });
+          }, 150);
+        }
+      }
+
+      /* ---------- DATE PICKER EVENT ---------- */
+      document
+        .getElementById("mapDatePicker")
+        .addEventListener("change", (e) => {
+          if (rawData) {
+            const vm = buildViewModel(rawData, "all");
+            renderTaskMap(vm, e.target.value);
+          }
+        });
+      /* ============================================================
+         PENDING SURVEY PANEL
+         ============================================================ */
+      function renderPendingSurveys(vm) {
+        const box = document.getElementById("pendingSurveyContainer");
+        box.innerHTML = "";
+
+        const tasks = vm.tasks || [];
+
+        // Filter for:
+        // - SurveyRequired = true
+        // - SurveyLink exists
+        // - SurveyStatus != Submitted
+        const pending = tasks.filter(
+          (t) =>
+            String(t.surveyRequired).toLowerCase() === "true" &&
+            t.surveyLink &&
+            String(t.surveyStatus).toLowerCase() !== "submitted"
+        );
+
+        if (!pending.length) {
+          box.innerHTML = `<div class="muted">No pending surveys. All caught up! 🎉</div>`;
+          return;
+        }
+
+        pending.forEach((t) => {
+          const staff = (t.assignedStaffEmails || []).join(", ") || "-";
+
+          const card = `
+            <div style="
+              background:#fff8e1;
+              border:1px solid #ffe58f;
+              padding:12px;
+              border-radius:10px;
+              margin-bottom:10px;
+            ">
+              <strong>${t.taskID}</strong> – ${t.clientName}<br/>
+
+              <div style="margin-top:4px;">
+                <strong>Status:</strong> ${t.surveyStatus || "Pending"}
+              </div>
+
+              <strong>Survey Link:</strong>
+              <div style="margin-top:4px; display:flex; gap:6px; align-items:center;">
+                <input 
+                  type="text" 
+                  value="${t.surveyLink}" 
+                  readonly 
+                  style="
+                    flex:1;
+                    padding:4px 6px;
+                    font-size:0.8rem;
+                    border:1px solid #ccc;
+                    border-radius:6px;
+                    background:#f9f9f9;
+                  "
+                  onclick="this.select();"
+                />
+                <button 
+                  onclick="navigator.clipboard.writeText('${t.surveyLink}')"
+                  style="
+                    padding:4px 8px;
+                    font-size:0.75rem;
+                    border-radius:6px;
+                    border:1px solid var(--primary);
+                    background:var(--primary);
+                    color:white;
+                    cursor:pointer;
+                  "
+                >Copy</button>
+              </div>
+
+              <div style="margin-top:4px;">
+                <strong>Assigned Staff:</strong> ${staff}
+              </div>
+
+              <div style="
+                margin-top:8px;
+                font-size:0.78rem;
+                color:#6c757d;
+              ">
+                Make sure to send the survey to your client.
+              </div>
+            </div>
+          `;
+
+          box.innerHTML += card;
+        });
+      }
     </script>
   </body>
 </html>
