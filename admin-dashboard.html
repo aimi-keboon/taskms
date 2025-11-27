@@ -525,7 +525,7 @@
 
     <script>
       const ADMIN_API_URL =
-        "https://script.google.com/macros/s/AKfycbxCDQrWB2lRJH91gDzyGFMk6dLmpW8FGao_trGMiUOsd5RmJnbM6u3JaBNOH8Ysnthf/exec";
+        "https://script.google.com/macros/s/AKfycbwx8B33FGs_lKWoiqLZduZPsFcaio2lFxDvAEU5aVaZmBkWmzU18wHLgMB72EiD8CLf/exec";
 
       function getSession() {
         return {
@@ -989,45 +989,52 @@
               '<div class="muted">No survey responses for this task in this range.</div>';
           } else {
             body.innerHTML = res
-              .map((r) => {
-                const questions =
-                  (rawData.surveyQuestions && rawData.surveyQuestions[tid]) ||
-                  [];
-                const ratings = r.ratings || [];
+  .map((r) => {
 
-                let questionBlock = "";
+    console.log("Looking up template for response:", r.taskID);
 
-                if (questions.length) {
-                  questionBlock = questions
-                    .map((q, i) => {
-                      const rating = ratings[i] ?? "-";
-                      return `
-                  <div style="margin-left:12px; padding:2px 0;">
-                    • <strong>${q.questionText}</strong>: ${rating}
-                  </div>
-                `;
-                    })
-                    .join("");
-                } else {
-                  questionBlock = `<div class="muted">No survey questions found for this task.</div>`;
-                }
+    const template = rawData.surveyQuestions.find(
+      (t) => String(t.templateID).trim() === String(r.taskID).trim()
+    );
 
-                return `
-            <div style="border-top:1px solid #eee; padding-top:8px; margin-top:8px;">
-              <div><strong>Response ID:</strong> ${r.responseID}</div>
-              <div><strong>Submitted At:</strong> ${formatDateTime(
-                r.submittedAt
-              )}</div>
-              <div><strong>Avg Rating:</strong> ${r.avgRating.toFixed(2)}</div>
+    console.log("Matched template:", template);
 
-              <div style="margin-top:6px;">
-                <strong>Responses:</strong><br/>
-                ${questionBlock}
-              </div>
+    const questions = template ? template.questions : [];
+    const ratings = r.ratings || [];
+
+    let questionBlock = "";
+
+    if (questions && questions.length > 0) {
+      questionBlock = questions
+        .map((q, i) => {
+          const rating = ratings[i] ?? "-";
+          return `
+            <div style="margin-left:12px; padding:2px 0;">
+              • <strong>${q.questionText}</strong>: ${rating}
             </div>
           `;
-              })
-              .join("");
+        })
+        .join("");
+    } else {
+      questionBlock = `<div class="muted">❌ No survey questions found for template ID: <b>${r.taskID}</b></div>`;
+    }
+
+    return `
+      <div style="border-top:1px solid #eee; padding-top:8px; margin-top:8px;">
+        <div><strong>Response ID:</strong> ${r.responseID}</div>
+        <div><strong>Submitted At:</strong> ${formatDateTime(r.submittedAt)}</div>
+        <div><strong>Avg Rating:</strong> ${r.avgRating.toFixed(2)}</div>
+
+        <div style="margin-top:6px;">
+          <strong>Responses:</strong><br/>
+          ${questionBlock}
+        </div>
+      </div>
+    `;
+  })
+  .join("");
+
+
           }
 
           header.onclick = () => {
