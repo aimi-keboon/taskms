@@ -499,11 +499,25 @@
               <input type="datetime-local" id="scheduledTime" required />
             </div>
 
-            <div class="form-row">
-              <label>Survey Required</label>
-              <div class="checkbox-row">
-                <input type="checkbox" id="surveyRequired" />
-                <span>Require customer survey for this task.</span>
+            <div class="checkbox-row">
+              <input type="checkbox" id="surveyRequired" />
+              <label for="surveyRequired">Survey Required</label>
+            </div>
+
+            <div
+              class="form-row"
+              id="templateSelectorRow"
+              style="display: none"
+            >
+              <label for="surveyTemplateID">
+                Survey Template
+                <span style="color: var(--danger)">*</span>
+              </label>
+              <select id="surveyTemplateID">
+                <option value="">-- Select Template --</option>
+              </select>
+              <div class="hint">
+                Choose a template of questions assigned to this task.
               </div>
             </div>
 
@@ -573,112 +587,32 @@
             style="margin: 10px 0; border: none; border-top: 1px solid #e5e7eb"
           />
 
-          <div id="subtaskEditorContainer">
-            <div class="form-row" style="margin-top: 12px">
-              <label>Add New Subtask</label>
-              <div style="display: flex; gap: 8px">
-                <input
-                  id="newSubtaskTitleInput"
-                  type="text"
-                  placeholder="Enter subtask title"
-                  style="flex: 1"
-                />
-                <button type="button" class="btn-primary" id="btnCreateSubtask">
-                  Add
-                </button>
-              </div>
-              <div
-                class="error-text"
-                id="subtaskAddError"
-                style="display: none; margin-top: 3px"
-              ></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ADMIN SURVEY QUESTIONS MODAL -->
-    <div id="surveyModalBackdrop" class="modal-backdrop">
-      <div class="modal">
-        <!-- HEADER -->
-        <div class="modal-header">
-          <div class="modal-title">
-            Survey Questions – <span id="surveyTaskIDLabel"></span>
-          </div>
-          <button class="modal-close" id="surveyModalClose">&times;</button>
-        </div>
-
-        <!-- BODY -->
-        <div class="modal-body">
-          <!-- TABLE TITLE -->
-          <div class="section-header" style="padding: 0; margin-bottom: 8px">
-            <h2 style="font-size: 0.9rem">Questions</h2>
-          </div>
-
-          <!-- QUESTIONS TABLE -->
-          <div class="table-wrapper">
-            <table>
-              <thead>
-                <tr>
-                  <th>No</th>
-                  <th>Question</th>
-                  <th style="width: 1%">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="surveyQuestionsTableBody">
-                <tr>
-                  <td colspan="3">No questions yet.</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <hr
-            style="margin: 10px 0; border: none; border-top: 1px solid #e5e7eb"
-          />
-
-          <!-- ADD / EDIT FORM -->
-          <div class="form-row">
-            <label>Add / Edit Question</label>
-            <div style="display: flex; gap: 8px; flex-wrap: wrap">
+          <div class="form-row" style="margin-top: 12px">
+            <label>Add New Subtask</label>
+            <div style="display: flex; gap: 8px">
               <input
-                type="number"
-                id="surveyQuestionNoInput"
-                placeholder="Question No"
-                style="width: 120px"
-              />
-              <input
+                id="newSubtaskTitleInput"
                 type="text"
-                id="surveyQuestionTextInput"
-                placeholder="Question text"
-                style="flex: 1; min-width: 0"
+                placeholder="Enter subtask title"
+                style="flex: 1"
               />
+              <button type="button" class="btn-primary" id="btnCreateSubtask">
+                Add
+              </button>
             </div>
-
             <div
               class="error-text"
-              id="surveyFormError"
+              id="subtaskAddError"
               style="display: none; margin-top: 3px"
             ></div>
           </div>
-        </div>
-
-        <!-- FOOTER -->
-        <div class="modal-footer">
-          <button type="button" class="btn-ghost" id="surveyModalCancel">
-            Close
-          </button>
-          <button type="button" class="btn-primary" id="surveySaveBtn">
-            Save Question
-          </button>
         </div>
       </div>
     </div>
 
     <script>
       const ADMIN_API_URL =
-        "https://script.google.com/macros/s/AKfycbygaG216P0vl8nR8GRZzfJ75L2KuSxfE7q4NlGdE3TmKZ6tFJXvtN8RLTsPYbwAXHal/exec"; // you will replace this
+        "https://script.google.com/macros/s/AKfycbxCDQrWB2lRJH91gDzyGFMk6dLmpW8FGao_trGMiUOsd5RmJnbM6u3JaBNOH8Ysnthf/exec"; // replace with your deployed URL if needed
 
       function getSession() {
         return {
@@ -706,6 +640,7 @@
       let rawTasks = [];
       let filteredTasks = [];
       let staffList = []; // from getUsers: [{userID,name,email,role,active}, ...]
+      let surveyTemplates = [];
 
       /* ===== HELPERS ===== */
       function formatDisplayDateTime(str) {
@@ -756,7 +691,7 @@
         return emails.map(findStaffNameByEmail).join(", ");
       }
 
-      /* ===== RENDER TABLE ===== */
+      /* ===== RENDER TASKS TABLE ===== */
       function renderTasksTable() {
         const tbody = document.getElementById("tasksTableBody");
         const countLabel = document.getElementById("taskCountLabel");
@@ -798,26 +733,21 @@
           const tdActions = document.createElement("td");
           tdActions.className = "actions-cell";
 
-          // Subtasks
+          // Subtasks button
           const btnSubtasks = document.createElement("button");
           btnSubtasks.type = "button";
           btnSubtasks.className = "btn-ghost";
           btnSubtasks.textContent = "Subtasks";
           btnSubtasks.onclick = () => openSubtasksModal(t);
 
-          // NEW: Survey Questions
-          const btnSurvey = document.createElement("button");
-          btnSurvey.type = "button";
-          btnSurvey.className = "btn-ghost";
-          btnSurvey.textContent = "Survey Qs";
-          btnSurvey.onclick = () => openSurveyModal(t);
-
+          // Edit Task
           const btnEdit = document.createElement("button");
           btnEdit.type = "button";
           btnEdit.className = "btn-ghost";
           btnEdit.textContent = "Edit";
           btnEdit.onclick = () => openTaskModal(t);
 
+          // Delete Task
           const btnDelete = document.createElement("button");
           btnDelete.type = "button";
           btnDelete.className = "btn-ghost danger";
@@ -825,7 +755,6 @@
           btnDelete.onclick = () => confirmDeleteTask(t);
 
           tdActions.appendChild(btnSubtasks);
-          tdActions.appendChild(btnSurvey);
           tdActions.appendChild(btnEdit);
           tdActions.appendChild(btnDelete);
 
@@ -843,11 +772,11 @@
 
         countLabel.textContent = filteredTasks.length + " task(s)";
       }
+
       /* ===== SUBTASKS – ADMIN STATE ===== */
       let currentSubtasksTaskID = null;
       let currentSubtasks = [];
 
-      /* ===== SUBTASKS – RENDER TABLE ===== */
       function renderSubtasksTable() {
         const tbody = document.getElementById("subtasksTableBody");
 
@@ -861,7 +790,6 @@
         currentSubtasks.forEach((s) => {
           const tr = document.createElement("tr");
 
-          /* NORMAL VIEW MODE */
           if (!s._editMode) {
             const tdTitle = document.createElement("td");
             tdTitle.textContent = s.title || "-";
@@ -896,22 +824,22 @@
             tr.appendChild(tdPhotos);
             tr.appendChild(tdActions);
           } else {
-            /* INLINE EDIT MODE */
+            // INLINE EDIT MODE
             const tdEdit = document.createElement("td");
             tdEdit.colSpan = 4;
 
             tdEdit.innerHTML = `
-        <div style="display:flex; gap:8px;">
-          <input 
-            type="text" 
-            id="editInput_${s.title}" 
-            value="${s.title}" 
-            style="flex:1;"
-          >
-          <button class="btn-primary" id="saveEdit_${s.title}">Save</button>
-          <button class="btn-ghost" id="cancelEdit_${s.title}">Cancel</button>
-        </div>
-      `;
+              <div style="display:flex; gap:8px;">
+                <input 
+                  type="text" 
+                  id="editInput_${s.title}" 
+                  value="${s.title}" 
+                  style="flex:1;"
+                >
+                <button class="btn-primary" id="saveEdit_${s.title}">Save</button>
+                <button class="btn-ghost" id="cancelEdit_${s.title}">Cancel</button>
+              </div>
+            `;
 
             tr.appendChild(tdEdit);
 
@@ -929,7 +857,6 @@
         });
       }
 
-      /* ===== SUBTASKS – LOAD FROM BACKEND ===== */
       async function loadSubtasksAdmin(taskID) {
         if (!taskID) return;
 
@@ -965,7 +892,6 @@
         }
       }
 
-      /* ===== SUBTASKS – INLINE EDIT SAVE ===== */
       async function saveInlineEdit(subtask) {
         const input = document.getElementById(`editInput_${subtask.title}`);
         const newTitle = (input.value || "").trim();
@@ -1002,7 +928,6 @@
         }
       }
 
-      /* ===== SUBTASKS – OPEN MODAL ===== */
       function openSubtasksModal(task) {
         if (!task || !task.taskID) return;
 
@@ -1011,7 +936,6 @@
         document.getElementById("subtasksTaskIDLabel").textContent =
           task.taskID;
 
-        // clear new input
         document.getElementById("newSubtaskTitleInput").value = "";
         document.getElementById("subtaskAddError").style.display = "none";
 
@@ -1020,7 +944,6 @@
         loadSubtasksAdmin(task.taskID);
       }
 
-      /* ===== SUBTASKS – CLOSE MODAL ===== */
       function closeSubtasksModal() {
         document
           .getElementById("subtasksModalBackdrop")
@@ -1030,7 +953,6 @@
         currentSubtasksTaskID = null;
       }
 
-      /* ===== SUBTASKS – CREATE NEW ===== */
       document.getElementById("btnCreateSubtask").onclick = async () => {
         const title = document
           .getElementById("newSubtaskTitleInput")
@@ -1073,7 +995,6 @@
         }
       };
 
-      /* ===== SUBTASKS – DELETE ===== */
       async function confirmDeleteSubtask(subtask) {
         if (!currentSubtasksTaskID || !subtask || !subtask.title) return;
 
@@ -1103,242 +1024,6 @@
         } catch (err) {
           console.error(err);
           alert("Failed to delete subtask.");
-        } finally {
-          setLoading(false);
-        }
-      }
-
-      /* ===== SURVEY QUESTIONS – ADMIN STATE ===== */
-      let currentSurveyTaskID = null;
-      let currentSurveyQuestions = [];
-      let editingSurveyQuestionNo = null; // null = create mode
-
-      /* ===== SURVEY QUESTIONS – RENDER TABLE ===== */
-      function renderSurveyQuestionsTable() {
-        const tbody = document.getElementById("surveyQuestionsTableBody");
-
-        if (!currentSurveyQuestions || currentSurveyQuestions.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="3">No questions yet.</td></tr>';
-          return;
-        }
-
-        tbody.innerHTML = "";
-
-        currentSurveyQuestions.forEach((q) => {
-          const tr = document.createElement("tr");
-
-          const tdNo = document.createElement("td");
-          tdNo.textContent = q.questionNo;
-
-          const tdText = document.createElement("td");
-          tdText.textContent = q.questionText;
-
-          const tdActions = document.createElement("td");
-          tdActions.className = "actions-cell";
-
-          const btnEdit = document.createElement("button");
-          btnEdit.className = "btn-ghost";
-          btnEdit.textContent = "Edit";
-          btnEdit.onclick = () => {
-            editingSurveyQuestionNo = q.questionNo;
-            document.getElementById("surveyQuestionNoInput").value =
-              q.questionNo;
-            document.getElementById("surveyQuestionTextInput").value =
-              q.questionText;
-            const err = document.getElementById("surveyFormError");
-            err.style.display = "none";
-            err.textContent = "";
-            document.getElementById("surveySaveBtn").textContent =
-              "Update Question";
-          };
-
-          const btnDelete = document.createElement("button");
-          btnDelete.className = "btn-ghost danger";
-          btnDelete.textContent = "Delete";
-          btnDelete.onclick = () => confirmDeleteSurveyQuestion(q);
-
-          tdActions.appendChild(btnEdit);
-          tdActions.appendChild(btnDelete);
-
-          tr.appendChild(tdNo);
-          tr.appendChild(tdText);
-          tr.appendChild(tdActions);
-
-          tbody.appendChild(tr);
-        });
-      }
-
-      /* ===== SURVEY QUESTIONS – LOAD FROM BACKEND ===== */
-      async function loadSurveyQuestionsAdmin(taskID) {
-        if (!taskID) return;
-
-        setLoading(true);
-        try {
-          const params = new URLSearchParams({
-            action: "getSurveyQuestions",
-            taskID: taskID,
-          });
-
-          const res = await fetch(`${ADMIN_API_URL}?${params.toString()}`, {
-            method: "GET",
-            mode: "cors",
-          });
-
-          const data = await res.json();
-
-          if (!data.success) {
-            currentSurveyQuestions = [];
-            alert(
-              "Error loading survey questions: " +
-                (data.message || "Unknown error")
-            );
-          } else {
-            currentSurveyQuestions = data.questions || [];
-          }
-        } catch (err) {
-          console.error("Error loading survey questions:", err);
-          currentSurveyQuestions = [];
-          alert("Error loading survey questions. Check console.");
-        } finally {
-          setLoading(false);
-          renderSurveyQuestionsTable();
-        }
-      }
-
-      /* ===== SURVEY QUESTIONS – OPEN / CLOSE MODAL ===== */
-      function openSurveyModal(task) {
-        if (!task || !task.taskID) return;
-
-        currentSurveyTaskID = task.taskID;
-        editingSurveyQuestionNo = null;
-
-        document.getElementById("surveyTaskIDLabel").textContent = task.taskID;
-
-        document.getElementById("surveyQuestionNoInput").value = "";
-        document.getElementById("surveyQuestionTextInput").value = "";
-        const err = document.getElementById("surveyFormError");
-        err.style.display = "none";
-        err.textContent = "";
-        document.getElementById("surveySaveBtn").textContent = "Save Question";
-
-        document.getElementById("surveyModalBackdrop").classList.add("show");
-
-        loadSurveyQuestionsAdmin(task.taskID);
-      }
-
-      function closeSurveyModal() {
-        document.getElementById("surveyModalBackdrop").classList.remove("show");
-
-        currentSurveyTaskID = null;
-        currentSurveyQuestions = [];
-        editingSurveyQuestionNo = null;
-      }
-
-      /* ===== SURVEY QUESTIONS – CREATE / UPDATE ===== */
-      async function handleSurveySave() {
-        const err = document.getElementById("surveyFormError");
-        err.style.display = "none";
-        err.textContent = "";
-
-        if (!currentSurveyTaskID) {
-          err.style.display = "block";
-          err.textContent = "No task selected.";
-          return;
-        }
-
-        const noVal = document
-          .getElementById("surveyQuestionNoInput")
-          .value.trim();
-        const textVal = document
-          .getElementById("surveyQuestionTextInput")
-          .value.trim();
-
-        if (!noVal || !textVal) {
-          err.style.display = "block";
-          err.textContent = "Question No and text are required.";
-          return;
-        }
-
-        const questionNo = Number(noVal);
-        if (!Number.isFinite(questionNo) || questionNo <= 0) {
-          err.style.display = "block";
-          err.textContent = "Question No must be a positive number.";
-          return;
-        }
-
-        const isEdit = editingSurveyQuestionNo !== null;
-
-        const payload = {
-          action: isEdit ? "updateSurveyQuestion" : "createSurveyQuestion",
-          taskID: currentSurveyTaskID,
-          questionNo: questionNo,
-          questionText: textVal,
-        };
-
-        if (isEdit) {
-          payload.questionNoExisting = editingSurveyQuestionNo;
-        }
-
-        setLoading(true);
-        try {
-          const params = new URLSearchParams({
-            action: payload.action,
-          });
-
-          await fetch(`${ADMIN_API_URL}?${params.toString()}`, {
-            method: "POST",
-            mode: "no-cors",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-          });
-
-          // assume success → reload list
-          document.getElementById("surveyQuestionNoInput").value = "";
-          document.getElementById("surveyQuestionTextInput").value = "";
-          editingSurveyQuestionNo = null;
-          document.getElementById("surveySaveBtn").textContent =
-            "Save Question";
-
-          await loadSurveyQuestionsAdmin(currentSurveyTaskID);
-        } catch (e) {
-          console.error("Error saving survey question:", e);
-          err.style.display = "block";
-          err.textContent = "Failed to save question.";
-        } finally {
-          setLoading(false);
-        }
-      }
-
-      /* ===== SURVEY QUESTIONS – DELETE ===== */
-      async function confirmDeleteSurveyQuestion(q) {
-        if (!currentSurveyTaskID || !q || q.questionNo == null) return;
-
-        if (!confirm(`Delete Question ${q.questionNo}? This cannot be undone.`))
-          return;
-
-        setLoading(true);
-        try {
-          const payload = {
-            action: "deleteSurveyQuestion",
-            taskID: currentSurveyTaskID,
-            questionNo: q.questionNo,
-          };
-
-          const params = new URLSearchParams({
-            action: "deleteSurveyQuestion",
-          });
-
-          await fetch(`${ADMIN_API_URL}?${params.toString()}`, {
-            method: "POST",
-            mode: "no-cors",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-          });
-
-          await loadSurveyQuestionsAdmin(currentSurveyTaskID);
-        } catch (err) {
-          console.error("Error deleting survey question:", err);
-          alert("Failed to delete question.");
         } finally {
           setLoading(false);
         }
@@ -1431,6 +1116,12 @@
           document.getElementById("surveyRequired").checked =
             !!task.surveyRequired;
 
+          // read only labels if you want to show them
+          document.getElementById("statusDisplay").textContent =
+            task.status || "New";
+          document.getElementById("surveyStatusDisplay").textContent =
+            task.surveyStatus || "-";
+
           populateStaffCheckboxes(task.assignedStaff || []);
         } else {
           // NEW TASK MODE
@@ -1441,9 +1132,25 @@
           document.getElementById("location").value = "";
           document.getElementById("scheduledTime").value = "";
           document.getElementById("surveyRequired").checked = false;
+          document.getElementById("statusDisplay").textContent = "New";
+          document.getElementById("surveyStatusDisplay").textContent = "-";
 
           populateStaffCheckboxes([]);
         }
+
+        // Handle template selector visibility
+        const surveyCheckbox = document.getElementById("surveyRequired");
+        const templateRow = document.getElementById("templateSelectorRow");
+
+        surveyCheckbox.onchange = () => {
+          const show = surveyCheckbox.checked;
+          templateRow.style.display = show ? "block" : "none";
+        };
+
+        templateRow.style.display =
+          task && task.surveyRequired ? "block" : "none";
+
+        renderTemplateDropdown(task ? task.surveyTemplateID : "");
 
         backdrop.classList.add("show");
       }
@@ -1452,7 +1159,6 @@
         const backdrop = document.getElementById("taskModalBackdrop");
         backdrop.classList.remove("show");
 
-        // Reset form
         document.getElementById("taskForm").reset();
         document.getElementById("taskIDHidden").value = "";
       }
@@ -1483,6 +1189,46 @@
           staffList = [];
         } finally {
           setLoading(false);
+        }
+      }
+
+      function renderTemplateDropdown(selectedID = "") {
+        const sel = document.getElementById("surveyTemplateID");
+        sel.innerHTML = `<option value="">-- Select Template --</option>`;
+
+        surveyTemplates.forEach((t) => {
+          const opt = document.createElement("option");
+          opt.value = t.templateID;
+          opt.textContent = t.templateName;
+
+          if (selectedID && selectedID === t.templateID) {
+            opt.selected = true;
+          }
+          sel.appendChild(opt);
+        });
+      }
+
+      async function loadSurveyTemplates() {
+        try {
+          const params = new URLSearchParams({
+            action: "getSurveyTemplates",
+            companyID: currentSession.companyID || "",
+          });
+
+          const res = await fetch(`${ADMIN_API_URL}?${params.toString()}`, {
+            method: "GET",
+            mode: "cors",
+          });
+
+          const data = await res.json();
+          if (data.success) {
+            surveyTemplates = data.templates || [];
+          } else {
+            surveyTemplates = [];
+          }
+        } catch (e) {
+          console.error("Error loading templates:", e);
+          surveyTemplates = [];
         }
       }
 
@@ -1534,7 +1280,6 @@
             body: JSON.stringify(payload),
           });
 
-          // cannot read res in no-cors → assume success
           await loadTasks();
           closeTaskModal();
         } catch (err) {
@@ -1579,6 +1324,7 @@
       /* ===== EVENT BINDINGS ===== */
       document.addEventListener("DOMContentLoaded", async () => {
         currentSession = requireLogin();
+        await loadSurveyTemplates();
 
         // Filters
         document
@@ -1596,7 +1342,7 @@
           .getElementById("btnAddTask")
           .addEventListener("click", () => openTaskModal(null));
 
-        // Modal controls
+        // Task modal controls
         document
           .getElementById("taskModalClose")
           .addEventListener("click", closeTaskModal);
@@ -1606,38 +1352,20 @@
             e.preventDefault();
             closeTaskModal();
           });
-        // SUBTASKS MODAL CONTROLS
+
+        // Subtasks modal controls
         document
           .getElementById("subtasksModalClose")
           .addEventListener("click", closeSubtasksModal);
 
-        // Add subtask button simply focuses the input
         document
           .getElementById("btnAddSubtask")
           .addEventListener("click", (e) => {
             e.preventDefault();
             document.getElementById("newSubtaskTitleInput").focus();
           });
-        // SURVEY MODAL CONTROLS
-        document
-          .getElementById("surveyModalClose")
-          .addEventListener("click", closeSurveyModal);
 
-        document
-          .getElementById("surveyModalCancel")
-          .addEventListener("click", (e) => {
-            e.preventDefault();
-            closeSurveyModal();
-          });
-
-        document
-          .getElementById("surveySaveBtn")
-          .addEventListener("click", (e) => {
-            e.preventDefault();
-            handleSurveySave();
-          });
-
-        // Form submit
+        // Task form submit
         document
           .getElementById("taskForm")
           .addEventListener("submit", async (e) => {
@@ -1647,9 +1375,6 @@
             formError.textContent = "";
 
             const taskIDHidden = document
-              .getElementById("taskIDHidden")
-              .value.trim();
-            const taskIDInput = document
               .getElementById("taskIDHidden")
               .value.trim();
 
@@ -1673,16 +1398,22 @@
             const assignedStaff = getSelectedStaffEmails();
 
             const payload = {
-              taskIDExisting: taskIDHidden,
-              taskID: taskIDHidden,
-
+              taskIDExisting: taskIDHidden || null,
               clientName,
               location,
               scheduledTime,
               surveyRequired,
+              surveyTemplateID: surveyRequired
+                ? document.getElementById("surveyTemplateID").value
+                : "",
               assignedStaff,
               companyID: currentSession.companyID || "",
             };
+
+            // Only include taskID when creating a new task
+            if (!taskIDHidden) {
+              payload.taskID = "";
+            }
 
             await saveTask(payload);
           });

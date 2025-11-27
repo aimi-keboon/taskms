@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>FSMS Admin – Survey Templates</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <style>
+      :root {
+        --primary: #2c5aa0;
+        --accent: #28a745;
+        --bg: #f4f6fb;
+        --text-dark: #1e2a3a;
+        --text-light: #6c757d;
+        --radius: 12px;
+        --danger: #dc3545;
+        --muted: #e9ecef;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: "Inter", Arial, sans-serif;
+      }
+
+      body {
+        background: var(--bg);
+      }
+
+      /* LOADING OVERLAY */
+      #loadingOverlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(4px);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 99999;
+      }
+      #loadingOverlay.hidden {
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s;
+      }
+      .loader {
+        width: 48px;
+        height: 48px;
+        border: 5px solid #d0d7e2;
+        border-top-color: var(--primary);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* LAYOUT */
+      main {
+        padding: 25px;
+        max-width: 1100px;
+        margin: auto;
+      }
+      .page-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+      .page-subtitle {
+        font-size: 0.9rem;
+        color: var(--text-light);
+        margin-bottom: 16px;
+      }
+
+      /* Toggle for mobile */
+      .view-toggle {
+        display: none;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+      .view-toggle button {
+        flex: 1;
+        padding: 7px 10px;
+        border-radius: 999px;
+        border: 1px solid #d0d7e2;
+        background: #fff;
+        font-size: 0.8rem;
+        cursor: pointer;
+      }
+      .view-toggle button.toggle-active {
+        background: var(--primary);
+        color: #fff;
+        border-color: var(--primary);
+      }
+
+      /* Two-panel layout */
+      .layout-two-panel {
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.2fr);
+        gap: 16px;
+      }
+
+      /* Cards */
+      .section-card {
+        background: #fff;
+        padding: 18px;
+        border-radius: var(--radius);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+        margin-bottom: 16px;
+      }
+
+      .section-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        align-items: center;
+        gap: 8px;
+      }
+      .section-header h2 {
+        font-size: 1rem;
+        font-weight: 600;
+      }
+      .section-header .muted {
+        font-size: 0.78rem;
+        color: var(--text-light);
+      }
+
+      /* Buttons */
+      .btn-primary {
+        background: var(--primary);
+        border: none;
+        padding: 7px 14px;
+        color: white;
+        border-radius: 999px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        font-weight: 500;
+      }
+      .btn-primary:hover {
+        opacity: 0.9;
+      }
+
+      .btn-ghost {
+        background: white;
+        border: 1px solid #d0d7e2;
+        padding: 6px 10px;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        cursor: pointer;
+      }
+      .btn-ghost:hover {
+        background: #f3f4f6;
+      }
+      .btn-ghost.danger {
+        color: var(--danger);
+        border-color: var(--danger);
+      }
+
+      /* Tables */
+      .table-wrapper {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.82rem;
+      }
+      th,
+      td {
+        border-bottom: 1px solid #e5e7eb;
+        padding: 7px;
+        text-align: left;
+      }
+      th {
+        background: #f8fafc;
+        color: var(--text-light);
+        font-size: 0.75rem;
+      }
+
+      /* Forms */
+      .form-row {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        margin-bottom: 8px;
+      }
+      .form-row label {
+        font-size: 0.78rem;
+        color: var(--text-light);
+      }
+      .form-row input,
+      .form-row textarea,
+      .form-row select {
+        border: 1px solid #d0d7e2;
+        padding: 7px 9px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+      }
+      textarea {
+        min-height: 70px;
+      }
+      .error-text {
+        color: var(--danger);
+        font-size: 0.75rem;
+      }
+
+      /* Small hint text */
+      .hint {
+        font-size: 0.75rem;
+        color: var(--text-light);
+      }
+
+      /* PANELS (for responsiveness) */
+      .panel {
+        /* On desktop they’re always visible; mobile we manage via .active */
+      }
+      .panel-questions-empty {
+        font-size: 0.82rem;
+        color: var(--text-light);
+        padding: 6px 0 2px;
+      }
+
+      /* TEMPLATE MODAL (kept from your version) */
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.4);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+      }
+      .modal-backdrop.show {
+        display: flex;
+      }
+      .modal {
+        background: white;
+        padding: 18px;
+        border-radius: 14px;
+        width: 100%;
+        max-width: 520px;
+        box-shadow: 0 18px 50px rgba(15, 23, 42, 0.25);
+      }
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        align-items: center;
+      }
+      .modal-title {
+        font-size: 1rem;
+        font-weight: 600;
+      }
+      .modal-close {
+        cursor: pointer;
+        font-size: 1.2rem;
+        background: none;
+        border: none;
+      }
+      .modal-footer {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        margin-top: 6px;
+      }
+
+      /* RESPONSIVE BEHAVIOUR */
+      @media (max-width: 900px) {
+        .layout-two-panel {
+          display: block;
+        }
+      }
+
+      /* Mobile accordion behaviour */
+      @media (max-width: 720px) {
+        .view-toggle {
+          display: flex;
+        }
+        .panel {
+          display: none;
+        }
+        .panel.active {
+          display: block;
+        }
+      }
+
+      /* On larger screens, always show both panels */
+      @media (min-width: 721px) {
+        .panel {
+          display: block !important;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="loadingOverlay"><div class="loader"></div></div>
+
+    <div id="globalHeader"></div>
+    <script src="admin-navbar.js"></script>
+
+    <main>
+      <div class="page-title">Survey Templates</div>
+      <div class="page-subtitle">
+        Create survey templates and manage questions for each template.
+      </div>
+
+      <!-- MOBILE VIEW TOGGLE -->
+      <div class="view-toggle">
+        <button id="btnViewTemplates" class="toggle-active">Templates</button>
+        <button id="btnViewQuestions">Questions</button>
+      </div>
+
+      <div class="layout-two-panel">
+        <!-- LEFT: TEMPLATES PANEL -->
+        <section class="section-card panel panel-templates">
+          <div class="section-header">
+            <h2>Templates</h2>
+            <button class="btn-primary" id="btnAddTemplate">
+              + New Template
+            </button>
+          </div>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width: 1%">ID</th>
+                  <th>Name</th>
+                  <th>Description</th>
+                  <th>Active</th>
+                  <th style="width: 1%">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="templateTableBody">
+                <tr>
+                  <td colspan="5">Loading...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- RIGHT: QUESTIONS PANEL -->
+        <section class="section-card panel panel-questions">
+          <div class="section-header">
+            <div>
+              <h2>Template Questions</h2>
+              <div class="muted">
+                Selected template:
+                <strong
+                  ><span id="tmplQ_TemplateID">None selected</span></strong
+                >
+              </div>
+            </div>
+            <button
+              class="btn-ghost"
+              id="tmplQ_Close"
+              title="Back to templates / clear selection"
+            >
+              Clear
+            </button>
+          </div>
+
+          <div id="questionsEmptyState" class="panel-questions-empty">
+            Select a template from the left to view and edit its questions.
+          </div>
+
+          <div id="questionsContent" style="display: none">
+            <div class="table-wrapper" style="margin-bottom: 10px">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width: 1%">No</th>
+                    <th>Question</th>
+                    <th style="width: 1%">Max</th>
+                    <th style="width: 1%">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="templateQuestionsTableBody">
+                  <tr>
+                    <td colspan="4">No questions.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <hr
+              style="
+                margin: 8px 0 12px;
+                border: none;
+                border-top: 1px solid #e5e7eb;
+              "
+            />
+
+            <div class="form-row">
+              <label>Edit / Add Question</label>
+              <input type="number" id="tmplQ_No" placeholder="Question No" />
+            </div>
+
+            <div class="form-row">
+              <textarea id="tmplQ_Text" placeholder="Question text"></textarea>
+            </div>
+
+            <div class="form-row">
+              <input
+                type="number"
+                id="tmplQ_Max"
+                placeholder="Max Rating (e.g. 5)"
+              />
+              <div class="hint">
+                This is the highest rating (for example 5 for a 1–5 scale).
+              </div>
+            </div>
+
+            <div
+              id="tmplQ_Error"
+              class="error-text"
+              style="display: none"
+            ></div>
+
+            <div
+              style="
+                display: flex;
+                justify-content: flex-end;
+                gap: 8px;
+                margin-top: 6px;
+              "
+            >
+              <button class="btn-ghost" id="tmplQ_Cancel" type="button">
+                Reset Form
+              </button>
+              <button class="btn-primary" id="tmplQ_Save" type="button">
+                Save Question
+              </button>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- TEMPLATE MODAL (unchanged behaviour) -->
+    <div id="templateModal" class="modal-backdrop">
+      <div class="modal">
+        <div class="modal-header">
+          <div class="modal-title" id="templateModalTitle">New Template</div>
+          <button class="modal-close" onclick="closeTemplateModal()">
+            &times;
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <div class="form-row">
+            <label>Template Name</label>
+            <input type="text" id="tmpl_Name" />
+          </div>
+
+          <div class="form-row">
+            <label>Description</label>
+            <textarea id="tmpl_Desc"></textarea>
+          </div>
+
+          <div class="form-row">
+            <label>Active?</label>
+            <select id="tmpl_Active">
+              <option value="true">Yes</option>
+              <option value="false">No</option>
+            </select>
+          </div>
+
+          <div id="tmpl_Error" class="error-text" style="display: none"></div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-ghost" onclick="closeTemplateModal()">
+            Cancel
+          </button>
+          <button class="btn-primary" onclick="saveTemplate()">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const ADMIN_API_URL =
+        "https://script.google.com/macros/s/AKfycbxCDQrWB2lRJH91gDzyGFMk6dLmpW8FGao_trGMiUOsd5RmJnbM6u3JaBNOH8Ysnthf/exec";
+
+      function setLoading(b) {
+        document
+          .getElementById("loadingOverlay")
+          .classList.toggle("hidden", !b);
+      }
+
+      /* STATE */
+      let templates = [];
+      let currentTemplateID = null;
+      let editingTemplateID = null;
+
+      let templateQuestions = [];
+      let editingQ_No = null;
+
+      /* SIMPLE VIEW STATE (for mobile accordion) */
+      let currentView = "templates"; // 'templates' | 'questions'
+
+      function applyViewVisibility() {
+        const isMobile = window.innerWidth <= 720;
+        const templatesPanel = document.querySelector(".panel-templates");
+        const questionsPanel = document.querySelector(".panel-questions");
+        const btnTemplates = document.getElementById("btnViewTemplates");
+        const btnQuestions = document.getElementById("btnViewQuestions");
+
+        if (!templatesPanel || !questionsPanel) return;
+
+        if (isMobile) {
+          templatesPanel.classList.toggle(
+            "active",
+            currentView === "templates"
+          );
+          questionsPanel.classList.toggle(
+            "active",
+            currentView === "questions"
+          );
+        } else {
+          // On bigger screens always show both
+          templatesPanel.classList.add("active");
+          questionsPanel.classList.add("active");
+        }
+
+        if (btnTemplates && btnQuestions) {
+          btnTemplates.classList.toggle(
+            "toggle-active",
+            currentView === "templates"
+          );
+          btnQuestions.classList.toggle(
+            "toggle-active",
+            currentView === "questions"
+          );
+        }
+      }
+
+      function setView(view) {
+        currentView = view;
+        applyViewVisibility();
+      }
+
+      /* --------------------------------
+   LOAD TEMPLATES
+---------------------------------- */
+      async function loadTemplates() {
+        setLoading(true);
+        try {
+          const params = new URLSearchParams({ action: "getSurveyTemplates" });
+          const res = await fetch(`${ADMIN_API_URL}?${params}`);
+          const data = await res.json();
+
+          templates = data.success ? data.templates || [] : [];
+          renderTemplateTable();
+        } catch (e) {
+          console.error(e);
+          templates = [];
+          renderTemplateTable();
+        }
+        setLoading(false);
+      }
+
+      function renderTemplateTable() {
+        const tbody = document.getElementById("templateTableBody");
+
+        if (!templates.length) {
+          tbody.innerHTML = `<tr><td colspan="5">No templates.</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = "";
+        templates.forEach((t) => {
+          const tr = document.createElement("tr");
+
+          tr.innerHTML = `
+      <td>${t.templateID}</td>
+      <td>${t.templateName}</td>
+      <td>${t.description || ""}</td>
+      <td>${t.active ? "Yes" : "No"}</td>
+      <td>
+        <button class="btn-ghost" onclick="openQuestions('${
+          t.templateID
+        }')">Questions</button>
+        <button class="btn-ghost" onclick="openTemplateModal('${
+          t.templateID
+        }')">Edit</button>
+        <button class="btn-ghost danger" onclick="deleteTemplate('${
+          t.templateID
+        }')">Delete</button>
+      </td>
+    `;
+
+          tbody.appendChild(tr);
+        });
+      }
+
+      /* --------------------------------
+   TEMPLATE MODAL
+---------------------------------- */
+      function openTemplateModal(templateID = null) {
+        editingTemplateID = templateID;
+
+        const modal = document.getElementById("templateModal");
+        const title = document.getElementById("templateModalTitle");
+        const nameInput = document.getElementById("tmpl_Name");
+        const descInput = document.getElementById("tmpl_Desc");
+        const activeInput = document.getElementById("tmpl_Active");
+        const err = document.getElementById("tmpl_Error");
+
+        err.style.display = "none";
+
+        if (templateID) {
+          const t = templates.find((x) => x.templateID === templateID);
+          title.textContent = "Edit Template";
+          nameInput.value = t ? t.templateName || "" : "";
+          descInput.value = t ? t.description || "" : "";
+          activeInput.value = t && t.active ? "true" : "false";
+        } else {
+          title.textContent = "New Template";
+          nameInput.value = "";
+          descInput.value = "";
+          activeInput.value = "true";
+        }
+
+        modal.classList.add("show");
+      }
+
+      function closeTemplateModal() {
+        document.getElementById("templateModal").classList.remove("show");
+        editingTemplateID = null;
+      }
+
+      /* --------------------------------
+   SAVE TEMPLATE (CREATE/UPDATE)
+---------------------------------- */
+      async function saveTemplate() {
+        const name = document.getElementById("tmpl_Name").value.trim();
+        const desc = document.getElementById("tmpl_Desc").value.trim();
+        const active = document.getElementById("tmpl_Active").value === "true";
+        const err = document.getElementById("tmpl_Error");
+
+        err.style.display = "none";
+        if (!name) {
+          err.textContent = "Template name required.";
+          err.style.display = "block";
+          return;
+        }
+
+        const payload = {
+          templateName: name,
+          description: desc,
+          active: active,
+        };
+
+        payload.action = editingTemplateID
+          ? "updateSurveyTemplate"
+          : "createSurveyTemplate";
+        if (editingTemplateID) payload.templateID = editingTemplateID;
+
+        setLoading(true);
+        try {
+          await fetch(ADMIN_API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain" },
+            body: JSON.stringify(payload),
+          });
+
+          closeTemplateModal();
+          await loadTemplates();
+        } catch (e) {
+          console.error(e);
+          err.textContent = "Failed to save template.";
+          err.style.display = "block";
+        }
+        setLoading(false);
+      }
+
+      /* --------------------------------
+   DELETE TEMPLATE
+---------------------------------- */
+      async function deleteTemplate(templateID) {
+        if (!confirm("Delete template?")) return;
+
+        const payload = {
+          action: "deleteSurveyTemplate",
+          templateID,
+        };
+
+        setLoading(true);
+        try {
+          await fetch(ADMIN_API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain" },
+            body: JSON.stringify(payload),
+          });
+
+          // If we were viewing its questions, clear panel
+          if (currentTemplateID === templateID) {
+            clearQuestionsPanel();
+          }
+
+          await loadTemplates();
+        } catch (e) {
+          console.error(e);
+          alert("Failed to delete template.");
+        }
+        setLoading(false);
+      }
+
+      /* --------------------------------
+   QUESTIONS PANEL
+---------------------------------- */
+      function clearQuestionsPanel() {
+        currentTemplateID = null;
+        templateQuestions = [];
+        editingQ_No = null;
+
+        document.getElementById("tmplQ_TemplateID").textContent =
+          "None selected";
+        document.getElementById("tmplQ_No").value = "";
+        document.getElementById("tmplQ_Text").value = "";
+        document.getElementById("tmplQ_Max").value = "";
+        document.getElementById("tmplQ_Error").style.display = "none";
+
+        document.getElementById("questionsEmptyState").style.display = "block";
+        document.getElementById("questionsContent").style.display = "none";
+
+        // On mobile, go back to templates view
+        setView("templates");
+      }
+
+      async function openQuestions(templateID) {
+        currentTemplateID = templateID;
+        editingQ_No = null;
+
+        document.getElementById("tmplQ_TemplateID").textContent = templateID;
+        document.getElementById("tmplQ_No").value = "";
+        document.getElementById("tmplQ_Text").value = "";
+        document.getElementById("tmplQ_Max").value = "";
+        document.getElementById("tmplQ_Error").style.display = "none";
+
+        document.getElementById("questionsEmptyState").style.display = "none";
+        document.getElementById("questionsContent").style.display = "block";
+
+        // When a template is chosen, jump to Questions view on small screens
+        setView("questions");
+
+        await loadTemplateQuestions(templateID);
+      }
+
+      /* --------------------------------
+   LOAD TEMPLATE QUESTIONS
+---------------------------------- */
+      async function loadTemplateQuestions(templateID) {
+        setLoading(true);
+        try {
+          const params = new URLSearchParams({
+            action: "getSurveyTemplateQuestions",
+            templateID,
+          });
+
+          const res = await fetch(`${ADMIN_API_URL}?${params}`);
+          const data = await res.json();
+
+          templateQuestions = data.success ? data.questions || [] : [];
+          renderQuestionTable();
+        } catch (e) {
+          console.error(e);
+          templateQuestions = [];
+          renderQuestionTable();
+        }
+        setLoading(false);
+      }
+
+      function renderQuestionTable() {
+        const tbody = document.getElementById("templateQuestionsTableBody");
+
+        if (!templateQuestions.length) {
+          tbody.innerHTML = `<tr><td colspan="4">No questions.</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = "";
+        templateQuestions.forEach((q) => {
+          const tr = document.createElement("tr");
+
+          tr.innerHTML = `
+      <td>${q.questionNo}</td>
+      <td>${q.questionText}</td>
+      <td>${q.maxRating}</td>
+      <td>
+        <button
+          class="btn-ghost"
+          onclick="editQuestion(${q.questionNo}, '${q.questionText.replace(
+            /'/g,
+            "&#39;"
+          )}', ${q.maxRating})">
+          Edit
+        </button>
+        <button
+          class="btn-ghost danger"
+          onclick="deleteQuestion(${q.questionNo})">
+          Delete
+        </button>
+      </td>
+    `;
+
+          tbody.appendChild(tr);
+        });
+      }
+
+      /* --------------------------------
+   EDIT QUESTION
+---------------------------------- */
+      function editQuestion(no, text, max) {
+        editingQ_No = no;
+        document.getElementById("tmplQ_No").value = no;
+        document.getElementById("tmplQ_Text").value = text;
+        document.getElementById("tmplQ_Max").value = max;
+        document.getElementById("tmplQ_Error").style.display = "none";
+
+        // On mobile, make sure Questions view is active
+        setView("questions");
+      }
+
+      /* --------------------------------
+   SAVE QUESTION
+---------------------------------- */
+      async function saveQuestion() {
+        const no = Number(document.getElementById("tmplQ_No").value.trim());
+        const text = document.getElementById("tmplQ_Text").value.trim();
+        const max = Number(document.getElementById("tmplQ_Max").value.trim());
+        const err = document.getElementById("tmplQ_Error");
+
+        err.style.display = "none";
+
+        if (!currentTemplateID) {
+          err.textContent = "Please select a template first.";
+          err.style.display = "block";
+          return;
+        }
+
+        if (!no || !text || !max) {
+          err.textContent = "All fields are required.";
+          err.style.display = "block";
+          return;
+        }
+
+        const payload = {
+          templateID: currentTemplateID,
+          questionNo: no,
+          questionText: text,
+          maxRating: max,
+        };
+
+        payload.action = editingQ_No
+          ? "updateSurveyTemplateQuestion"
+          : "createSurveyTemplateQuestion";
+
+        if (editingQ_No) payload.questionNoExisting = editingQ_No;
+
+        setLoading(true);
+        try {
+          await fetch(ADMIN_API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain" },
+            body: JSON.stringify(payload),
+          });
+
+          await loadTemplateQuestions(currentTemplateID);
+
+          // Reset form after save
+          editingQ_No = null;
+          document.getElementById("tmplQ_No").value = "";
+          document.getElementById("tmplQ_Text").value = "";
+          document.getElementById("tmplQ_Max").value = "";
+        } catch (e) {
+          console.error(e);
+          err.textContent = "Failed to save question.";
+          err.style.display = "block";
+        }
+
+        setLoading(false);
+      }
+
+      /* --------------------------------
+   DELETE QUESTION
+---------------------------------- */
+      async function deleteQuestion(no) {
+        if (!confirm("Delete this question?")) return;
+
+        const payload = {
+          action: "deleteSurveyTemplateQuestion",
+          templateID: currentTemplateID,
+          questionNo: no,
+        };
+
+        setLoading(true);
+        try {
+          await fetch(ADMIN_API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain" },
+            body: JSON.stringify(payload),
+          });
+
+          await loadTemplateQuestions(currentTemplateID);
+        } catch (e) {
+          console.error(e);
+          alert("Failed to delete question.");
+        }
+        setLoading(false);
+      }
+
+      /* --------------------------------
+   BINDINGS & INIT
+---------------------------------- */
+      document.addEventListener("DOMContentLoaded", () => {
+        // Initial view
+        applyViewVisibility();
+
+        // Handle resize to keep view state consistent
+        window.addEventListener("resize", applyViewVisibility);
+
+        // Mobile view toggle buttons
+        const btnViewTemplates = document.getElementById("btnViewTemplates");
+        const btnViewQuestions = document.getElementById("btnViewQuestions");
+        if (btnViewTemplates) {
+          btnViewTemplates.addEventListener("click", () =>
+            setView("templates")
+          );
+        }
+        if (btnViewQuestions) {
+          btnViewQuestions.addEventListener("click", () =>
+            setView("questions")
+          );
+        }
+
+        // Template buttons
+        document.getElementById("btnAddTemplate").onclick = () =>
+          openTemplateModal();
+
+        // Question panel buttons
+        document.getElementById("tmplQ_Close").onclick = clearQuestionsPanel;
+        document.getElementById("tmplQ_Cancel").onclick = () => {
+          // Just reset form; keep template and question list
+          editingQ_No = null;
+          document.getElementById("tmplQ_No").value = "";
+          document.getElementById("tmplQ_Text").value = "";
+          document.getElementById("tmplQ_Max").value = "";
+          document.getElementById("tmplQ_Error").style.display = "none";
+        };
+        document.getElementById("tmplQ_Save").onclick = saveQuestion;
+
+        // Load templates on start
+        loadTemplates();
+      });
+    </script>
+  </body>
+</html>

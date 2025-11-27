@@ -30,6 +30,7 @@ function renderGlobalHeader() {
     { label: "Dashboard", file: "admin-dashboard.html" },
     { label: "Users", file: "admin-users.html" },
     { label: "Tasks", file: "admin-tasks.html" },
+    { label: "Survey Settings", file: "admin-survey-templates.html" },
   ];
 
   container.innerHTML = `
