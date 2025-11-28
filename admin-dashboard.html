@@ -518,14 +518,31 @@
 
       <!-- DEBUG -->
       <div class="section-card">
-        <span class="debug-toggle" onclick="toggleDebug()">Show Raw JSON</span>
-        <pre id="debugBox"></pre>
-      </div>
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <span class="debug-toggle" onclick="toggleDebug()">Show Raw JSON</span>
+    <button 
+      id="copyJsonBtn"
+      style="
+        padding:4px 10px;
+        font-size:0.75rem;
+        border:1px solid var(--primary);
+        background:var(--primary);
+        color:white;
+        border-radius:6px;
+        cursor:pointer;
+      "
+      onclick="copyDebugJson()"
+    >Copy JSON</button>
+  </div>
+
+  <pre id="debugBox"></pre>
+</div>
+
     </main>
 
     <script>
       const ADMIN_API_URL =
-        "https://script.google.com/macros/s/AKfycbwx8B33FGs_lKWoiqLZduZPsFcaio2lFxDvAEU5aVaZmBkWmzU18wHLgMB72EiD8CLf/exec";
+        "https://script.google.com/macros/s/AKfycbyqkg-xRlBFcdY24D6ESWYO6n9Yb2gTigKRrKTd7WTPp33590Tcl_hBBe6lksbs9tpp/exec";
 
       function getSession() {
         return {
@@ -993,9 +1010,24 @@
 
     console.log("Looking up template for response:", r.taskID);
 
-    const template = rawData.surveyQuestions.find(
-      (t) => String(t.templateID).trim() === String(r.taskID).trim()
+    // Find task for this response
+const task = rawData.tasks.find(t => t.taskID === r.taskID);
+const assignedTemplateID = task?.surveyTemplateID || "";
+
+// Match template using SurveyTemplateID
+let template = rawData.surveyQuestions.find(
+    t => String(t.templateID).trim() === String(assignedTemplateID).trim()
+);
+
+// Legacy fallback (old surveys)
+if (!template) {
+    template = rawData.surveyQuestions.find(
+        t => String(t.templateID).trim() === String(r.taskID).trim()
     );
+}
+
+
+
 
     console.log("Matched template:", template);
 
@@ -1729,6 +1761,28 @@
           box.innerHTML += card;
         });
       }
+      function copyDebugJson() {
+  const btn = document.getElementById("copyJsonBtn");
+
+  if (!rawData) {
+    btn.textContent = "No Data";
+    setTimeout(() => (btn.textContent = "Copy JSON"), 1500);
+    return;
+  }
+
+  const jsonText = JSON.stringify(rawData, null, 2);
+
+  navigator.clipboard.writeText(jsonText)
+    .then(() => {
+      btn.textContent = "Copied!";
+      setTimeout(() => (btn.textContent = "Copy JSON"), 1500);
+    })
+    .catch(() => {
+      btn.textContent = "Failed";
+      setTimeout(() => (btn.textContent = "Copy JSON"), 1500);
+    });
+}
+
     </script>
   </body>
 </html>
