@@ -1185,59 +1185,46 @@ if (!template) {
         );
 
         /* --- Tasks Completed Over Time (day-of-month labels) --- */
-        const tasks = vm.tasks || [];
-        const dateMap = {};
+        /* --- Tasks Completed Over Time --- */
+const tasks = vm.tasks || [];
+const dateMap = {};
 
-        tasks.forEach((t) => {
-          if (t.status !== "Done" || !t.endAt) return;
-          const d = new Date(t.endAt);
-          if (isNaN(d)) return;
+tasks.forEach(t => {
+  if (t.status !== "Done" || !t.endAt) return;
 
-          const yyyy = d.getFullYear();
-          const mm = d.getMonth() + 1;
-          const dd = d.getDate();
+  const d = new Date(t.endAt);
+  if (isNaN(d)) return;
 
-          const key = `${yyyy}-${mm}-${dd}`;
-          dateMap[key] = (dateMap[key] || 0) + 1;
-        });
+  const key = d.toISOString().split("T")[0]; // YYYY-MM-DD
+  dateMap[key] = (dateMap[key] || 0) + 1;
+});
 
-        const sortedKeys = Object.keys(dateMap)
-          .map((k) => {
-            const [y, m, d] = k.split("-").map(Number);
-            return { y, m, d, key: k };
-          })
-          .sort(
-            (a, b) => new Date(a.y, a.m - 1, a.d) - new Date(b.y, b.m - 1, b.d)
-          );
+const sorted = Object.keys(dateMap).sort();
+const labels = sorted.map(k => k.split("-")[2]); // day of month
+const values = sorted.map(k => dateMap[k]);
 
-        const xLabels = sortedKeys.map((k) => k.d);
-        const yValues = sortedKeys.map((k) => dateMap[k.key]);
+if (tasksOverTimeChart) tasksOverTimeChart.destroy();
 
-        if (tasksOverTimeChart) tasksOverTimeChart.destroy();
-        tasksOverTimeChart = new Chart(
-          document.getElementById("tasksOverTimeChart"),
-          {
-            type: "line",
-            data: {
-              labels: xLabels,
-              datasets: [
-                {
-                  label: "Completed Tasks",
-                  data: yValues,
-                  tension: 0.3,
-                },
-              ],
-            },
-            options: {
-              plugins: { legend: { display: false } },
-              scales: {
-                x: { ticks: { font: { size: 9 } } },
-                y: { beginAtZero: true, ticks: { font: { size: 10 } } },
-              },
-              maintainAspectRatio: false,
-            },
-          }
-        );
+tasksOverTimeChart = new Chart(document.getElementById("tasksOverTimeChart"), {
+  type: "line",
+  data: {
+    labels,
+    datasets: [{
+      label: "Completed Tasks",
+      data: values,
+      tension: 0.3
+    }]
+  },
+  options: {
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { font: { size: 9 } } },
+      y: { beginAtZero: true }
+    },
+    maintainAspectRatio: false
+  }
+});
+
 
         /* --- Average Duration Per Day --- */
         const durationMap = {};
@@ -1298,71 +1285,53 @@ if (!template) {
         );
 
         /* --- Average Delay Per Month --- */
-        const delayMap = {};
+        /* --- Average Delay Per Month --- */
+const delayMap = {};
 
-        (vm.tasks || []).forEach((t) => {
-          if (!t.startAt || t.delayMinutes == null) return;
-          const d = new Date(t.startAt);
-          if (isNaN(d)) return;
+(vm.tasks || []).forEach(t => {
+  if (!t.startAt || t.delayMinutes == null) return;
 
-          const yyyy = d.getFullYear();
-          const mm = (d.getMonth() + 1).toString().padStart(2, "0");
-          const key = `${yyyy}-${mm}`;
+  const d = new Date(t.startAt);
+  if (isNaN(d)) return;
 
-          if (!delayMap[key]) delayMap[key] = [];
-          delayMap[key].push(Number(t.delayMinutes));
-        });
+  const key = `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}`;
 
-        const delayKeys = Object.keys(delayMap).sort();
-        const monthNames = [
-          "Jan",
-          "Feb",
-          "Mar",
-          "Apr",
-          "May",
-          "Jun",
-          "Jul",
-          "Aug",
-          "Sep",
-          "Oct",
-          "Nov",
-          "Dec",
-        ];
+  if (!delayMap[key]) delayMap[key] = [];
+  delayMap[key].push(Number(t.delayMinutes));
+});
 
-        const delayLabels = delayKeys.map((k) => {
-          const m = Number(k.split("-")[1]);
-          return monthNames[m - 1];
-        });
+const months = Object.keys(delayMap).sort();
+const monthLabels = months.map(k => {
+  const m = Number(k.split("-")[1]);
+  return ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][m-1];
+});
 
-        const delayValues = delayKeys.map((k) => {
-          const arr = delayMap[k];
-          return Math.round(arr.reduce((a, b) => a + b) / arr.length);
-        });
+const monthValues = months.map(k => {
+  const arr = delayMap[k];
+  return Math.round(arr.reduce((a,b)=>a+b,0) / arr.length);
+});
 
-        if (avgDelayMonthlyChart) avgDelayMonthlyChart.destroy();
-        avgDelayMonthlyChart = new Chart(
-          document.getElementById("avgDelayMonthlyChart"),
-          {
-            type: "bar",
-            data: {
-              labels: delayLabels,
-              datasets: [
-                {
-                  label: "Avg Delay (min)",
-                  data: delayValues,
-                },
-              ],
-            },
-            options: {
-              plugins: { legend: { display: false } },
-              scales: {
-                x: { ticks: { maxRotation: 0, font: { size: 10 } } },
-                y: { beginAtZero: true },
-              },
-              maintainAspectRatio: false,
-            },
-          }
-        );
+if (avgDelayMonthlyChart) avgDelayMonthlyChart.destroy();
+
+avgDelayMonthlyChart = new Chart(document.getElementById("avgDelayMonthlyChart"), {
+  type: "bar",
+  data: {
+    labels: monthLabels,
+    datasets: [{
+      label: "Avg Delay (min)",
+      data: monthValues
+    }]
+  },
+  options: {
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { font: { size: 10 } } },
+      y: { beginAtZero: true }
+    },
+    maintainAspectRatio: false
+  }
+});
+
       }
 
       /* ========== FILTER BUTTONS ========== */
@@ -1477,191 +1446,143 @@ if (!template) {
       ];
 
       function renderTaskMap(vm, selectedDate) {
-        if (!selectedDate) return;
+  if (!selectedDate) return;
 
-        // Initialize map ONCE
-        if (!map) {
-          const container = document.getElementById("mapContainer");
-          if (!container) return;
+  // Initialize map once
+  if (!map) {
+    const container = document.getElementById("mapContainer");
+    if (!container) return;
 
-          // Ensure the container is visible with real height
-          if (container.clientHeight < 100) {
-            setTimeout(() => renderTaskMap(vm, selectedDate), 200);
-            return;
-          }
+    map = L.map("mapContainer", {
+      center: [3.139, 101.6869],
+      zoom: 7,
+      zoomControl: true,
+    });
 
-          map = L.map("mapContainer", {
-            center: [3.139, 101.6869],
-            zoom: 10,
-            zoomControl: true,
-          });
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+    }).addTo(map);
+  }
 
-          L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-            maxZoom: 19,
-          }).addTo(map);
-        }
+  taskLayer.clearLayers();
+  subtaskLayer.clearLayers();
 
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-          maxZoom: 19,
-        }).addTo(map);
+  const tasks = vm.tasks || [];
 
-        // 🔥 Important: allow Leaflet to detect actual size after render
-        setTimeout(() => map.invalidateSize(), 300);
+  // Match ANY date field (scheduled/start/end)
+  const filtered = tasks.filter(t => {
+    const refs = [t.scheduledAt, t.startAt, t.endAt].filter(Boolean);
 
-        taskLayer.clearLayers();
-        subtaskLayer.clearLayers();
+    return refs.some(ref => {
+      const d = new Date(ref);
+      if (isNaN(d)) return false;
+      return d.toISOString().split("T")[0] === selectedDate;
+    });
+  });
 
-        const list = vm.tasks || [];
+  if (!filtered.length) return;
 
-        // Filter by exact date
-        const filtered = list.filter((t) => {
-          const refs = [t.scheduledAt, t.startAt, t.endAt].filter(Boolean);
+  // Assign task colors
+  const colorMap = {};
+  filtered.forEach((t, i) => {
+    colorMap[t.taskID] = MAP_COLORS[i % MAP_COLORS.length];
+  });
 
-          return refs.some((ref) => {
-            const d = new Date(ref);
-            return !isNaN(d) && d.toISOString().split("T")[0] === selectedDate;
-          });
-        });
+  const markers = [];
 
-        if (!filtered.length) return;
+  /* ---- TASK START / END MARKERS ---- */
+  filtered.forEach(t => {
+    const color = colorMap[t.taskID];
 
-        // Assign each TaskID a color
-        const colorMap = {};
-        let counter = 0;
+    if (t.startLat && t.startLon) {
+      const icon = L.divIcon({
+        html: `<div style="
+          width:0;height:0;
+          border-left:10px solid transparent;
+          border-right:10px solid transparent;
+          border-bottom:18px solid ${color};
+        "></div>`,
+        iconSize: [0, 0],
+        iconAnchor: [10, 18],
+        className: "no-default-icon",
+      });
 
-        filtered.forEach((t) => {
-          colorMap[t.taskID] = MAP_COLORS[counter % MAP_COLORS.length];
-          counter++;
-        });
+      const m = L.marker([t.startLat, t.startLon], { icon })
+        .bindPopup(`<b>${t.taskID}</b><br>Start<br>${t.clientName}`);
+      taskLayer.addLayer(m);
+      markers.push(m);
+    }
 
-        const markers = [];
+    if (t.endLat && t.endLon) {
+      const icon = L.divIcon({
+        html: `<div style="
+          width:0;height:0;
+          border-left:10px solid transparent;
+          border-right:10px solid transparent;
+          border-top:18px solid ${color};
+        "></div>`,
+        iconSize: [0, 0],
+        iconAnchor: [10, 0],
+        className: "no-default-icon",
+      });
 
-        /* ---------- 1. TASK START / END POINTS (Triangles) ---------- */
-        filtered.forEach((t) => {
-          const color = colorMap[t.taskID];
+      const m = L.marker([t.endLat, t.endLon], { icon })
+        .bindPopup(`<b>${t.taskID}</b><br>End<br>${t.clientName}`);
+      taskLayer.addLayer(m);
+      markers.push(m);
+    }
+  });
 
-          // Start marker (triangle up)
-          if (
-            !isNaN(t.startLat) &&
-            !isNaN(t.startLon) &&
-            t.startLat !== "" &&
-            t.startLon !== ""
-          ) {
-            const icon = L.divIcon({
-              html: `<div style="
-      width:0;height:0;
-      border-left:10px solid transparent;
-      border-right:10px solid transparent;
-      border-bottom:18px solid ${color};
-  "></div>`,
-              iconSize: [0, 0],
-              iconAnchor: [10, 18],
-              popupAnchor: [0, -10],
-              className: "no-default-icon",
-            });
+  /* ---- SUBTASK CIRCLES ---- */
+  (vm.subtasks || []).forEach(s => {
+    if (!s.lat || !s.lon) return;
 
-            const m = L.marker([t.startLat, t.startLon], { icon }).bindPopup(
-              `<strong>${t.taskID}</strong><br>Start – ${t.clientName}`
-            );
-            taskLayer.addLayer(m);
-            markers.push(m);
-          }
+    const t = filtered.find(x => x.taskID === s.taskID);
+    if (!t) return;
 
-          // End marker (triangle down)
-          if (t.endLat && t.endLon) {
-            const icon = L.divIcon({
-              html: `<div style="
-      width:0;height:0;
-      border-left:10px solid transparent;
-      border-right:10px solid transparent;
-      border-top:18px solid ${color};
-  "></div>`,
-              iconSize: [0, 0],
-              iconAnchor: [10, 0],
-              popupAnchor: [0, -10],
-              className: "no-default-icon",
-            });
+    const color = colorMap[t.taskID];
 
-            const m = L.marker([t.endLat, t.endLon], { icon }).bindPopup(
-              `<strong>${t.taskID}</strong><br>End – ${t.clientName}`
-            );
-            taskLayer.addLayer(m);
-            markers.push(m);
-          }
-        });
+    const icon = L.divIcon({
+      html: `<div style="
+        width:14px;height:14px;
+        border-radius:50%;
+        background:${color};
+        border:2px solid white;
+      "></div>`,
+      iconSize: [14, 14],
+      iconAnchor: [7, 7],
+      className: "no-default-icon",
+    });
 
-        /* ---------- 2. SUBTASKS (Circles) ---------- */
-        vm.subtasks.forEach((s) => {
-          const t = filtered.find((x) => x.taskID === s.taskID);
-          if (!t) return;
+    const m = L.marker([s.lat, s.lon], { icon })
+      .bindPopup(`
+        <b>${s.taskID}</b><br>
+        Subtask: ${s.subtaskNo}<br>
+        Status: ${s.status}<br>
+        Remarks: ${s.remarks || "-"}
+      `);
 
-          const color = colorMap[t.taskID];
+    subtaskLayer.addLayer(m);
+    markers.push(m);
+  });
 
-          if (s.lat && s.lon) {
-            const icon = L.divIcon({
-              html: `<div style="
-      width:14px;height:14px;
-      border-radius:50%;
-      background:${color};
-      border:2px solid white;
-  "></div>`,
-              iconSize: [14, 14],
-              iconAnchor: [7, 7],
-              popupAnchor: [0, -7],
-              className: "no-default-icon",
-            });
+  // Add layers
+  taskLayer.addTo(map);
 
-            const m = L.marker([s.lat, s.lon], { icon }).bindPopup(`
-                <strong>${s.taskID}</strong><br>
-                Subtask ${s.subtaskNo}<br>
-                Status: ${s.status}<br>
-                Remarks: ${s.remarks || "-"}
-              `);
+  // Update layer control
+  if (mapLayerControl) mapLayerControl.remove();
+  mapLayerControl = L.control.layers(
+    {},
+    { "Task Start/End": taskLayer, Subtasks: subtaskLayer }
+  ).addTo(map);
 
-            subtaskLayer.addLayer(m);
-            markers.push(m);
-          }
-        });
+  // Fit bounds
+  if (markers.length) {
+    const bounds = L.featureGroup(markers).getBounds();
+    setTimeout(() => map.fitBounds(bounds, { padding: [50, 50], maxZoom: 17 }), 150);
+  }
+}
 
-        // Add layers to map
-        taskLayer.addTo(map);
-
-        // ⭐ Ensure layer control exists only once
-        if (!mapLayerControl) {
-          mapLayerControl = L.control
-            .layers(
-              {},
-              {
-                "Task Start/End": taskLayer,
-                Subtasks: subtaskLayer,
-              }
-            )
-            .addTo(map);
-        } else {
-          // Update existing layer control, not add a new one
-          mapLayerControl.remove();
-
-          mapLayerControl = L.control
-            .layers(
-              {},
-              {
-                "Task Start/End": taskLayer,
-                Subtasks: subtaskLayer,
-              }
-            )
-            .addTo(map);
-        }
-
-        if (markers.length) {
-          const group = L.featureGroup(markers);
-          const bounds = group.getBounds();
-
-          // Run AFTER browser paints markers
-          setTimeout(() => {
-            map.fitBounds(bounds, { padding: [50, 50], maxZoom: 17 });
-          }, 150);
-        }
-      }
 
       /* ---------- DATE PICKER EVENT ---------- */
       document
