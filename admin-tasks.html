@@ -1367,56 +1367,47 @@
 
         // Task form submit
         document
-          .getElementById("taskForm")
-          .addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const formError = document.getElementById("taskFormError");
-            formError.style.display = "none";
-            formError.textContent = "";
+  .getElementById("taskForm")
+  .addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-            const taskIDHidden = document
-              .getElementById("taskIDHidden")
-              .value.trim();
+    const formError = document.getElementById("taskFormError");
+    formError.style.display = "none";
+    formError.textContent = "";
 
-            const clientName = document
-              .getElementById("clientName")
-              .value.trim();
-            const location = document.getElementById("location").value.trim();
-            const scheduledTime =
-              document.getElementById("scheduledTime").value;
+    // Read values
+    const taskIDHidden = document.getElementById("taskIDHidden").value.trim();
+    const clientName = document.getElementById("clientName").value.trim();
+    const location = document.getElementById("location").value.trim();
+    const scheduledTime = document.getElementById("scheduledTime").value;
+    const surveyRequired = document.getElementById("surveyRequired").checked;
+    const assignedStaff = getSelectedStaffEmails();
 
-            const surveyRequired =
-              document.getElementById("surveyRequired").checked;
+    if (!clientName || !location || !scheduledTime) {
+      formError.style.display = "block";
+      formError.textContent =
+        "Client name, location and scheduled time are required.";
+      return;
+    }
 
-            if (!clientName || !location || !scheduledTime) {
-              formError.style.display = "block";
-              formError.textContent =
-                "Client name, location and scheduled time are required.";
-              return;
-            }
+    // Build payload (always include taskID so Apps Script can update)
+    const payload = {
+      taskID: taskIDHidden || "",
+      taskIDExisting: taskIDHidden || null,
+      clientName,
+      location,
+      scheduledTime,
+      surveyRequired,
+      surveyTemplateID: surveyRequired
+        ? document.getElementById("surveyTemplateID").value
+        : "",
+      assignedStaff,
+      companyID: currentSession.companyID || "",
+    };
 
-            const assignedStaff = getSelectedStaffEmails();
+    await saveTask(payload);
+  });
 
-            const payload = {
-              taskIDExisting: taskIDHidden || null,
-              clientName,
-              location,
-              scheduledTime,
-              surveyRequired,
-              surveyTemplateID: surveyRequired
-                ? document.getElementById("surveyTemplateID").value
-                : "",
-              assignedStaff,
-              companyID: currentSession.companyID || "",
-            };
-
-            // Only include taskID when creating a new task
-            if (!taskIDHidden) {
-              payload.taskID = "";
-            }
-
-            await saveTask(payload);
-          });
 
         // Initial load: staff then tasks
         await loadStaff();
