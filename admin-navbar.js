@@ -47,13 +47,16 @@ function renderGlobalHeader() {
       .fsms-header {
         background: var(--primary);
         color: white;
-        padding: 14px 22px;
+        padding: 12px 16px;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        font-family: 'Inter', Arial, sans-serif;
-        box-shadow: 0 3px 10px rgba(0,0,0,0.18);
+
+        flex-wrap: wrap;
+        row-gap: 6px;
       }
+
+
 
       .fsms-header-title {
         font-size: 1.15rem;
@@ -76,12 +79,23 @@ function renderGlobalHeader() {
       /* ===== NAV BAR ===== */
       .fsms-nav {
         background: var(--nav-bg);
-        padding: 10px 20px;
+        padding: 10px 12px;
         display: flex;
-        gap: 20px;
+        gap: 8px;
         align-items: center;
         font-family: 'Inter', Arial, sans-serif;
+
+        /* KEY FIXES */
+        flex-wrap: wrap;
+        overflow-x: auto;
       }
+
+
+        /* Hide scrollbar but keep scroll */
+        .fsms-nav::-webkit-scrollbar {
+          display: none;
+        }
+
 
       .fsms-nav a {
         color: var(--nav-text);
@@ -90,7 +104,11 @@ function renderGlobalHeader() {
         padding: 6px 12px;
         border-radius: var(--radius);
         transition: 0.2s;
+
+        white-space: nowrap;
+        flex-shrink: 0;
       }
+
 
       .fsms-nav a:hover {
         background: rgba(255,255,255,0.18);
@@ -114,16 +132,16 @@ function renderGlobalHeader() {
 
     <nav class="fsms-nav">
       ${navItems
-        .map(
-          (n) => `
+      .map(
+        (n) => `
           <a 
             href="${n.file}" 
             class="${currentPage === n.file ? "active" : ""}"
           >
             ${n.label}
           </a>`
-        )
-        .join("")}
+      )
+      .join("")}
     </nav>
   `;
 }
