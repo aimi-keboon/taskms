@@ -431,9 +431,17 @@
       <!-- TASKS TABLE -->
       <div class="section-card">
         <div class="section-header">
-          <h2>Tasks</h2>
-          <span class="muted" id="taskCountLabel">0 task(s)</span>
-        </div>
+  <h2>Tasks</h2>
+
+  <div style="display:flex; gap:6px; align-items:center;">
+    <span class="muted" id="taskCountLabel">0 task(s)</span>
+    <button type="button" class="btn-ghost" id="tasksSortBtn">Sort ↓</button>
+    <button type="button" class="btn-ghost" id="tasksPrevBtn">◀</button>
+    <span class="muted" id="tasksPageInfo">1 / 1</span>
+    <button type="button" class="btn-ghost" id="tasksNextBtn">▶</button>
+  </div>
+</div>
+
         <div class="table-wrapper">
           <table>
             <thead>
@@ -638,9 +646,51 @@
       /* ===== STATE ===== */
       let currentSession = null;
       let rawTasks = [];
-      let filteredTasks = [];
+let filteredTasks = [];
+let tasksController = null;
+
       let staffList = []; // from getUsers: [{userID,name,email,role,active}, ...]
       let surveyTemplates = [];
+
+      function createListController(data = [], options = {}) {
+  return {
+    data,
+    page: 1,
+    pageSize: options.pageSize || 10,
+    sortDir: options.sortDir || "desc",
+    sortFn: options.sortFn || null,
+
+    get sortedData() {
+      let arr = [...this.data];
+      if (this.sortFn) arr.sort(this.sortFn);
+      if (this.sortDir === "desc") arr.reverse();
+      return arr;
+    },
+
+    get pagedData() {
+      const start = (this.page - 1) * this.pageSize;
+      return this.sortedData.slice(start, start + this.pageSize);
+    },
+
+    get totalPages() {
+      return Math.max(1, Math.ceil(this.data.length / this.pageSize));
+    },
+
+    toggleSort() {
+      this.sortDir = this.sortDir === "asc" ? "desc" : "asc";
+      this.page = 1;
+    },
+
+    nextPage() {
+      if (this.page < this.totalPages) this.page++;
+    },
+
+    prevPage() {
+      if (this.page > 1) this.page--;
+    }
+  };
+}
+
 
       /* ===== HELPERS ===== */
       function formatDisplayDateTime(str) {
@@ -692,86 +742,95 @@
       }
 
       /* ===== RENDER TASKS TABLE ===== */
-      function renderTasksTable() {
-        const tbody = document.getElementById("tasksTableBody");
-        const countLabel = document.getElementById("taskCountLabel");
+function renderTasksTable() {
+  const tbody = document.getElementById("tasksTableBody");
+  const countLabel = document.getElementById("taskCountLabel");
+  const pageInfo = document.getElementById("tasksPageInfo");
+  const sortBtn = document.getElementById("tasksSortBtn");
 
-        if (!filteredTasks.length) {
-          tbody.innerHTML =
-            '<tr><td colspan="8">No tasks found for current filters.</td></tr>';
-          countLabel.textContent = "0 task(s)";
-          return;
-        }
+  if (!tasksController || !tasksController.data.length) {
+    tbody.innerHTML =
+      '<tr><td colspan="8">No tasks found for current filters.</td></tr>';
+    countLabel.textContent = "0 task(s)";
+    pageInfo.textContent = "1 / 1";
+    sortBtn.textContent = "Sort ↓";
+    return;
+  }
 
-        tbody.innerHTML = "";
-        filteredTasks.forEach((t) => {
-          const tr = document.createElement("tr");
+  const list = tasksController.pagedData;
+  tbody.innerHTML = "";
 
-          const tdTaskID = document.createElement("td");
-          tdTaskID.textContent = t.taskID || "-";
+  list.forEach((t) => {
+    const tr = document.createElement("tr");
 
-          const tdClient = document.createElement("td");
-          tdClient.textContent = t.clientName || "-";
+    const tdTaskID = document.createElement("td");
+    tdTaskID.textContent = t.taskID || "-";
 
-          const tdLoc = document.createElement("td");
-          tdLoc.textContent = t.location || "-";
+    const tdClient = document.createElement("td");
+    tdClient.textContent = t.clientName || "-";
 
-          const tdSched = document.createElement("td");
-          tdSched.textContent = formatDisplayDateTime(t.scheduledTime);
+    const tdLoc = document.createElement("td");
+    tdLoc.textContent = t.location || "-";
 
-          const tdStaff = document.createElement("td");
-          tdStaff.textContent = renderAssignedStaffCell(t.assignedStaff);
+    const tdSched = document.createElement("td");
+    tdSched.textContent = formatDisplayDateTime(t.scheduledTime);
 
-          const tdStatus = document.createElement("td");
-          tdStatus.appendChild(buildStatusPill(t.status));
+    const tdStaff = document.createElement("td");
+    tdStaff.textContent = renderAssignedStaffCell(t.assignedStaff);
 
-          const tdSurvey = document.createElement("td");
-          tdSurvey.appendChild(
-            buildSurveyPill(!!t.surveyRequired, t.surveyStatus)
-          );
+    const tdStatus = document.createElement("td");
+    tdStatus.appendChild(buildStatusPill(t.status));
 
-          const tdActions = document.createElement("td");
-          tdActions.className = "actions-cell";
+    const tdSurvey = document.createElement("td");
+    tdSurvey.appendChild(
+      buildSurveyPill(!!t.surveyRequired, t.surveyStatus)
+    );
 
-          // Subtasks button
-          const btnSubtasks = document.createElement("button");
-          btnSubtasks.type = "button";
-          btnSubtasks.className = "btn-ghost";
-          btnSubtasks.textContent = "Subtasks";
-          btnSubtasks.onclick = () => openSubtasksModal(t);
+    const tdActions = document.createElement("td");
+    tdActions.className = "actions-cell";
 
-          // Edit Task
-          const btnEdit = document.createElement("button");
-          btnEdit.type = "button";
-          btnEdit.className = "btn-ghost";
-          btnEdit.textContent = "Edit";
-          btnEdit.onclick = () => openTaskModal(t);
+    const btnSubtasks = document.createElement("button");
+    btnSubtasks.type = "button";
+    btnSubtasks.className = "btn-ghost";
+    btnSubtasks.textContent = "Subtasks";
+    btnSubtasks.onclick = () => openSubtasksModal(t);
 
-          // Delete Task
-          const btnDelete = document.createElement("button");
-          btnDelete.type = "button";
-          btnDelete.className = "btn-ghost danger";
-          btnDelete.textContent = "Delete";
-          btnDelete.onclick = () => confirmDeleteTask(t);
+    const btnEdit = document.createElement("button");
+    btnEdit.type = "button";
+    btnEdit.className = "btn-ghost";
+    btnEdit.textContent = "Edit";
+    btnEdit.onclick = () => openTaskModal(t);
 
-          tdActions.appendChild(btnSubtasks);
-          tdActions.appendChild(btnEdit);
-          tdActions.appendChild(btnDelete);
+    const btnDelete = document.createElement("button");
+    btnDelete.type = "button";
+    btnDelete.className = "btn-ghost danger";
+    btnDelete.textContent = "Delete";
+    btnDelete.onclick = () => confirmDeleteTask(t);
 
-          tr.appendChild(tdTaskID);
-          tr.appendChild(tdClient);
-          tr.appendChild(tdLoc);
-          tr.appendChild(tdSched);
-          tr.appendChild(tdStaff);
-          tr.appendChild(tdStatus);
-          tr.appendChild(tdSurvey);
-          tr.appendChild(tdActions);
+    tdActions.appendChild(btnSubtasks);
+    tdActions.appendChild(btnEdit);
+    tdActions.appendChild(btnDelete);
 
-          tbody.appendChild(tr);
-        });
+    tr.appendChild(tdTaskID);
+    tr.appendChild(tdClient);
+    tr.appendChild(tdLoc);
+    tr.appendChild(tdSched);
+    tr.appendChild(tdStaff);
+    tr.appendChild(tdStatus);
+    tr.appendChild(tdSurvey);
+    tr.appendChild(tdActions);
 
-        countLabel.textContent = filteredTasks.length + " task(s)";
-      }
+    tbody.appendChild(tr);
+  });
+
+  countLabel.textContent = tasksController.data.length + " task(s)";
+  pageInfo.textContent =
+    `${tasksController.page} / ${tasksController.totalPages}`;
+
+  sortBtn.textContent =
+    tasksController.sortDir === "asc" ? "Sort ↑" : "Sort ↓";
+}
+
 
       /* ===== SUBTASKS – ADMIN STATE ===== */
       let currentSubtasksTaskID = null;
@@ -1061,7 +1120,16 @@
           return matchesSearch && matchesStatus && matchesSurvey;
         });
 
-        renderTasksTable();
+        // (Re)create controller whenever filters change
+tasksController = createListController(filteredTasks, {
+  pageSize: 10,
+  sortDir: tasksController?.sortDir || "desc",
+  sortFn: (a, b) =>
+    new Date(a.scheduledTime || 0) - new Date(b.scheduledTime || 0)
+});
+
+renderTasksTable();
+
       }
 
       /* ===== MODAL HELPERS ===== */
@@ -1325,6 +1393,25 @@
       document.addEventListener("DOMContentLoaded", async () => {
         currentSession = requireLogin();
         await loadSurveyTemplates();
+
+        document.getElementById("tasksSortBtn").onclick = () => {
+  if (!tasksController) return;
+  tasksController.toggleSort();
+  renderTasksTable();
+};
+
+document.getElementById("tasksPrevBtn").onclick = () => {
+  if (!tasksController) return;
+  tasksController.prevPage();
+  renderTasksTable();
+};
+
+document.getElementById("tasksNextBtn").onclick = () => {
+  if (!tasksController) return;
+  tasksController.nextPage();
+  renderTasksTable();
+};
+
 
         // Filters
         document
