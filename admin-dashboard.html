@@ -1175,6 +1175,11 @@
         surveyController.sortDir === "asc" ? "Sort ↑" : "Sort ↓";
     }
 
+const role = localStorage.getItem("user_role");
+if (role !== "Admin") {
+  alert("Access denied.");
+  window.location.href = "tasklist.html";
+}
 
 
     /* ========== CHARTS ========== */

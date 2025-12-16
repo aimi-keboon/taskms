@@ -31,6 +31,7 @@ function renderGlobalHeader() {
     { label: "Users", file: "admin-users.html" },
     { label: "Tasks", file: "admin-tasks.html" },
     { label: "Survey Settings", file: "admin-survey-templates.html" },
+    { label: "Staff View", file: "tasklist.html" },
   ];
 
   container.innerHTML = `
