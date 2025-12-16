@@ -1114,11 +1114,13 @@
       const container = document.getElementById("assignedStaffContainer");
       container.innerHTML = "";
 
-      const staffOnly = staffList.filter(
-        (s) => s.role === "Staff" && s.active
+      const assignableUsers = staffList.filter(
+        (s) => (s.role === "Staff" || s.role === "Admin") && s.active
       );
 
-      staffOnly.forEach((s) => {
+
+      assignableUsers.forEach((s) => {
+
         const wrap = document.createElement("div");
         wrap.className = "checkbox-item";
 
