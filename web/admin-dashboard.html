@@ -1,0 +1,1945 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>FSMS Admin Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    :root {
+      --primary: #2c5aa0;
+      --accent: #28a745;
+      --bg: #f4f6fb;
+      --text-dark: #1e2a3a;
+      --text-light: #6c757d;
+      --radius: 12px;
+      --danger: #dc3545;
+      --warning: #ffc107;
+      --muted: #e9ecef;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: "Inter", Arial, sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+    }
+
+    /* REMOVED OLD HEADER — navbar.js now handles header + logout */
+
+    main {
+      padding: 25px;
+      max-width: 1250px;
+      margin: auto;
+    }
+
+    .page-title {
+      font-size: 1.1rem;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    .page-subtitle {
+      font-size: 0.88rem;
+      margin-bottom: 18px;
+      color: var(--text-light);
+    }
+
+    /* UNIVERSAL FULLSCREEN LOADING OVERLAY */
+    #loadingOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(4px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 99999;
+    }
+
+    /* Spinner */
+    .loader {
+      width: 48px;
+      height: 48px;
+      border: 5px solid #c8d4e5;
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* Hidden state */
+    #loadingOverlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease-out;
+    }
+
+    /* FILTER BAR */
+    .filter-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .filter-bar-left {
+      font-size: 0.9rem;
+      color: var(--text-light);
+    }
+
+    .filter-buttons {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      padding: 6px 10px;
+      font-size: 0.8rem;
+      border-radius: 999px;
+      border: 1px solid #d0d7e2;
+      background: white;
+      cursor: pointer;
+      color: var(--text-dark);
+      transition: 0.2s;
+    }
+
+    .filter-btn:hover {
+      background: #e9f0ff;
+    }
+
+    .filter-btn.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    .section-card {
+      background: white;
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 25px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-header h2 {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    /* STATUS BREAKDOWN */
+    .status-bar {
+      margin-bottom: 10px;
+    }
+
+    .status-bar-label {
+      font-size: 0.85rem;
+      margin-bottom: 4px;
+      color: var(--text-dark);
+    }
+
+    .status-bar-track {
+      width: 100%;
+      background: #e5e7eb;
+      border-radius: 8px;
+      height: 12px;
+      overflow: hidden;
+    }
+
+    .status-bar-fill {
+      height: 12px;
+      border-radius: 8px;
+    }
+
+    /* TABLES */
+    .table-wrapper {
+      overflow-x: auto;
+    }
+
+    .scroll-y {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid #e5e7eb;
+      padding: 7px;
+      white-space: nowrap;
+      text-align: left;
+    }
+
+    th {
+      background: #f8fafc;
+      font-size: 0.75rem;
+      color: var(--text-light);
+      text-transform: uppercase;
+    }
+
+    tr:nth-child(even) td {
+      background: #fafafa;
+    }
+
+    /* DEBUG */
+    .debug-toggle {
+      cursor: pointer;
+      color: var(--primary);
+      font-size: 0.85rem;
+    }
+
+    #debugBox {
+      display: none;
+      background: #1e1e1e;
+      padding: 15px;
+      border-radius: 8px;
+      color: #dcdcdc;
+      font-size: 0.85rem;
+      white-space: pre-wrap;
+      margin-top: 10px;
+    }
+
+    /* SURVEY BREAKDOWN */
+    .survey-card {
+      border: 1px solid #e1e4e8;
+      background: #fff;
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 12px;
+      transition: all 0.2s;
+    }
+
+    .survey-header {
+      display: flex;
+      justify-content: space-between;
+      cursor: pointer;
+      padding: 3px 0;
+      gap: 10px;
+    }
+
+    .survey-header-main {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .survey-header-main small {
+      font-size: 0.75rem;
+      color: var(--text-light);
+    }
+
+    .survey-body {
+      display: none;
+      padding-top: 10px;
+      font-size: 0.8rem;
+    }
+
+    .muted {
+      color: var(--text-light);
+      font-size: 0.8rem;
+    }
+
+    .survey-scroll {
+      max-height: 300px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    /* CHARTS */
+    .chart-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+    }
+
+    .chart-card {
+      background: #fff;
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+      min-height: 220px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chart-card h3 {
+      font-size: 0.85rem;
+      margin-bottom: 6px;
+      color: var(--text-light);
+    }
+
+    .chart-card canvas {
+      max-height: 160px !important;
+      margin-top: 4px;
+    }
+  </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- MAP LIBRARY (Leaflet) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+</head>
+
+<body>
+  <!-- UNIVERSAL LOADING OVERLAY -->
+  <div id="loadingOverlay">
+    <div class="loader"></div>
+  </div>
+
+  <!-- NEW GLOBAL NAVBAR -->
+  <div id="globalHeader"></div>
+  <script src="admin-navbar.js"></script>
+
+  <main>
+    <div class="page-title">Field Service Performance Overview</div>
+    <div class="page-subtitle">
+      Company-level analysis of tasks, staff performance, subtasks & surveys.
+    </div>
+    <!-- PENDING SURVEYS -->
+    <div class="section-card">
+      <div class="section-header">
+        <h2>Pending Surveys (Action Required)</h2>
+        <span class="muted">Surveys that were generated but haven’t been submitted.</span>
+      </div>
+
+      <div id="pendingSurveyContainer">
+        <div class="muted">Loading...</div>
+      </div>
+    </div>
+    <!-- Everything below stays unchanged — charts, tables, survey breakdown, debug, etc. -->
+
+    <!-- FILTER BAR -->
+    <div class="filter-bar">
+      <div class="filter-bar-left">
+        Time range applies to tasks, subtasks, surveys & charts.
+      </div>
+      <div class="filter-buttons">
+        <button class="filter-btn active" data-range="all">All</button>
+        <button class="filter-btn" data-range="week">Last 7 days</button>
+        <button class="filter-btn" data-range="month">Last 30 days</button>
+        <button class="filter-btn" data-range="year">Last 12 months</button>
+      </div>
+    </div>
+
+    <!-- VISUAL OVERVIEW (CHARTS) -->
+    <div class="section-card">
+      <div class="section-header">
+        <h2>Visual Overview (Filtered)</h2>
+        <span class="muted">
+          Charts reflect current time range selection.
+        </span>
+      </div>
+
+      <div class="chart-grid">
+        <div class="chart-card">
+          <h3>Task Status Distribution</h3>
+          <canvas id="statusChart"></canvas>
+        </div>
+
+        <div class="chart-card">
+          <h3>Rating Distribution (1–5)</h3>
+          <canvas id="ratingChart"></canvas>
+        </div>
+
+        <div class="chart-card">
+          <h3>Tasks Completed by Staff (Top 5)</h3>
+          <canvas id="staffTasksChart"></canvas>
+        </div>
+
+        <div class="chart-card">
+          <h3>Avg Rating by Staff (Top 5)</h3>
+          <canvas id="staffRatingChart"></canvas>
+        </div>
+
+        <div class="chart-card">
+          <h3>Tasks Completed Over Time</h3>
+          <canvas id="tasksOverTimeChart"></canvas>
+        </div>
+      </div>
+
+      <div class="chart-card" style="margin-top: 12px">
+        <h3>Avg Duration Per Day</h3>
+        <canvas id="avgDurationDailyChart"></canvas>
+      </div>
+
+      <div class="chart-card" style="margin-top: 12px">
+        <h3>Avg Delay Per Month</h3>
+        <canvas id="avgDelayMonthlyChart"></canvas>
+      </div>
+    </div>
+    <!-- MAP VIEW (Daily Filter) -->
+    <div class="section-card">
+      <div class="section-header">
+        <h2>Task & Subtask Map (Daily View)</h2>
+
+        <input type="date" id="mapDatePicker" style="
+              padding: 6px 10px;
+              border: 1px solid #ccc;
+              border-radius: 6px;
+              font-size: 0.85rem;
+            " />
+      </div>
+
+      <div id="mapContainer" style="height: 450px; border-radius: 12px; overflow: hidden"></div>
+    </div>
+
+    <!-- STATUS BREAKDOWN -->
+    <div class="section-card">
+      <div class="section-header">
+        <h2>Task Status Breakdown (Filtered)</h2>
+      </div>
+      <div id="statusBreakdownBars"></div>
+    </div>
+
+    <!-- STAFF PERFORMANCE -->
+    <div class="section-card">
+      <div class="section-header">
+        <h2>Staff Performance (Filtered)</h2>
+      </div>
+      <div class="table-wrapper scroll-y">
+        <table>
+          <thead>
+            <tr>
+              <th>Staff Email</th>
+              <th>Name</th>
+              <th>Completed</th>
+              <th>Avg Duration</th>
+              <th>Avg Rating</th>
+              <th>On Time</th>
+              <th>Late</th>
+            </tr>
+          </thead>
+          <tbody id="staffTableBody">
+            <tr>
+              <td colspan="7">Loading...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TASK DURATION -->
+    <div class="section-card">
+      <div class="section-header">
+        <h2>Task Durations (Filtered)</h2>
+
+        <div style="display:flex; gap:6px; align-items:center;">
+          <button type="button" class="filter-btn" id="taskSortBtn">Sort ↓</button>
+          <button class="filter-btn" id="taskPrevBtn">◀</button>
+          <span class="muted" id="taskPageInfo">1 / 1</span>
+          <button class="filter-btn" id="taskNextBtn">▶</button>
+        </div>
+      </div>
+
+      <div class="table-wrapper scroll-y">
+        <table>
+          <thead>
+            <tr>
+              <th>TaskID</th>
+              <th>Client</th>
+              <th>Scheduled</th>
+              <th>Start</th>
+              <th>End</th>
+              <th>Duration (min)</th>
+              <th>Status</th>
+              <th>Staff</th>
+            </tr>
+          </thead>
+          <tbody id="taskDurationBody">
+            <tr>
+              <td colspan="8">Loading...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SUBTASKS -->
+    <div class="section-card">
+      <div class="section-header">
+        <h2>Subtask Details (Filtered by Task)</h2>
+
+        <div style="display:flex; gap:6px; align-items:center;">
+          <button class="filter-btn" id="subtaskSortBtn">Sort ↓</button>
+          <button class="filter-btn" id="subtaskPrevBtn">◀</button>
+          <span class="muted" id="subtaskPageInfo">1 / 1</span>
+          <button class="filter-btn" id="subtaskNextBtn">▶</button>
+        </div>
+      </div>
+
+      <div class="table-wrapper scroll-y">
+        <table>
+          <thead>
+            <tr>
+              <th>TaskID</th>
+              <th>Subtask No</th>
+              <th>Status</th>
+              <th>Remarks</th>
+              <th>Geo</th>
+              <th>Photos</th>
+            </tr>
+          </thead>
+          <tbody id="subtaskBody">
+            <tr>
+              <td colspan="6">Loading...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SURVEY BREAKDOWN -->
+    <div class="section-card">
+      <div class="section-header">
+        <h2>Survey Breakdown Per Task (Filtered)</h2>
+
+        <div style="display:flex; gap:6px; align-items:center;">
+          <button type="button" class="filter-btn" id="surveySortBtn">Sort ↓</button>
+
+          <button class="filter-btn" id="surveyPrevBtn">◀</button>
+          <span class="muted" id="surveyPageInfo">1 / 1</span>
+          <button class="filter-btn" id="surveyNextBtn">▶</button>
+        </div>
+      </div>
+
+      <div id="surveyBreakdownContainer" class="survey-scroll"></div>
+    </div>
+
+    <!-- DEBUG -->
+    <div class="section-card">
+      <div style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          ">
+        <span class="debug-toggle" onclick="toggleDebug()">Show Raw JSON</span>
+        <button id="copyJsonBtn" style="
+              padding: 4px 10px;
+              font-size: 0.75rem;
+              border: 1px solid var(--primary);
+              background: var(--primary);
+              color: white;
+              border-radius: 6px;
+              cursor: pointer;
+            " onclick="copyDebugJson()">
+          Copy JSON
+        </button>
+      </div>
+
+      <pre id="debugBox"></pre>
+    </div>
+  </main>
+
+  <script>
+    const ADMIN_API_URL =
+      "https://script.google.com/macros/s/AKfycbziUWDQ06l5hZ1nIYv8Z-tMZQsTPzlVfTqXl7rWhxlQlXL1DTaUpMzpPqXR53Sfh0E/exec";
+
+    function getSession() {
+      return {
+        email: localStorage.getItem("user_email"),
+        companyID: localStorage.getItem("user_companyID"),
+        name: localStorage.getItem("user_name"),
+      };
+    }
+
+    function requireLogin() {
+      const s = getSession();
+      if (!s.email) location.href = "index.html";
+      return s;
+    }
+
+    function logout() {
+      localStorage.clear();
+      location.href = "index.html";
+    }
+
+    function toggleDebug() {
+      const b = document.getElementById("debugBox");
+      b.style.display = b.style.display === "block" ? "none" : "block";
+    }
+
+    function formatDateTime(val) {
+      if (!val) return "-";
+      const d = new Date(val);
+      if (isNaN(d)) return val;
+      return d.toLocaleString("en-MY");
+    }
+
+    /* ======== GLOBAL STATE ======== */
+    let rawData = null;
+    let currentRange = "all";
+    let currentVM = null;
+    /* ======== LIST CONTROLLER HELPER ======== */
+    function createListController(data = [], options = {}) {
+      return {
+        data,
+        page: 1,
+        pageSize: options.pageSize || 10,
+        sortDir: options.sortDir || "desc",
+        sortFn: options.sortFn || null,
+
+        get sortedData() {
+          let arr = [...this.data];
+          if (this.sortFn) arr.sort(this.sortFn);
+          if (this.sortDir === "desc") arr.reverse();
+          return arr;
+        },
+
+        get pagedData() {
+          const start = (this.page - 1) * this.pageSize;
+          return this.sortedData.slice(start, start + this.pageSize);
+        },
+
+        get totalPages() {
+          return Math.max(1, Math.ceil(this.data.length / this.pageSize));
+        },
+
+        toggleSort() {
+          this.sortDir = this.sortDir === "asc" ? "desc" : "asc";
+          this.page = 1;
+        },
+
+        nextPage() {
+          if (this.page < this.totalPages) this.page++;
+        },
+
+        prevPage() {
+          if (this.page > 1) this.page--;
+        }
+      };
+    }
+
+
+    /* Chart instances */
+    let statusChart,
+      ratingChart,
+      staffTasksChart,
+      staffRatingChart,
+      tasksOverTimeChart,
+      avgDurationDailyChart,
+      avgDelayMonthlyChart;
+
+    /* ======== FILTERING LOGIC ======== */
+    function dateInRange(dateStr, range) {
+      if (!dateStr || range === "all") return true;
+      const d = new Date(dateStr);
+      if (isNaN(d)) return false;
+
+      const now = new Date();
+      const diffMs = now.getTime() - d.getTime();
+      const dayMs = 24 * 60 * 60 * 1000;
+
+      if (range === "week") {
+        return diffMs <= 7 * dayMs;
+      } else if (range === "month") {
+        return diffMs <= 30 * dayMs;
+      } else if (range === "year") {
+        return diffMs <= 365 * dayMs;
+      }
+      return true;
+    }
+
+    function getTaskReferenceDate(t) {
+      return t.endAt || t.startAt || t.scheduledAt;
+    }
+
+    /**
+     * Build a filtered view model from raw backend data
+     */
+    function buildViewModel(raw, range) {
+      if (!raw) return null;
+
+      const tasksAll = raw.tasks || [];
+      const subtasksAll = raw.subtasks || [];
+      const surveyResponsesAll = (raw.survey && raw.survey.responses) || [];
+      const staffDirectory = (raw.staff && raw.staff.list) || [];
+
+      // Filter tasks by reference date
+      const filteredTasks = tasksAll.filter((t) => {
+        const ref = getTaskReferenceDate(t);
+        if (!ref && range !== "all") return false;
+        return dateInRange(ref, range);
+      });
+
+      const taskIDSet = new Set(filteredTasks.map((t) => t.taskID));
+
+      // Filter subtasks linked to filtered tasks
+      const filteredSubtasks = subtasksAll.filter((st) =>
+        taskIDSet.has(st.taskID)
+      );
+
+      // Filter survey responses by submittedAt date
+      const filteredResponses = surveyResponsesAll.filter((r) =>
+        dateInRange(r.submittedAt, range)
+      );
+
+      // Build task map
+      const taskMap = {};
+      filteredTasks.forEach((t) => {
+        taskMap[t.taskID] = t;
+      });
+
+      /* --- KPIs (still computed, but not shown as cards) --- */
+      const totalTasks = filteredTasks.length;
+      const totalStaff =
+        raw.staff && raw.staff.list ? raw.staff.list.length : 0;
+      const completedTasks = filteredTasks.filter(
+        (t) => t.status === "Done"
+      ).length;
+
+      let durationSum = 0;
+      let durationCount = 0;
+      const statusCounts = {};
+
+      let delaySum = 0;
+      let delayCount = 0;
+
+      filteredTasks.forEach((t) => {
+        const status = t.status || "Unknown";
+        statusCounts[status] = (statusCounts[status] || 0) + 1;
+
+        if (t.status === "Done" && t.durationMinutes != null) {
+          durationSum += Number(t.durationMinutes) || 0;
+          durationCount++;
+        }
+
+        if (t.delayMinutes != null) {
+          const d = Number(t.delayMinutes);
+          if (!isNaN(d)) {
+            delaySum += d;
+            delayCount++;
+          }
+        }
+      });
+
+      const avgDurationMinutes = durationCount
+        ? Math.round(durationSum / durationCount)
+        : 0;
+
+      const avgDelayMinutes = delayCount
+        ? Math.round(delaySum / delayCount)
+        : 0;
+
+      /* --- Survey metrics --- */
+      let ratingSum = 0;
+      let ratingCount = 0;
+      const ratingDistribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+
+      filteredResponses.forEach((r) => {
+        const ratings = r.ratings || [];
+        ratings.forEach((val) => {
+          const num = Number(val);
+          if (!isNaN(num) && num >= 1 && num <= 5) {
+            ratingSum += num;
+            ratingCount++;
+            ratingDistribution[num] = (ratingDistribution[num] || 0) + 1;
+          }
+        });
+      });
+
+      const avgRatingOverall = ratingCount
+        ? Number((ratingSum / ratingCount).toFixed(2))
+        : 0;
+      const totalResponses = filteredResponses.length;
+
+      /* --- Staff KPIs from filtered tasks & surveys --- */
+      const staffStats = {};
+
+      function ensureStaff(email) {
+        const key = String(email || "").toLowerCase();
+        if (!key) return null;
+
+        if (!staffStats[key]) {
+          const base =
+            staffDirectory.find(
+              (s) => String(s.email || "").toLowerCase() === key
+            ) || {};
+
+          staffStats[key] = {
+            email: email,
+            name: base.name || "",
+            userID: base.userID || "",
+            phone: base.phone || "",
+            role: base.role || "",
+            active: base.active != null ? base.active : true,
+            totalTasks: 0,
+            completedTasks: 0,
+            totalDuration: 0,
+            durationCount: 0,
+            avgDurationMinutes: 0,
+            ratingSum: 0,
+            ratingCount: 0,
+            avgRating: 0,
+            onTimeCount: 0,
+            lateCount: 0,
+            surveyResponses: 0, // NEW: count of survey responses linked to this staff
+          };
+        }
+        return staffStats[key];
+      }
+
+      // From tasks
+      filteredTasks.forEach((t) => {
+        const emails = t.assignedStaffEmails || [];
+        emails.forEach((e) => {
+          const stat = ensureStaff(e);
+          if (!stat) return;
+          stat.totalTasks++;
+          if (t.status === "Done") {
+            stat.completedTasks++;
+          }
+          if (t.durationMinutes != null) {
+            stat.totalDuration += Number(t.durationMinutes) || 0;
+            stat.durationCount++;
+          }
+          if (t.delayMinutes != null) {
+            const d = Number(t.delayMinutes);
+            if (!isNaN(d)) {
+              if (d > 0) stat.lateCount++;
+              else stat.onTimeCount++;
+            }
+          }
+        });
+      });
+
+      // From survey responses
+      filteredResponses.forEach((r) => {
+        const t = taskMap[r.taskID];
+        if (!t) return;
+        const emails = t.assignedStaffEmails || [];
+        const ratings = r.ratings || [];
+        const localSum = ratings.reduce(
+          (a, val) => a + (Number(val) || 0),
+          0
+        );
+        const localCount = ratings.length;
+
+        emails.forEach((e) => {
+          const stat = ensureStaff(e);
+          if (!stat) return;
+          stat.ratingSum += localSum;
+          stat.ratingCount += localCount;
+          stat.surveyResponses += 1;
+        });
+      });
+
+      const staffKpis = Object.values(staffStats)
+        .map((s) => {
+          s.avgDurationMinutes = s.durationCount
+            ? Math.round(s.totalDuration / s.durationCount)
+            : 0;
+          s.avgRating = s.ratingCount
+            ? Number((s.ratingSum / s.ratingCount).toFixed(2))
+            : 0;
+          return s;
+        })
+        .sort((a, b) => b.completedTasks - a.completedTasks);
+
+      return {
+        kpis: {
+          totalTasks,
+          totalStaff,
+          completedTasks,
+          avgDurationMinutes,
+          avgDelayMinutes,
+          totalResponses,
+          avgRatingOverall,
+        },
+        statusCounts,
+        ratingDistribution,
+        staffKpis,
+        tasks: filteredTasks,
+        subtasks: filteredSubtasks,
+        survey: {
+          totalResponses,
+          avgRatingOverall,
+          ratingDistribution,
+          responses: filteredResponses,
+        },
+      };
+    }
+
+    /* ========== STATUS BREAKDOWN VISUAL ========== */
+    function renderStatus(statusCounts) {
+      const container = document.getElementById("statusBreakdownBars");
+      container.innerHTML = "";
+
+      const entries = Object.entries(statusCounts || {});
+      if (!entries.length) {
+        container.innerHTML =
+          '<div class="muted">No tasks in this range.</div>';
+        return;
+      }
+
+      const total = entries.reduce((a, b) => a + b[1], 0);
+
+      const colors = {
+        Scheduled: "#6c757d",
+        "In Progress": "#007bff",
+        Pending: "#ffc107",
+        "On Hold": "#fd7e14",
+        Done: "#28a745",
+        Cancelled: "#dc3545",
+        Unknown: "#999",
+      };
+
+      entries.forEach(([status, count]) => {
+        const pct = total ? Math.round((count / total) * 100) : 0;
+
+        container.innerHTML += `
+                  <div class="status-bar">
+                    <div class="status-bar-label">${status} — ${count} (${pct}%)</div>
+                    <div class="status-bar-track">
+                      <div class="status-bar-fill" style="width:${pct}%; background:${colors[status] || "#888"
+          };"></div>
+                    </div>
+                  </div>
+                `;
+      });
+    }
+
+    /* ========== STAFF TABLE ========== */
+    function renderStaff(vm) {
+      const list = vm.staffKpis || [];
+      const body = document.getElementById("staffTableBody");
+      body.innerHTML = "";
+
+      if (!list.length) {
+        body.innerHTML =
+          '<tr><td colspan="7">No staff activity in this range.</td></tr>';
+        return;
+      }
+
+      list.forEach((st) => {
+        body.innerHTML += `
+                  <tr>
+                    <td>${st.email}</td>
+                    <td>${st.name || "-"}</td>
+                    <td>${st.completedTasks}</td>
+                    <td>${st.avgDurationMinutes}</td>
+                    <td>${st.avgRating}</td>
+                    <td>${st.onTimeCount}</td>
+                    <td>${st.lateCount}</td>
+                  </tr>`;
+      });
+    }
+
+    /* ========== TASK DURATIONS ========== */
+    let taskDurationController;
+
+    function initTaskDurations(vm) {
+      taskDurationController = createListController(vm.tasks || [], {
+        pageSize: 10,
+        sortDir: "desc",
+        sortFn: (a, b) => {
+          const da = new Date(a.endAt || a.startAt || a.scheduledAt || 0);
+          const db = new Date(b.endAt || b.startAt || b.scheduledAt || 0);
+          return da - db;
+        }
+      });
+
+      renderTaskDurations();
+    }
+
+    function renderTaskDurations() {
+      const body = document.getElementById("taskDurationBody");
+      body.innerHTML = "";
+
+      const list = taskDurationController.pagedData;
+
+      if (!list.length) {
+        body.innerHTML =
+          '<tr><td colspan="8">No tasks in this range.</td></tr>';
+        return;
+      }
+
+      list.forEach((t) => {
+        body.innerHTML += `
+      <tr>
+        <td>${t.taskID}</td>
+        <td>${t.clientName}</td>
+        <td>${formatDateTime(t.scheduledAt)}</td>
+        <td>${formatDateTime(t.startAt)}</td>
+        <td>${formatDateTime(t.endAt)}</td>
+        <td>${t.durationMinutes ?? "-"}</td>
+        <td>${t.status}</td>
+        <td>${(t.assignedStaffEmails || []).join(", ")}</td>
+      </tr>`;
+      });
+
+      document.getElementById("taskPageInfo").textContent =
+        `${taskDurationController.page} / ${taskDurationController.totalPages}`;
+
+      document.getElementById("taskSortBtn").textContent =
+        taskDurationController.sortDir === "asc" ? "Sort ↑" : "Sort ↓";
+    }
+
+
+    /* ========== SUBTASKS ========== */
+    let subtaskController;
+
+    function initSubtasks(vm) {
+      subtaskController = createListController(vm.subtasks || [], {
+        pageSize: 10,
+        sortDir: "desc",
+        sortFn: (a, b) => {
+          // Sort by taskID, then subtask number
+          if (a.taskID !== b.taskID) {
+            return String(a.taskID).localeCompare(String(b.taskID));
+          }
+          return (a.subtaskNo || 0) - (b.subtaskNo || 0);
+        }
+      });
+
+      renderSubtasks();
+    }
+
+    function renderSubtasks() {
+      const body = document.getElementById("subtaskBody");
+      body.innerHTML = "";
+
+      const list = subtaskController.pagedData;
+
+      if (!list.length) {
+        body.innerHTML =
+          '<tr><td colspan="6">No subtasks linked to tasks in this range.</td></tr>';
+        return;
+      }
+
+      list.forEach((s) => {
+        const photos = s.photoUrls?.length
+          ? s.photoUrls
+            .map(
+              (u, i) => `<a href="${u}" target="_blank">Photo ${i + 1}</a>`
+            )
+            .join(" | ")
+          : "-";
+
+        body.innerHTML += `
+      <tr>
+        <td>${s.taskID}</td>
+        <td>${s.subtaskNo}</td>
+        <td>${s.status}</td>
+        <td>${s.remarks || "-"}</td>
+        <td>${s.lat || "-"}, ${s.lon || "-"}</td>
+        <td>${photos}</td>
+      </tr>`;
+      });
+
+      document.getElementById("subtaskPageInfo").textContent =
+        `${subtaskController.page} / ${subtaskController.totalPages}`;
+
+      document.getElementById("subtaskSortBtn").textContent =
+        subtaskController.sortDir === "asc" ? "Sort ↑" : "Sort ↓";
+    }
+
+
+    /* ========== SURVEY BREAKDOWN ========== */
+    let surveyController;
+
+    function initSurveyBreakdown() {
+      // ✅ build controller from currentVM only
+      surveyController = createListController(currentVM?.tasks || [], {
+        pageSize: 10,
+        sortDir: "desc",
+        sortFn: (a, b) => {
+          const da = new Date(a.endAt || a.startAt || a.scheduledAt || 0);
+          const db = new Date(b.endAt || b.startAt || b.scheduledAt || 0);
+          return da - db;
+        }
+      });
+
+      renderSurveyBreakdown();
+    }
+
+    function renderSurveyBreakdown() {
+      const container = document.getElementById("surveyBreakdownContainer");
+      container.innerHTML = "";
+
+      const vm = currentVM;
+      if (!vm) {
+        container.innerHTML = '<div class="muted">No data.</div>';
+        return;
+      }
+
+      const responses = vm.survey?.responses || [];
+      const grouped = {};
+      responses.forEach((r) => {
+        if (!grouped[r.taskID]) grouped[r.taskID] = [];
+        grouped[r.taskID].push(r);
+      });
+
+      // Only tasks that have surveys OR survey-required
+      const surveyTasks = surveyController.sortedData.filter(
+        (t) =>
+          grouped[t.taskID] ||
+          String(t.surveyRequired).toLowerCase() === "true"
+      );
+
+      const start = (surveyController.page - 1) * surveyController.pageSize;
+      const list = surveyTasks.slice(start, start + surveyController.pageSize);
+
+      // Fix totalPages dynamically
+      surveyController._effectiveTotalPages = Math.max(
+        1,
+        Math.ceil(surveyTasks.length / surveyController.pageSize)
+      );
+
+
+      if (!list.length) {
+        container.innerHTML =
+          '<div class="muted">No tasks / survey responses in this range.</div>';
+        return;
+      }
+
+      list.forEach((task) => {
+        const res = grouped[task.taskID] || [];
+        const avg = res.length
+          ? (res.reduce((a, r) => a + r.avgRating, 0) / res.length).toFixed(2)
+          : "-";
+
+        const card = document.createElement("div");
+        card.className = "survey-card";
+
+        const header = document.createElement("div");
+        header.className = "survey-header";
+        header.innerHTML = `
+      <div class="survey-header-main">
+        <div><strong>${task.taskID}</strong> – ${task.clientName}</div>
+        <small>Survey Status: ${task.surveyStatus || "-"}</small>
+      </div>
+      <div>
+        <strong>${avg}</strong> ⭐
+        <div class="muted" style="text-align:right;">${res.length} response(s)</div>
+      </div>
+    `;
+
+        const body = document.createElement("div");
+        body.className = "survey-body";
+        body.style.display = "none";
+
+        body.innerHTML = res.length
+          ? res.map(r => {
+
+            // 1️⃣ Find the task
+            const task = rawData.tasks.find(t => t.taskID === r.taskID);
+
+            // 2️⃣ Get assigned template ID
+            const templateID = task?.surveyTemplateID;
+
+            // 3️⃣ Match survey template
+            const template = rawData.surveyQuestions?.find(
+              t => String(t.templateID).trim() === String(templateID).trim()
+            );
+
+            const questions = template?.questions || [];
+            const ratings = r.ratings || [];
+
+            let qaHtml = "";
+
+            if (questions.length) {
+              qaHtml = questions.map((q, i) => `
+          <div style="margin-top:6px;">
+            • <strong>${q.questionText}</strong>: ${ratings[i] ?? "-"} 
+          </div>
+        `).join("");
+            } else {
+              qaHtml = `<div class="muted">
+          No survey template found (Template ID: ${templateID || "N/A"})
+        </div>`;
+            }
+
+            return `
+        <div style="border-top:1px solid #eee; padding-top:8px; margin-top:8px;">
+          <div><strong>Response ID:</strong> ${r.responseID}</div>
+          <div><strong>Submitted At:</strong> ${formatDateTime(r.submittedAt)}</div>
+          <div><strong>Avg Rating:</strong> ${r.avgRating.toFixed(2)}</div>
+
+          <div style="
+            margin-top:8px;
+            padding:8px;
+            background:#fafafa;
+            border-radius:6px;
+          ">
+            ${qaHtml}
+          </div>
+        </div>
+      `;
+          }).join("")
+          : `<div class="muted">No survey responses.</div>`;
+
+
+        header.onclick = () => {
+          body.style.display = body.style.display === "none" ? "block" : "none";
+        };
+
+        card.appendChild(header);
+        card.appendChild(body);
+        container.appendChild(card);
+      });
+
+      document.getElementById("surveyPageInfo").textContent =
+        `${surveyController.page} / ${surveyController._effectiveTotalPages}`;
+
+
+      document.getElementById("surveySortBtn").textContent =
+        surveyController.sortDir === "asc" ? "Sort ↑" : "Sort ↓";
+    }
+
+    const role = localStorage.getItem("user_role");
+    if (role !== "Admin") {
+      alert("Access denied.");
+      window.location.href = "tasklist.html";
+    }
+
+
+    /* ========== CHARTS ========== */
+    function renderCharts(vm) {
+      /* --- Status Chart --- */
+      const statusLabels = Object.keys(vm.statusCounts || {});
+      const statusValues = Object.values(vm.statusCounts || {});
+      if (statusChart) statusChart.destroy();
+      statusChart = new Chart(document.getElementById("statusChart"), {
+        type: "doughnut",
+        data: {
+          labels: statusLabels,
+          datasets: [{ data: statusValues }],
+        },
+        options: {
+          plugins: {
+            legend: {
+              position: "bottom",
+              labels: { boxWidth: 10, padding: 8 },
+            },
+          },
+          cutout: "55%",
+          maintainAspectRatio: false,
+        },
+      });
+
+      /* --- Rating Chart --- */
+      const ratingDist = vm.ratingDistribution || {};
+      const ratingLabels = ["1", "2", "3", "4", "5"];
+      const ratingValues = ratingLabels.map((x) => ratingDist[x] || 0);
+      if (ratingChart) ratingChart.destroy();
+      ratingChart = new Chart(document.getElementById("ratingChart"), {
+        type: "bar",
+        data: {
+          labels: ratingLabels,
+          datasets: [{ data: ratingValues }],
+        },
+        options: {
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { ticks: { maxRotation: 0, font: { size: 10 } } },
+            y: { beginAtZero: true, ticks: { font: { size: 10 } } },
+          },
+          maintainAspectRatio: false,
+        },
+      });
+
+      /* --- Staff Tasks Chart (Top 5 by completed) --- */
+      const staff = (vm.staffKpis || []).slice(0, 5);
+      const staffLabels = staff.map((s) => s.name || s.email);
+      const staffValues = staff.map((s) => s.completedTasks || 0);
+      if (staffTasksChart) staffTasksChart.destroy();
+      staffTasksChart = new Chart(
+        document.getElementById("staffTasksChart"),
+        {
+          type: "bar",
+          data: {
+            labels: staffLabels,
+            datasets: [{ data: staffValues }],
+          },
+          options: {
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { ticks: { maxRotation: 0, font: { size: 9 } } },
+              y: { beginAtZero: true, ticks: { font: { size: 10 } } },
+            },
+            maintainAspectRatio: false,
+          },
+        }
+      );
+
+      /* --- Staff Rating Chart (Top 5 by ratingCount) --- */
+      const staffSortedByRating = [...(vm.staffKpis || [])]
+        .filter((s) => s.ratingCount > 0)
+        .sort((a, b) => b.ratingCount - a.ratingCount)
+        .slice(0, 5);
+
+      const staffRatingLabels = staffSortedByRating.map(
+        (s) => s.name || s.email
+      );
+      const staffRatingValues = staffSortedByRating.map(
+        (s) => s.avgRating || 0
+      );
+
+      if (staffRatingChart) staffRatingChart.destroy();
+      staffRatingChart = new Chart(
+        document.getElementById("staffRatingChart"),
+        {
+          type: "bar",
+          data: {
+            labels: staffRatingLabels,
+            datasets: [{ data: staffRatingValues }],
+          },
+          options: {
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { ticks: { maxRotation: 0, font: { size: 9 } } },
+              y: { beginAtZero: true, max: 5, ticks: { font: { size: 10 } } },
+            },
+            maintainAspectRatio: false,
+          },
+        }
+      );
+
+      /* --- Tasks Completed Over Time (day-of-month labels) --- */
+      /* --- Tasks Completed Over Time --- */
+      const tasks = vm.tasks || [];
+      const dateMap = {};
+
+      tasks.forEach((t) => {
+        if (t.status !== "Done" || !t.endAt) return;
+
+        const d = new Date(t.endAt);
+        if (isNaN(d)) return;
+
+        const key = d.toISOString().split("T")[0]; // YYYY-MM-DD
+        dateMap[key] = (dateMap[key] || 0) + 1;
+      });
+
+      const sorted = Object.keys(dateMap).sort();
+      const labels = sorted.map((k) => k.split("-")[2]); // day of month
+      const values = sorted.map((k) => dateMap[k]);
+
+      if (tasksOverTimeChart) tasksOverTimeChart.destroy();
+
+      tasksOverTimeChart = new Chart(
+        document.getElementById("tasksOverTimeChart"),
+        {
+          type: "line",
+          data: {
+            labels,
+            datasets: [
+              {
+                label: "Completed Tasks",
+                data: values,
+                tension: 0.3,
+              },
+            ],
+          },
+          options: {
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { ticks: { font: { size: 9 } } },
+              y: { beginAtZero: true },
+            },
+            maintainAspectRatio: false,
+          },
+        }
+      );
+
+      /* --- Average Duration Per Day --- */
+      const durationMap = {};
+
+      (vm.tasks || []).forEach((t) => {
+        if (t.status !== "Done" || !t.endAt || !t.durationMinutes) return;
+        const d = new Date(t.endAt);
+        if (isNaN(d)) return;
+
+        const yyyy = d.getFullYear();
+        const mm = d.getMonth() + 1;
+        const dd = d.getDate();
+        const key = `${yyyy}-${mm}-${dd}`;
+
+        if (!durationMap[key]) durationMap[key] = [];
+        durationMap[key].push(Number(t.durationMinutes));
+      });
+
+      const durKeys = Object.keys(durationMap)
+        .map((k) => {
+          const [y, m, d] = k.split("-").map(Number);
+          return { y, m, d, key: k };
+        })
+        .sort(
+          (a, b) => new Date(a.y, a.m - 1, a.d) - new Date(b.y, b.m - 1, b.d)
+        );
+
+      const durLabels = durKeys.map((k) => k.d);
+      const durValues = durKeys.map((k) => {
+        const arr = durationMap[k.key];
+        return Math.round(arr.reduce((a, b) => a + b) / arr.length);
+      });
+
+      if (avgDurationDailyChart) avgDurationDailyChart.destroy();
+      avgDurationDailyChart = new Chart(
+        document.getElementById("avgDurationDailyChart"),
+        {
+          type: "line",
+          data: {
+            labels: durLabels,
+            datasets: [
+              {
+                label: "Avg Duration (min)",
+                data: durValues,
+                tension: 0.3,
+              },
+            ],
+          },
+          options: {
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { ticks: { font: { size: 9 } } },
+              y: { beginAtZero: true },
+            },
+            maintainAspectRatio: false,
+          },
+        }
+      );
+
+      /* --- Average Delay Per Month (FIXED VERSION) --- */
+      const delayMap = {};
+
+      (rawData.tasks || []).forEach((t) => {
+        // MUST use delayMinutes directly (NOT filtered by status, duration, endAt)
+        if (t.delayMinutes == null) return;
+
+        const d = t.startAt || t.scheduledAt;
+        if (!d) return;
+
+        const dt = new Date(d);
+        if (isNaN(dt)) return;
+
+        const yyyy = dt.getFullYear();
+        const mm = (dt.getMonth() + 1).toString().padStart(2, "0");
+        const key = `${yyyy}-${mm}`;
+
+        if (!delayMap[key]) delayMap[key] = [];
+        delayMap[key].push(Number(t.delayMinutes));
+      });
+
+      const delayKeys = Object.keys(delayMap).sort();
+
+      const monthNames = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ];
+
+      const delayLabels = delayKeys.map((k) => {
+        const [y, m] = k.split("-");
+        return `${monthNames[Number(m) - 1]} ${y}`;
+      });
+
+      const delayValues = delayKeys.map((k) => {
+        const arr = delayMap[k];
+        return Math.round(arr.reduce((a, b) => a + b) / arr.length);
+      });
+
+      if (avgDelayMonthlyChart) avgDelayMonthlyChart.destroy();
+
+      avgDelayMonthlyChart = new Chart(
+        document.getElementById("avgDelayMonthlyChart"),
+        {
+          type: "bar",
+          data: {
+            labels: delayLabels,
+            datasets: [
+              {
+                label: "Avg Delay (min)",
+                data: delayValues,
+              },
+            ],
+          },
+          options: {
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { ticks: { maxRotation: 0, font: { size: 10 } } },
+              y: { beginAtZero: true },
+            },
+            maintainAspectRatio: false,
+          },
+        }
+      );
+    }
+
+    /* ========== FILTER BUTTONS ========== */
+    function initFilters() {
+      const buttons = document.querySelectorAll(".filter-bar .filter-btn");
+      buttons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          buttons.forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          currentRange = btn.dataset.range;
+          updateDashboard();
+        });
+      });
+    }
+
+    /* ========== MAIN LOAD & UPDATE ========== */
+    function updateDashboard() {
+      if (!rawData) return;
+      const vm = buildViewModel(rawData, currentRange);
+      if (!vm) return;
+      currentVM = vm;
+      renderStatus(vm.statusCounts);
+      renderStaff(vm);
+      // Only init controllers if they don't exist OR data source changed
+      if (!taskDurationController || taskDurationController.data !== vm.tasks) {
+        initTaskDurations(vm);
+      }
+
+      if (!subtaskController || subtaskController.data !== vm.subtasks) {
+        initSubtasks(vm);
+      }
+
+      if (!surveyController || surveyController.data !== vm.tasks) {
+        initSurveyBreakdown();
+      }
+
+      renderCharts(vm);
+      renderPendingSurveys(vm);
+
+      // Map needs all data regardless of current filter, so pass "all"
+      let selectedDate = document.getElementById("mapDatePicker").value;
+
+      // Auto-fallback if empty
+      if (!selectedDate) {
+        selectedDate = getMalaysiaToday();
+        document.getElementById("mapDatePicker").value = selectedDate;
+      }
+
+      renderTaskMap(buildViewModel(rawData, "all"), selectedDate);
+    }
+    function getMalaysiaToday() {
+      const now = new Date();
+      // convert to UTC+8 (Malaysia)
+      const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+      const malaysia = new Date(utc + 8 * 60 * 60 * 1000);
+      return malaysia.toISOString().split("T")[0];
+    }
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      const s = requireLogin();
+
+      const res = await fetch(
+        `${ADMIN_API_URL}?action=getDashboardSummary&email=${encodeURIComponent(
+          s.email
+        )}`
+      );
+      const data = await res.json();
+
+      document.getElementById("debugBox").textContent = JSON.stringify(
+        data,
+        null,
+        2
+      );
+
+      if (!data.success) {
+        alert("Error loading dashboard: " + data.message);
+        return;
+      }
+
+      rawData = data;
+      initFilters();
+
+      // 🌟 Set today automatically if user hasn't picked a date yet
+      const mapPicker = document.getElementById("mapDatePicker");
+      if (!mapPicker.value) {
+        mapPicker.value = getMalaysiaToday();
+      }
+
+      // Delay dashboard load until overlay is removed
+      setTimeout(() => {
+        updateDashboard();
+      }, 300);
+
+      document.getElementById("loadingOverlay").classList.add("hidden");
+
+      // Fix Leaflet render after overlay hides
+      setTimeout(() => {
+        if (map) map.invalidateSize();
+      }, 400);
+      document.getElementById("taskSortBtn").onclick = () => {
+        taskDurationController.toggleSort();
+        renderTaskDurations();
+      };
+
+      document.getElementById("taskPrevBtn").onclick = () => {
+        taskDurationController.prevPage();
+        renderTaskDurations();
+      };
+
+      document.getElementById("taskNextBtn").onclick = () => {
+        taskDurationController.nextPage();
+        renderTaskDurations();
+      };
+      document.getElementById("subtaskSortBtn").onclick = () => {
+        subtaskController.toggleSort();
+        renderSubtasks();
+      };
+
+      document.getElementById("subtaskPrevBtn").onclick = () => {
+        subtaskController.prevPage();
+        renderSubtasks();
+      };
+
+      document.getElementById("subtaskNextBtn").onclick = () => {
+        subtaskController.nextPage();
+        renderSubtasks();
+      };
+      document.getElementById("surveySortBtn").onclick = () => {
+        if (!surveyController) return;
+        surveyController.toggleSort();
+        renderSurveyBreakdown();
+      };
+
+      document.getElementById("surveyPrevBtn").onclick = () => {
+        if (!surveyController) return;
+
+        surveyController.page = Math.max(1, surveyController.page - 1);
+        renderSurveyBreakdown();
+      };
+
+
+      document.getElementById("surveyNextBtn").onclick = () => {
+        if (!surveyController) return;
+        if (surveyController.page < surveyController._effectiveTotalPages) {
+          surveyController.page++;
+        }
+
+        renderSurveyBreakdown();
+      };
+
+
+
+    });
+
+    /* ============================================================
+       MAP VIEW (Leaflet)
+       ============================================================ */
+    let map;
+    let taskLayer = L.layerGroup();
+    let subtaskLayer = L.layerGroup();
+    let mapLayerControl = null;
+
+    /* Utility: assign colors per task */
+    const MAP_COLORS = [
+      "red",
+      "blue",
+      "green",
+      "purple",
+      "orange",
+      "cyan",
+      "magenta",
+      "brown",
+      "teal",
+      "pink",
+    ];
+
+    function renderTaskMap(vm, selectedDate) {
+      if (!selectedDate) return;
+
+      // Initialize map once
+      if (!map) {
+        const container = document.getElementById("mapContainer");
+        if (!container) return;
+
+        map = L.map("mapContainer", {
+          center: [3.139, 101.6869],
+          zoom: 7,
+          zoomControl: true,
+        });
+
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          maxZoom: 19,
+        }).addTo(map);
+      }
+
+      taskLayer.clearLayers();
+      subtaskLayer.clearLayers();
+
+      const tasks = vm.tasks || [];
+
+      // Match ANY date field (scheduled/start/end)
+      const filtered = tasks.filter((t) => {
+        const refs = [t.scheduledAt, t.startAt, t.endAt].filter(Boolean);
+
+        return refs.some((ref) => {
+          const d = new Date(ref);
+          if (isNaN(d)) return false;
+          return d.toISOString().split("T")[0] === selectedDate;
+        });
+      });
+
+      if (!filtered.length) return;
+
+      // Assign task colors
+      const colorMap = {};
+      filtered.forEach((t, i) => {
+        colorMap[t.taskID] = MAP_COLORS[i % MAP_COLORS.length];
+      });
+
+      const markers = [];
+
+      /* ---- TASK START / END MARKERS ---- */
+      filtered.forEach((t) => {
+        const color = colorMap[t.taskID];
+
+        if (t.startLat && t.startLon) {
+          const icon = L.divIcon({
+            html: `<div style="
+          width:0;height:0;
+          border-left:10px solid transparent;
+          border-right:10px solid transparent;
+          border-bottom:18px solid ${color};
+        "></div>`,
+            iconSize: [0, 0],
+            iconAnchor: [10, 18],
+            className: "no-default-icon",
+          });
+
+          const m = L.marker([t.startLat, t.startLon], { icon }).bindPopup(
+            `<b>${t.taskID}</b><br>Start<br>${t.clientName}`
+          );
+          taskLayer.addLayer(m);
+          markers.push(m);
+        }
+
+        if (t.endLat && t.endLon) {
+          const icon = L.divIcon({
+            html: `<div style="
+          width:0;height:0;
+          border-left:10px solid transparent;
+          border-right:10px solid transparent;
+          border-top:18px solid ${color};
+        "></div>`,
+            iconSize: [0, 0],
+            iconAnchor: [10, 0],
+            className: "no-default-icon",
+          });
+
+          const m = L.marker([t.endLat, t.endLon], { icon }).bindPopup(
+            `<b>${t.taskID}</b><br>End<br>${t.clientName}`
+          );
+          taskLayer.addLayer(m);
+          markers.push(m);
+        }
+      });
+
+      /* ---- SUBTASK CIRCLES ---- */
+      (vm.subtasks || []).forEach((s) => {
+        if (!s.lat || !s.lon) return;
+
+        const t = filtered.find((x) => x.taskID === s.taskID);
+        if (!t) return;
+
+        const color = colorMap[t.taskID];
+
+        const icon = L.divIcon({
+          html: `<div style="
+        width:14px;height:14px;
+        border-radius:50%;
+        background:${color};
+        border:2px solid white;
+      "></div>`,
+          iconSize: [14, 14],
+          iconAnchor: [7, 7],
+          className: "no-default-icon",
+        });
+
+        const m = L.marker([s.lat, s.lon], { icon }).bindPopup(`
+        <b>${s.taskID}</b><br>
+        Subtask: ${s.subtaskNo}<br>
+        Status: ${s.status}<br>
+        Remarks: ${s.remarks || "-"}
+      `);
+
+        subtaskLayer.addLayer(m);
+        markers.push(m);
+      });
+
+      // Add layers
+      taskLayer.addTo(map);
+
+      // Update layer control
+      if (mapLayerControl) mapLayerControl.remove();
+      mapLayerControl = L.control
+        .layers({}, { "Task Start/End": taskLayer, Subtasks: subtaskLayer })
+        .addTo(map);
+
+      // Fit bounds
+      if (markers.length) {
+        const bounds = L.featureGroup(markers).getBounds();
+        setTimeout(
+          () => map.fitBounds(bounds, { padding: [50, 50], maxZoom: 17 }),
+          150
+        );
+      }
+    }
+
+    /* ---------- DATE PICKER EVENT ---------- */
+    document
+      .getElementById("mapDatePicker")
+      .addEventListener("change", (e) => {
+        if (rawData) {
+          const vm = buildViewModel(rawData, "all");
+          renderTaskMap(vm, e.target.value);
+        }
+      });
+    /* ============================================================
+       PENDING SURVEY PANEL
+       ============================================================ */
+    function renderPendingSurveys(vm) {
+      const box = document.getElementById("pendingSurveyContainer");
+      box.innerHTML = "";
+
+      const tasks = vm.tasks || [];
+
+      // Filter for:
+      // - SurveyRequired = true
+      // - SurveyLink exists
+      // - SurveyStatus != Submitted
+      const pending = tasks.filter(
+        (t) =>
+          String(t.surveyRequired).toLowerCase() === "true" &&
+          t.surveyLink &&
+          String(t.surveyStatus).toLowerCase() !== "submitted"
+      );
+
+      if (!pending.length) {
+        box.innerHTML = `<div class="muted">No pending surveys. All caught up! 🎉</div>`;
+        return;
+      }
+
+      pending.forEach((t) => {
+        const staff = (t.assignedStaffEmails || []).join(", ") || "-";
+
+        const card = `
+            <div style="
+              background:#fff8e1;
+              border:1px solid #ffe58f;
+              padding:12px;
+              border-radius:10px;
+              margin-bottom:10px;
+            ">
+              <strong>${t.taskID}</strong> – ${t.clientName}<br/>
+
+              <div style="margin-top:4px;">
+                <strong>Status:</strong> ${t.surveyStatus || "Pending"}
+              </div>
+
+              <strong>Survey Link:</strong>
+              <div style="margin-top:4px; display:flex; gap:6px; align-items:center;">
+                <input 
+                  type="text" 
+                  value="${t.surveyLink}" 
+                  readonly 
+                  style="
+                    flex:1;
+                    padding:4px 6px;
+                    font-size:0.8rem;
+                    border:1px solid #ccc;
+                    border-radius:6px;
+                    background:#f9f9f9;
+                  "
+                  onclick="this.select();"
+                />
+                <button 
+                  onclick="navigator.clipboard.writeText('${t.surveyLink}')"
+                  style="
+                    padding:4px 8px;
+                    font-size:0.75rem;
+                    border-radius:6px;
+                    border:1px solid var(--primary);
+                    background:var(--primary);
+                    color:white;
+                    cursor:pointer;
+                  "
+                >Copy</button>
+              </div>
+
+              <div style="margin-top:4px;">
+                <strong>Assigned Staff:</strong> ${staff}
+              </div>
+
+              <div style="
+                margin-top:8px;
+                font-size:0.78rem;
+                color:#6c757d;
+              ">
+                Make sure to send the survey to your client.
+              </div>
+            </div>
+          `;
+
+        box.innerHTML += card;
+      });
+    }
+    function copyDebugJson() {
+      const btn = document.getElementById("copyJsonBtn");
+
+      if (!rawData) {
+        btn.textContent = "No Data";
+        setTimeout(() => (btn.textContent = "Copy JSON"), 1500);
+        return;
+      }
+
+      const jsonText = JSON.stringify(rawData, null, 2);
+
+      navigator.clipboard
+        .writeText(jsonText)
+        .then(() => {
+          btn.textContent = "Copied!";
+          setTimeout(() => (btn.textContent = "Copy JSON"), 1500);
+        })
+        .catch(() => {
+          btn.textContent = "Failed";
+          setTimeout(() => (btn.textContent = "Copy JSON"), 1500);
+        });
+    }
+  </script>
+</body>
+
+</html>
