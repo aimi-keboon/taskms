@@ -328,15 +328,21 @@
     <!-- PENDING SURVEYS -->
     <div class="section-card">
       <div class="section-header">
-        <h2>Pending Surveys (Action Required)</h2>
-        <span class="muted">Surveys that were generated but haven’t been submitted.</span>
+        <div>
+          <h2>Pending Surveys (Action Required)</h2>
+          <span class="muted">Surveys that were generated but haven’t been submitted.</span>
+        </div>
+
+        <div style="display:flex; gap:6px; align-items:center;">
+          <button class="filter-btn" id="pendingSurveySortBtn">Sort ↓</button>
+          <button class="filter-btn" id="pendingSurveyPrevBtn">◀</button>
+          <span class="muted" id="pendingSurveyPageInfo">1 / 1</span>
+          <button class="filter-btn" id="pendingSurveyNextBtn">▶</button>
+        </div>
       </div>
 
-      <div id="pendingSurveyContainer">
-        <div class="muted">Loading...</div>
-      </div>
+      <div id="pendingSurveyContainer"></div>
     </div>
-    <!-- Everything below stays unchanged — charts, tables, survey breakdown, debug, etc. -->
 
     <!-- FILTER BAR -->
     <div class="filter-bar">
@@ -1066,6 +1072,8 @@
 
     /* ========== SURVEY BREAKDOWN ========== */
     let surveyController;
+    let pendingSurveyController;
+
 
     function initSurveyBreakdown() {
       // ✅ build controller from currentVM only
@@ -1081,6 +1089,28 @@
 
       renderSurveyBreakdown();
     }
+
+    function initPendingSurveys(vm) {
+      const pending = (vm.tasks || []).filter(
+        (t) =>
+          String(t.surveyRequired).toLowerCase() === "true" &&
+          t.surveyLink &&
+          String(t.surveyStatus).toLowerCase() !== "submitted"
+      );
+
+      pendingSurveyController = createListController(pending, {
+        pageSize: 3,
+        sortDir: "desc",
+        sortFn: (a, b) => {
+          const da = new Date(a.endAt || a.startAt || a.scheduledAt || 0);
+          const db = new Date(b.endAt || b.startAt || b.scheduledAt || 0);
+          return da - db;
+        }
+      });
+
+      renderPendingSurveys();
+    }
+
 
     function renderSurveyBreakdown() {
       const container = document.getElementById("surveyBreakdownContainer");
@@ -1539,7 +1569,13 @@
       }
 
       renderCharts(vm);
-      renderPendingSurveys(vm);
+      if (
+        !pendingSurveyController ||
+        pendingSurveyController.data !== vm.tasks
+      ) {
+        initPendingSurveys(vm);
+      }
+
 
       // Map needs all data regardless of current filter, so pass "all"
       let selectedDate = document.getElementById("mapDatePicker").value;
@@ -1651,6 +1687,22 @@
 
         renderSurveyBreakdown();
       };
+
+      document.getElementById("pendingSurveySortBtn").onclick = () => {
+        pendingSurveyController.toggleSort();
+        renderPendingSurveys();
+      };
+
+      document.getElementById("pendingSurveyPrevBtn").onclick = () => {
+        pendingSurveyController.prevPage();
+        renderPendingSurveys();
+      };
+
+      document.getElementById("pendingSurveyNextBtn").onclick = () => {
+        pendingSurveyController.nextPage();
+        renderPendingSurveys();
+      };
+
 
 
 
@@ -1831,92 +1883,50 @@
     /* ============================================================
        PENDING SURVEY PANEL
        ============================================================ */
-    function renderPendingSurveys(vm) {
+    function renderPendingSurveys() {
       const box = document.getElementById("pendingSurveyContainer");
       box.innerHTML = "";
 
-      const tasks = vm.tasks || [];
-
-      // Filter for:
-      // - SurveyRequired = true
-      // - SurveyLink exists
-      // - SurveyStatus != Submitted
-      const pending = tasks.filter(
-        (t) =>
-          String(t.surveyRequired).toLowerCase() === "true" &&
-          t.surveyLink &&
-          String(t.surveyStatus).toLowerCase() !== "submitted"
-      );
-
-      if (!pending.length) {
+      if (!pendingSurveyController || !pendingSurveyController.data.length) {
         box.innerHTML = `<div class="muted">No pending surveys. All caught up! 🎉</div>`;
+        document.getElementById("pendingSurveyPageInfo").textContent = "1 / 1";
         return;
       }
 
-      pending.forEach((t) => {
+      pendingSurveyController.pagedData.forEach((t) => {
         const staff = (t.assignedStaffEmails || []).join(", ") || "-";
 
-        const card = `
-            <div style="
-              background:#fff8e1;
-              border:1px solid #ffe58f;
-              padding:12px;
-              border-radius:10px;
-              margin-bottom:10px;
-            ">
-              <strong>${t.taskID}</strong> – ${t.clientName}<br/>
+        box.innerHTML += `
+      <div style="
+        background:#fff8e1;
+        border:1px solid #ffe58f;
+        padding:12px;
+        border-radius:10px;
+        margin-bottom:10px;
+      ">
+        <strong>${t.taskID}</strong> – ${t.clientName}<br/>
+        <div><strong>Status:</strong> ${t.surveyStatus || "Pending"}</div>
 
-              <div style="margin-top:4px;">
-                <strong>Status:</strong> ${t.surveyStatus || "Pending"}
-              </div>
+        <strong>Survey Link:</strong>
+        <div style="display:flex; gap:6px; margin-top:4px;">
+          <input type="text" value="${t.surveyLink}" readonly onclick="this.select();" style="flex:1;padding:4px;font-size:0.8rem;">
+          <button onclick="navigator.clipboard.writeText('${t.surveyLink}')" class="filter-btn">Copy</button>
+        </div>
 
-              <strong>Survey Link:</strong>
-              <div style="margin-top:4px; display:flex; gap:6px; align-items:center;">
-                <input 
-                  type="text" 
-                  value="${t.surveyLink}" 
-                  readonly 
-                  style="
-                    flex:1;
-                    padding:4px 6px;
-                    font-size:0.8rem;
-                    border:1px solid #ccc;
-                    border-radius:6px;
-                    background:#f9f9f9;
-                  "
-                  onclick="this.select();"
-                />
-                <button 
-                  onclick="navigator.clipboard.writeText('${t.surveyLink}')"
-                  style="
-                    padding:4px 8px;
-                    font-size:0.75rem;
-                    border-radius:6px;
-                    border:1px solid var(--primary);
-                    background:var(--primary);
-                    color:white;
-                    cursor:pointer;
-                  "
-                >Copy</button>
-              </div>
-
-              <div style="margin-top:4px;">
-                <strong>Assigned Staff:</strong> ${staff}
-              </div>
-
-              <div style="
-                margin-top:8px;
-                font-size:0.78rem;
-                color:#6c757d;
-              ">
-                Make sure to send the survey to your client.
-              </div>
-            </div>
-          `;
-
-        box.innerHTML += card;
+        <div style="margin-top:4px;">
+          <strong>Assigned Staff:</strong> ${staff}
+        </div>
+      </div>
+    `;
       });
+
+      document.getElementById("pendingSurveyPageInfo").textContent =
+        `${pendingSurveyController.page} / ${pendingSurveyController.totalPages}`;
+
+      document.getElementById("pendingSurveySortBtn").textContent =
+        pendingSurveyController.sortDir === "asc" ? "Sort ↑" : "Sort ↓";
     }
+
     function copyDebugJson() {
       const btn = document.getElementById("copyJsonBtn");
 
