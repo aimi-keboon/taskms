@@ -597,7 +597,7 @@
 
   <script>
     const ADMIN_API_URL =
-      "https://script.google.com/macros/s/AKfycbziUWDQ06l5hZ1nIYv8Z-tMZQsTPzlVfTqXl7rWhxlQlXL1DTaUpMzpPqXR53Sfh0E/exec"; // replace with your deployed URL if needed
+      "https://script.google.com/macros/s/AKfycbx5W0mk3v8kXHViNuOr4Qh50DpWl06aprkqt_W6qkPVqJyfbco3Yn5xPp3G9WE_QtZ6/exec"; // replace with your deployed URL if needed
 
     function getSession() {
       return {
@@ -717,6 +717,15 @@
       if (!emails || !emails.length) return "-";
       return emails.map(findStaffNameByEmail).join(", ");
     }
+
+    function normalizeAssignedStaff(value) {
+      if (Array.isArray(value)) return value;
+      if (typeof value === "string" && value.trim()) {
+        return value.split(",").map(v => v.trim());
+      }
+      return [];
+    }
+
 
     /* ===== RENDER TASKS TABLE ===== */
     function renderTasksTable() {
@@ -1147,9 +1156,31 @@
         .map((cb) => cb.value);
     }
 
+    function toDateTimeLocal(value) {
+      if (!value) return "";
+      return value.replace(" ", "T").slice(0, 16);
+    }
+
+    function normalizeAssignedStaff(value) {
+      if (Array.isArray(value)) return value;
+      if (typeof value === "string" && value.trim()) {
+        return value.split(",").map(v => v.trim());
+      }
+      return [];
+    }
+
+
     function openTaskModal(task) {
       const backdrop = document.getElementById("taskModalBackdrop");
       const title = document.getElementById("taskModalTitle");
+
+      if (!backdrop || !title) {
+        console.error("Task modal elements missing", {
+          backdrop,
+          title
+        });
+        return;
+      }
 
       if (task) {
         // EDIT MODE
@@ -1159,7 +1190,8 @@
         document.getElementById("clientName").value = task.clientName || "";
         document.getElementById("location").value = task.location || "";
         document.getElementById("scheduledTime").value =
-          task.scheduledTime || "";
+          toDateTimeLocal(task.scheduledTime);
+
         document.getElementById("surveyRequired").checked =
           !!task.surveyRequired;
 
@@ -1169,7 +1201,10 @@
         document.getElementById("surveyStatusDisplay").textContent =
           task.surveyStatus || "-";
 
-        populateStaffCheckboxes(task.assignedStaff || []);
+        populateStaffCheckboxes(
+          normalizeAssignedStaff(task.assignedStaff)
+        );
+
       } else {
         // NEW TASK MODE
         title.textContent = "Add New Task";
@@ -1241,19 +1276,25 @@
 
     function renderTemplateDropdown(selectedID = "") {
       const sel = document.getElementById("surveyTemplateID");
+      if (!sel) return;
+
       sel.innerHTML = `<option value="">-- Select Template --</option>`;
+
+      if (!Array.isArray(surveyTemplates)) return;
 
       surveyTemplates.forEach((t) => {
         const opt = document.createElement("option");
-        opt.value = t.templateID;
+        opt.value = String(t.templateID);
         opt.textContent = t.templateName;
 
-        if (selectedID && selectedID === t.templateID) {
+        if (String(selectedID) === String(t.templateID)) {
           opt.selected = true;
         }
         sel.appendChild(opt);
       });
     }
+
+
 
     async function loadSurveyTemplates() {
       try {
