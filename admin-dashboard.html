@@ -349,12 +349,15 @@
       <div class="filter-bar-left">
         Time range applies to tasks, subtasks, surveys & charts.
       </div>
-      <div class="filter-buttons">
-        <button class="filter-btn active" data-range="all">All</button>
-        <button class="filter-btn" data-range="week">Last 7 days</button>
-        <button class="filter-btn" data-range="month">Last 30 days</button>
-        <button class="filter-btn" data-range="year">Last 12 months</button>
+      <div class="filter-buttons" style="gap:8px;">
+        <select id="yearFilter" class="filter-btn">
+          <option value="all">All Time</option>
+        </select>
+
+        <select id="monthFilter" class="filter-btn" disabled></select>
+
       </div>
+
     </div>
 
     <!-- VISUAL OVERVIEW (CHARTS) -->
@@ -603,7 +606,25 @@
 
     /* ======== GLOBAL STATE ======== */
     let rawData = null;
-    let currentRange = "all";
+    function dateInSelectedMonth(dateStr) {
+      if (!dateStr) return false;
+
+      const yearVal = document.getElementById("yearFilter").value;
+      if (yearVal === "all") return true; // ✅ All Time
+
+      const d = new Date(dateStr);
+      if (isNaN(d)) return false;
+
+      const year = Number(yearVal);
+      const month = Number(document.getElementById("monthFilter").value);
+
+      return (
+        d.getFullYear() === year &&
+        d.getMonth() + 1 === month
+      );
+    }
+
+
     let currentVM = null;
     /* ======== LIST CONTROLLER HELPER ======== */
     function createListController(data = [], options = {}) {
@@ -690,12 +711,12 @@
       const surveyResponsesAll = (raw.survey && raw.survey.responses) || [];
       const staffDirectory = (raw.staff && raw.staff.list) || [];
 
-      // Filter tasks by reference date
       const filteredTasks = tasksAll.filter((t) => {
         const ref = getTaskReferenceDate(t);
-        if (!ref && range !== "all") return false;
-        return dateInRange(ref, range);
+        return dateInSelectedMonth(ref);
       });
+
+
 
       const taskIDSet = new Set(filteredTasks.map((t) => t.taskID));
 
@@ -704,10 +725,10 @@
         taskIDSet.has(st.taskID)
       );
 
-      // Filter survey responses by submittedAt date
       const filteredResponses = surveyResponsesAll.filter((r) =>
-        dateInRange(r.submittedAt, range)
+        dateInSelectedMonth(r.submittedAt)
       );
+
 
       // Build task map
       const taskMap = {};
@@ -1534,6 +1555,50 @@
       );
     }
 
+    function initMonthYearFilters() {
+      const yearSelect = document.getElementById("yearFilter");
+      const monthSelect = document.getElementById("monthFilter");
+
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth() + 1;
+
+      // Years (current year back 5 years)
+      for (let y = currentYear; y >= currentYear - 5; y--) {
+        const opt = document.createElement("option");
+        opt.value = y;
+        opt.textContent = y;
+        yearSelect.appendChild(opt);
+      }
+
+      // Months
+      const months = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+      ];
+
+      months.forEach((m, i) => {
+        const opt = document.createElement("option");
+        opt.value = i + 1;
+        opt.textContent = m;
+        monthSelect.appendChild(opt);
+      });
+
+      // Default = All Time
+      yearSelect.value = "all";
+      monthSelect.value = currentMonth;
+      monthSelect.disabled = true;
+
+      yearSelect.onchange = () => {
+        monthSelect.disabled = yearSelect.value === "all";
+        updateDashboard();
+      };
+
+      monthSelect.onchange = updateDashboard;
+    }
+
+
+
     /* ========== FILTER BUTTONS ========== */
     function initFilters() {
       const buttons = document.querySelectorAll(".filter-bar .filter-btn");
@@ -1550,7 +1615,8 @@
     /* ========== MAIN LOAD & UPDATE ========== */
     function updateDashboard() {
       if (!rawData) return;
-      const vm = buildViewModel(rawData, currentRange);
+      const vm = buildViewModel(rawData);
+
       if (!vm) return;
       currentVM = vm;
       renderStatus(vm.statusCounts);
@@ -1619,6 +1685,8 @@
 
       rawData = data;
       initFilters();
+      initMonthYearFilters();
+
 
       // 🌟 Set today automatically if user hasn't picked a date yet
       const mapPicker = document.getElementById("mapDatePicker");
