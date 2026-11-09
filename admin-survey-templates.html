@@ -297,7 +297,7 @@
     </style>
   </head>
 
-  <body class="fsms-ui admin-page">
+  <body class="fsms-ui admin-page survey-settings-page">
     <div id="loadingOverlay"><div class="loader"></div></div>
 
     <div id="globalHeader"></div>
@@ -309,22 +309,29 @@
         Create survey templates and manage questions for each template.
       </div>
 
-      <!-- MOBILE VIEW TOGGLE -->
-      <div class="view-toggle">
-        <button id="btnViewTemplates" class="toggle-active">Templates</button>
-        <button id="btnViewQuestions">Questions</button>
+      <p class="setup-progress" id="setupProgress" aria-live="polite">
+        Step 1 of 2 · Choose or create a survey template to begin.
+      </p>
+      <div class="view-toggle" role="group" aria-label="Survey setup steps">
+        <button type="button" id="btnViewTemplates" class="toggle-active" aria-current="step">
+          <span class="setup-step-label">Step 1</span>Choose template
+        </button>
+        <button type="button" id="btnViewQuestions" disabled>
+          <span class="setup-step-label">Step 2</span>Edit questions
+        </button>
       </div>
 
       <div class="layout-two-panel">
         <!-- LEFT: TEMPLATES PANEL -->
         <section class="section-card panel panel-templates">
           <div class="section-header">
-            <h2>Templates</h2>
+            <h2>Choose a survey template</h2>
             <button class="btn-primary" id="btnAddTemplate">
               + New Template
             </button>
           </div>
 
+          <p class="setup-tip">Select <strong>Questions</strong> on an existing template to configure its rating questions, or create a new template first.</p>
           <div class="table-wrapper">
             <table>
               <thead>
@@ -349,7 +356,7 @@
         <section class="section-card panel panel-questions">
           <div class="section-header">
             <div>
-              <h2>Template Questions</h2>
+              <h2>Configure rating questions</h2>
               <div class="muted">
                 Selected template:
                 <strong
@@ -367,7 +374,7 @@
           </div>
 
           <div id="questionsEmptyState" class="panel-questions-empty">
-            Select a template from the left to view and edit its questions.
+            Start with step 1: choose or create a template. Its questions will appear here.
           </div>
 
           <div id="questionsContent" style="display: none">
@@ -397,20 +404,26 @@
               "
             />
 
+            <div class="question-editor">
+              <h3 class="question-editor-heading">Add or edit a question</h3>
+              <p class="question-editor-intro">Give the question a number, write what the customer should rate, and choose a maximum score.</p>
+              <div class="form-row">
+                <label for="tmplQ_No">Question number</label>
+                <input type="number" id="tmplQ_No" placeholder="For example, 1" min="1" />
+              </div>
+
             <div class="form-row">
-              <label>Edit / Add Question</label>
-              <input type="number" id="tmplQ_No" placeholder="Question No" />
+              <label for="tmplQ_Text">Question text</label>
+              <textarea id="tmplQ_Text" placeholder="For example, how would you rate the service?"></textarea>
             </div>
 
             <div class="form-row">
-              <textarea id="tmplQ_Text" placeholder="Question text"></textarea>
-            </div>
-
-            <div class="form-row">
+              <label for="tmplQ_Max">Maximum rating</label>
               <input
                 type="number"
                 id="tmplQ_Max"
-                placeholder="Max Rating (e.g. 5)"
+                min="1"
+                placeholder="For example, 5"
               />
               <div class="hint">
                 This is the highest rating (for example 5 for a 1–5 scale).
@@ -423,20 +436,14 @@
               style="display: none"
             ></div>
 
-            <div
-              style="
-                display: flex;
-                justify-content: flex-end;
-                gap: 8px;
-                margin-top: 6px;
-              "
-            >
+            <div class="question-form-actions">
               <button class="btn-ghost" id="tmplQ_Cancel" type="button">
                 Reset Form
               </button>
               <button class="btn-primary" id="tmplQ_Save" type="button">
                 Save Question
               </button>
+            </div>
             </div>
           </div>
         </section>
@@ -455,20 +462,20 @@
 
         <div class="modal-body">
           <div class="form-row">
-            <label>Template Name</label>
+            <label for="tmpl_Name">Template name</label>
             <input type="text" id="tmpl_Name" />
           </div>
 
           <div class="form-row">
-            <label>Description</label>
+            <label for="tmpl_Desc">Description</label>
             <textarea id="tmpl_Desc"></textarea>
           </div>
 
           <div class="form-row">
-            <label>Active?</label>
+            <label for="tmpl_Active">Availability</label>
             <select id="tmpl_Active">
-              <option value="true">Yes</option>
-              <option value="false">No</option>
+              <option value="true">Active — available for tasks</option>
+              <option value="false">Inactive — not available</option>
             </select>
           </div>
 
@@ -506,43 +513,29 @@
       let currentView = "templates"; // 'templates' | 'questions'
 
       function applyViewVisibility() {
-        const isMobile = window.innerWidth <= 720;
         const templatesPanel = document.querySelector(".panel-templates");
         const questionsPanel = document.querySelector(".panel-questions");
         const btnTemplates = document.getElementById("btnViewTemplates");
         const btnQuestions = document.getElementById("btnViewQuestions");
+        const progress = document.getElementById("setupProgress");
 
-        if (!templatesPanel || !questionsPanel) return;
-
-        if (isMobile) {
-          templatesPanel.classList.toggle(
-            "active",
-            currentView === "templates"
-          );
-          questionsPanel.classList.toggle(
-            "active",
-            currentView === "questions"
-          );
-        } else {
-          // On bigger screens always show both
-          templatesPanel.classList.add("active");
-          questionsPanel.classList.add("active");
-        }
-
-        if (btnTemplates && btnQuestions) {
-          btnTemplates.classList.toggle(
-            "toggle-active",
-            currentView === "templates"
-          );
-          btnQuestions.classList.toggle(
-            "toggle-active",
-            currentView === "questions"
-          );
-        }
+        const hasTemplate = !!currentTemplateID;
+        if (!hasTemplate && currentView === "questions") currentView = "templates";
+        const inQuestions = currentView === "questions" && hasTemplate;
+        templatesPanel.classList.toggle("active", !inQuestions);
+        questionsPanel.classList.toggle("active", inQuestions);
+        btnTemplates.classList.toggle("toggle-active", !inQuestions);
+        btnQuestions.classList.toggle("toggle-active", inQuestions);
+        btnQuestions.disabled = !hasTemplate;
+        btnTemplates.setAttribute("aria-current", !inQuestions ? "step" : "false");
+        btnQuestions.setAttribute("aria-current", inQuestions ? "step" : "false");
+        progress.textContent = inQuestions
+          ? "Step 2 of 2 · Add, edit, or remove questions. Return to step 1 to switch templates."
+          : "Step 1 of 2 · Choose or create a survey template to begin.";
       }
 
       function setView(view) {
-        currentView = view;
+        currentView = view === "questions" && currentTemplateID ? "questions" : "templates";
         applyViewVisibility();
       }
 
@@ -750,6 +743,7 @@
 
         // When a template is chosen, jump to Questions view on small screens
         setView("questions");
+        document.getElementById("btnViewQuestions").focus();
 
         await loadTemplateQuestions(templateID);
       }
@@ -846,7 +840,7 @@
           return;
         }
 
-        if (!no || !text || !max) {
+        if (!Number.isInteger(no) || no < 1 || !text || !Number.isInteger(max) || max < 1) {
           err.textContent = "All fields are required.";
           err.style.display = "block";
           return;
@@ -924,8 +918,6 @@
         // Initial view
         applyViewVisibility();
 
-        // Handle resize to keep view state consistent
-        window.addEventListener("resize", applyViewVisibility);
 
         // Mobile view toggle buttons
         const btnViewTemplates = document.getElementById("btnViewTemplates");
@@ -961,5 +953,6 @@
         loadTemplates();
       });
     </script>
-  </body>
+    <script src="responsive-tables.js"></script>
+</body>
 </html>

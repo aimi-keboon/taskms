@@ -468,11 +468,13 @@
     <div class="modal">
       <div class="modal-header">
         <div class="modal-title" id="taskModalTitle">Add Task</div>
-        <button class="modal-close" id="taskModalClose">&times;</button>
+        <button type="button" class="modal-close" id="taskModalClose" aria-label="Close task editor">&times;</button>
       </div>
       <form id="taskForm">
         <div class="modal-body">
           <input type="hidden" id="taskIDHidden" />
+          <h3 class="modal-stage-title">1. Visit details</h3>
+          <p class="modal-stage-hint">Choose who will visit, where they should go, and when the job is scheduled.</p>
 
           <div class="form-row">
             <label>Assigned Staff</label>
@@ -504,6 +506,8 @@
             <input type="datetime-local" id="scheduledTime" required />
           </div>
 
+          <h3 class="modal-stage-title">2. Customer feedback</h3>
+          <p class="modal-stage-hint">Only enable a survey when the customer should rate this visit after completion.</p>
           <div class="checkbox-row">
             <input type="checkbox" id="surveyRequired" />
             <label for="surveyRequired">Survey Required</label>
@@ -553,7 +557,7 @@
         <div class="modal-title">
           Subtasks – <span id="subtasksTaskIDLabel"></span>
         </div>
-        <button class="modal-close" id="subtasksModalClose">&times;</button>
+        <button type="button" class="modal-close" id="subtasksModalClose" aria-label="Close checklist editor">&times;</button>
       </div>
 
       <div class="modal-body">
@@ -583,8 +587,8 @@
         <hr style="margin: 10px 0; border: none; border-top: 1px solid #e5e7eb" />
 
         <div class="form-row" style="margin-top: 12px">
-          <label>Add New Subtask</label>
-          <div style="display: flex; gap: 8px">
+          <label for="newSubtaskTitleInput">Add a checklist item</label>
+          <div class="subtask-create-row">
             <input id="newSubtaskTitleInput" type="text" placeholder="Enter subtask title" style="flex: 1" />
             <button type="button" class="btn-primary" id="btnCreateSubtask">
               Add
@@ -1522,6 +1526,7 @@
       await loadTasks();
     });
   </script>
+  <script src="responsive-tables.js"></script>
 </body>
 
 </html>
