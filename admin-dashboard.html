@@ -5,6 +5,7 @@
   <meta charset="UTF-8" />
   <title>FSMS Admin Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="fsms-ui.css" />
 
   <style>
     :root {
@@ -310,7 +311,7 @@
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 </head>
 
-<body>
+<body class="fsms-ui admin-page">
   <!-- UNIVERSAL LOADING OVERLAY -->
   <div id="loadingOverlay">
     <div class="loader"></div>
@@ -321,7 +322,7 @@
   <script src="admin-navbar.js"></script>
 
   <main>
-    <div class="page-title">Field Service Performance Overview</div>
+    <h1 class="page-title">Field Service Performance Overview</h1>
     <div class="page-subtitle">
       Company-level analysis of tasks, staff performance, subtasks & surveys.
     </div>

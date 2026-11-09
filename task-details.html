@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="fsms-ui.css" />
     <title>Field Service – Task Details</title>
     <style>
       :root {
@@ -385,7 +386,7 @@
       }
     </style>
   </head>
-  <body>
+  <body class="fsms-ui staff-page">
     <!-- 🔥 Global loading overlay -->
     <div id="loadingOverlay" class="loading-overlay">
       <div class="loading-box">
@@ -394,6 +395,12 @@
       </div>
     </div>
 
+    <div class="staff-page-head">
+      <a class="back-link" href="tasklist.html">← Back to tasks</a>
+      <p class="ui-eyebrow">Field work</p>
+      <h1>Task details</h1>
+      <p>Record location, photos, and checklist progress for this visit.</p>
+    </div>
     <div class="container">
       <div id="alertBox" class="alert"></div>
 
@@ -716,7 +723,7 @@
           const card = document.createElement("div");
           card.className = "subtask-accordion";
           card.innerHTML = `
-            <div class="subtask-summary" data-toggle="${s.subtaskNo}">
+            <div class="subtask-summary" data-toggle="${s.subtaskNo}" role="button" tabindex="0" aria-expanded="false" aria-controls="body-${s.subtaskNo}">
               <div class="subtask-title">${s.subtaskNo}</div>
 
               <div class="subtask-summary-right">
@@ -792,9 +799,17 @@
           );
           const body = document.getElementById(`body-${s.subtaskNo}`);
           if (summary && body) {
-            summary.addEventListener("click", () => {
-              body.style.display =
-                body.style.display === "none" ? "block" : "none";
+            const toggle = () => {
+              const willOpen = body.style.display === "none";
+              body.style.display = willOpen ? "block" : "none";
+              summary.setAttribute("aria-expanded", String(willOpen));
+            };
+            summary.addEventListener("click", toggle);
+            summary.addEventListener("keydown", (event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                toggle();
+              }
             });
           }
         });
