@@ -124,168 +124,255 @@
         color: #777;
         padding: 20px;
       }
+
+      /* Staff task discovery and keyboard accessibility. */
+      .tab {
+        border: 0;
+        border-bottom: 3px solid transparent;
+        background: transparent;
+        font: inherit;
+      }
+      .tab:focus-visible, .task-card:focus-visible, .retry-btn:focus-visible,
+      #taskSearch:focus-visible {
+        outline: 3px solid #174c95;
+        outline-offset: 2px;
+      }
+      .toolbar {
+        background: #fff;
+        padding: 14px 15px 10px;
+      }
+      .toolbar label {
+        display: block;
+        font-weight: 600;
+        color: var(--text-dark);
+        margin-bottom: 6px;
+      }
+      #taskSearch {
+        box-sizing: border-box;
+        display: block;
+        width: 100%;
+        padding: 11px 12px;
+        border: 1px solid #9daaba;
+        border-radius: 8px;
+        font: inherit;
+      }
+      .task-count {
+        margin: 8px 0 0;
+        color: var(--text-light);
+        font-size: 0.85rem;
+      }
+      .task-card {
+        display: block;
+        width: 100%;
+        border: 0;
+        text-align: left;
+        font: inherit;
+      }
+      .retry-btn {
+        margin-top: 8px;
+        border: 0;
+        border-radius: 8px;
+        padding: 10px 16px;
+        background: var(--primary);
+        color: #fff;
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .status-badge + .status-badge { margin-left: 6px; }
     </style>
   </head>
 
   <body>
 
 
-    <div class="tabs">
-      <div class="tab active" id="tabToday">Today</div>
-      <div class="tab" id="tabUpcoming">Upcoming</div>
-      <div class="tab" id="tabCompleted">Completed</div>
-      <div class="tab" id="tabPast">Past</div>
+
+    <div class="tabs" role="tablist" aria-label="Task categories">
+      <button type="button" class="tab active" id="tabToday" data-filter="today" role="tab" aria-selected="true" aria-controls="taskList" tabindex="0">Today</button>
+      <button type="button" class="tab" id="tabUpcoming" data-filter="upcoming" role="tab" aria-selected="false" aria-controls="taskList" tabindex="-1">Upcoming</button>
+      <button type="button" class="tab" id="tabCompleted" data-filter="completed" role="tab" aria-selected="false" aria-controls="taskList" tabindex="-1">Completed</button>
+      <button type="button" class="tab" id="tabPast" data-filter="past" role="tab" aria-selected="false" aria-controls="taskList" tabindex="-1">Past</button>
     </div>
 
-    <div class="container" id="taskList">Loading tasks...</div>
+    <div class="toolbar">
+      <label for="taskSearch">Search tasks</label>
+      <input type="search" id="taskSearch" placeholder="Client, location, status or ID" autocomplete="off" />
+      <p class="task-count" id="taskCount" aria-live="polite"></p>
+    </div>
+    <div class="container" id="taskList" role="tabpanel" aria-labelledby="tabToday">Loading tasks...</div>
 
+
+
+    <script src="tasklist-utils.js"></script>
     <script>
       const SCRIPT_URL =
         "https://script.google.com/macros/s/AKfycbx5W0mk3v8kXHViNuOr4Qh50DpWl06aprkqt_W6qkPVqJyfbco3Yn5xPp3G9WE_QtZ6/exec";
 
+      const { malaysiaToday, isDone, filterTasks } = window.TaskListUtils;
+      const taskListEl = document.getElementById("taskList");
+      const taskCountEl = document.getElementById("taskCount");
+      const searchInput = document.getElementById("taskSearch");
+      const tabs = Array.from(document.querySelectorAll(".tab"));
+
       let currentFilter = "today";
+      let allTasks = [];
+      let hasLoaded = false;
+
+      function taskLine(label, value) {
+        const line = document.createElement("div");
+        line.className = "task-line";
+        const strong = document.createElement("strong");
+        strong.textContent = label + ":";
+        line.append(strong, " " + (value == null || value === "" ? "-" : value));
+        return line;
+      }
 
       function statusBadge(status) {
-        const s = (status || "").toLowerCase();
-        if (s === "done") {
-          return `<span class="status-badge status-done">Done</span>`;
+        const badge = document.createElement("span");
+        badge.className = "status-badge";
+        const normalized = String(status || "").trim().toLowerCase();
+        if (normalized === "done") {
+          badge.classList.add("status-done");
+          badge.textContent = "Done";
+        } else if (normalized === "in progress") {
+          badge.classList.add("status-progress");
+          badge.textContent = "In Progress";
+        } else {
+          badge.classList.add("status-new");
+          badge.textContent = status || "New";
         }
-        if (s === "in progress") {
-          return `<span class="status-badge status-progress">In Progress</span>`;
-        }
-        return `<span class="status-badge status-new">New</span>`;
+        return badge;
       }
 
       function renderTaskList(tasks) {
-        const container = document.getElementById("taskList");
+        taskListEl.replaceChildren();
+        taskCountEl.textContent = tasks.length + " task" + (tasks.length === 1 ? "" : "s") + " shown";
 
-        if (!tasks || tasks.length === 0) {
-          container.innerHTML = `<div class="no-task">No tasks found</div>`;
+        if (!tasks.length) {
+          const empty = document.createElement("p");
+          empty.className = "no-task";
+          empty.textContent = searchInput.value.trim()
+            ? "No tasks match your search in this tab."
+            : "No tasks found for this tab.";
+          taskListEl.appendChild(empty);
           return;
         }
 
-        container.innerHTML = "";
-
-        tasks.forEach((task) => {
-          const card = document.createElement("div");
+        tasks.forEach(task => {
+          const card = document.createElement("button");
+          card.type = "button";
           card.className = "task-card";
 
-          card.innerHTML = `
-      <div class="task-title">${task.client}</div>
-      <div class="task-line"><strong>Date:</strong> ${task.date}</div>
-      <div class="task-line"><strong>Time:</strong> ${task.time}</div>
-      <div class="task-line"><strong>Location:</strong> ${task.location}</div>
-      <div class="task-line">${statusBadge(task.status)}${
-            task.overdue && task.status.toLowerCase() !== "done"
-              ? `<span class="status-badge status-overdue">Overdue</span>`
-              : ""
+          const title = document.createElement("div");
+          title.className = "task-title";
+          title.textContent = task.client || "Unnamed client";
+
+          const statusLine = document.createElement("div");
+          statusLine.className = "task-line";
+          statusLine.appendChild(statusBadge(task.status));
+          if (task.overdue && !isDone(task.status)) {
+            const overdue = document.createElement("span");
+            overdue.className = "status-badge status-overdue";
+            overdue.textContent = "Overdue";
+            statusLine.appendChild(overdue);
           }
-</div>
 
-    `;
-
-          card.onclick = () => {
+          card.append(
+            title,
+            taskLine("Date", task.date),
+            taskLine("Time", task.time),
+            taskLine("Location", task.location),
+            statusLine
+          );
+          card.addEventListener("click", () => {
             localStorage.setItem("selectedTask", JSON.stringify(task));
             window.location.href = "task-details.html";
-          };
-
-          container.appendChild(card);
+          });
+          taskListEl.appendChild(card);
         });
-      }
-
-      let allTasks = [];
-
-      async function loadTasks() {
-        const email = localStorage.getItem("user_email");
-
-        if (!email) {
-          document.getElementById("taskList").innerHTML =
-            "You are not logged in.";
-          return;
-        }
-
-        const query = new URLSearchParams({
-          action: "getAllTasks",
-          email,
-        });
-
-        const res = await fetch(`${SCRIPT_URL}?${query}`);
-        const text = await res.text();
-
-        try {
-          const data = JSON.parse(text);
-          if (data.success) {
-            allTasks = data.tasks; // store all tasks
-            renderByFilter(); // filter based on tab
-          } else {
-            document.getElementById("taskList").innerHTML = data.message;
-          }
-        } catch {
-          document.getElementById("taskList").innerHTML =
-            "Error loading tasks.";
-        }
       }
 
       function renderByFilter() {
-        if (!allTasks) return;
-
-        const today = new Date().toISOString().slice(0, 10);
-        let filtered = [];
-
-        switch (currentFilter) {
-          case "today":
-            filtered = allTasks.filter((t) => t.date === today);
-            break;
-
-          case "upcoming":
-            filtered = allTasks.filter(
-              (t) => t.date > today && t.status !== "Done"
-            );
-            break;
-
-          case "completed":
-            filtered = allTasks.filter((t) => t.status === "Done");
-            break;
-
-          case "past":
-            filtered = allTasks.filter((t) => t.date < today);
-            break;
-        }
-
+        if (!hasLoaded) return;
+        const filtered = filterTasks(
+          allTasks, currentFilter, searchInput.value, malaysiaToday()
+        );
         renderTaskList(filtered);
       }
 
-      function setActiveTab(id) {
-        document
-          .querySelectorAll(".tab")
-          .forEach((tab) => tab.classList.remove("active"));
-        document.getElementById(id).classList.add("active");
+      function activateTab(tab, focus = false) {
+        currentFilter = tab.dataset.filter;
+        tabs.forEach(item => {
+          const selected = item === tab;
+          item.classList.toggle("active", selected);
+          item.setAttribute("aria-selected", String(selected));
+          item.tabIndex = selected ? 0 : -1;
+        });
+        taskListEl.setAttribute("aria-labelledby", tab.id);
+        if (focus) tab.focus();
+        renderByFilter();
       }
 
-      document.getElementById("tabToday").onclick = () => {
-        currentFilter = "today";
-        setActiveTab("tabToday");
-        renderByFilter();
-      };
+      function showLoadError() {
+        taskListEl.replaceChildren();
+        taskCountEl.textContent = "Unable to load tasks";
+        const message = document.createElement("p");
+        message.textContent = "Could not load tasks. Check your connection and try again.";
+        const retry = document.createElement("button");
+        retry.type = "button";
+        retry.className = "retry-btn";
+        retry.textContent = "Try again";
+        retry.addEventListener("click", loadTasks);
+        const wrapper = document.createElement("div");
+        wrapper.className = "no-task";
+        wrapper.append(message, retry);
+        taskListEl.appendChild(wrapper);
+      }
 
-      document.getElementById("tabUpcoming").onclick = () => {
-        currentFilter = "upcoming";
-        setActiveTab("tabUpcoming");
-        renderByFilter();
-      };
+      async function loadTasks() {
+        const email = localStorage.getItem("user_email");
+        if (!email) {
+          taskListEl.textContent = "Please sign in to view your assigned tasks.";
+          taskCountEl.textContent = "";
+          return;
+        }
 
-      document.getElementById("tabCompleted").onclick = () => {
-        currentFilter = "completed";
-        setActiveTab("tabCompleted");
-        renderByFilter();
-      };
+        hasLoaded = false;
+        taskListEl.textContent = "Loading tasks...";
+        taskCountEl.textContent = "";
 
-      document.getElementById("tabPast").onclick = () => {
-        currentFilter = "past";
-        setActiveTab("tabPast");
-        renderByFilter();
-      };
+        try {
+          const query = new URLSearchParams({ action: "getAllTasks", email });
+          const response = await fetch(SCRIPT_URL + "?" + query.toString());
+          if (!response.ok) throw new Error("HTTP " + response.status);
+          const data = await response.json();
+          if (!data.success || !Array.isArray(data.tasks)) {
+            throw new Error(data.message || "Unexpected task response");
+          }
+          allTasks = data.tasks;
+          hasLoaded = true;
+          renderByFilter();
+        } catch (error) {
+          console.error("Failed to load tasks:", error);
+          showLoadError();
+        }
+      }
 
+      tabs.forEach((tab, index) => {
+        tab.addEventListener("click", () => activateTab(tab));
+        tab.addEventListener("keydown", event => {
+          let next = index;
+          if (event.key === "ArrowRight") next = (index + 1) % tabs.length;
+          else if (event.key === "ArrowLeft") next = (index - 1 + tabs.length) % tabs.length;
+          else if (event.key === "Home") next = 0;
+          else if (event.key === "End") next = tabs.length - 1;
+          else return;
+          event.preventDefault();
+          activateTab(tabs[next], true);
+        });
+      });
+
+      searchInput.addEventListener("input", renderByFilter);
       document.addEventListener("DOMContentLoaded", loadTasks);
     </script>
     <script src="navbar.js"></script>
